@@ -280,9 +280,9 @@ def compute_distance(struct_1, struct_2):
     """
     nearest_dist = []
 
-    for point_2 in struct_2.dotplot.coordinates:
+    for point_1 in struct_1.dotplot.coordinates:
         point_dist = []
-        for point_1 in struct_1.dotplot.coordinates:
+        for point_2 in struct_2.dotplot.coordinates:
             # print(point_P, point_O)
             Man_Dist = cityblock(point_1, point_2)
             point_dist.append(Man_Dist)
