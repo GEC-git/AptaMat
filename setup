@@ -1,0 +1,13 @@
+#!/bin/sh
+
+VERSION=$(python -V | grep -Po '(?<=Python )(.+)')
+parsedVersion=${VERSION//./}
+
+if [ "$parsedVersion" -ge "300" ]
+  then
+    pip install numpy
+    pip install scipy
+
+  else
+    echo "Invalid version of Python"
+    echo "Make sure to use Python 3.0.0 or higher"
