@@ -1,4 +1,4 @@
-![](AptaMat.png) { width: 250px; }
+![](AptaMat.png)
 
 # AptaMAT
 
