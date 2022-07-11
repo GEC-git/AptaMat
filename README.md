@@ -1,5 +1,4 @@
-![](AptaMat.png)
-
+<img src="AptaMat.png" alt="AptaMat" width="200"/>
 # AptaMAT
 
 Purpose
