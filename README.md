@@ -1,5 +1,3 @@
-![](AptaMat.png)
-
 # AptaMAT
 
 Purpose
