@@ -1,4 +1,4 @@
-![](AptaMat.png)
+![](AptaMat.png = 250x336)
 
 # AptaMAT
 
