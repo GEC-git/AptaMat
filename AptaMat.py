@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pathlib
 from copy import deepcopy
-from scipy.spatial.distance import cityblock
+from scipy.spatial.distance import cityblock, euclidean
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -44,15 +44,17 @@ class Parse:
         Structure parser from fasta formatted files
 
         Examples
-        -------
-        >Template\n
+        --------
+
+        >ID\n
         TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA\n
+        --Template--
         ((((.........(((((.....)))))))))\n
         [ weight ]\n
-        >Compared1\n
+        --Compared1--\n
         .........(((.(((((.....))))).)))\n
-        [ weight ]\n
-        >Compared2\n
+        [ weight ]--\n
+        --Compared2\n
         ..........((.((((.......)))).)).\n
         [ weight ]\n
 
@@ -82,8 +84,8 @@ class Parse:
             if line.isspace():
                 continue
 
-            if line.startswith('>'):
-                id = line.strip('\n >')
+            if line.startswith(('>', '--')):
+                id = line.strip('\n >-')
                 if not Dotbracket.is_dotbracket(lines[i + 1]):
                     sequence = lines[i + 1].strip('\n')
                 else:
@@ -127,7 +129,7 @@ class Weight:
 
     @staticmethod
     def adjust(structures, w):
-        warnings.warn('Included weights does not result in ensemble distribution of 100% \n Adjusting weight ...\n')
+        #warnings.warn('Included weights does not result in ensemble distribution of 100% \n Adjusting weight ...\n')
         if len(structures) > len(w):
             unfilled = len(structures) - len(w)
 
@@ -337,7 +339,7 @@ def _check_instance(obj):
 
 
 def compute_distance(struct_1: object, struct_2: object, verbose=False):
-    """
+    r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
         - struct_1 : Template structure
@@ -375,24 +377,31 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
     s2 = deepcopy(struct_2)
     s2 = _check_instance(s2)
 
+    if verbose:
+        print(f'Comparing :\n'
+              f'{struct_1.id}\n'
+              f'{struct_1.dotbracket}\n'
+              f'{struct_2.id}\n'
+              f'{struct_2.dotbracket}\n')
+
     if len(s1) != len(s2):
         warnings.warn(
             "Input structures with different sizes.\n "
             "For accurate results, please perform sequence or structure alignment before. \n")
 
     if s2 == s1:
-        return s1.id, s2.id, 0
+        return 0
 
     elif s1.coordinates.size > 0 and s2.coordinates.size > 0:
-        # Compare Predicted --> Original structure
-        d_PO = manhattan(s1, s2, verbose)
+        # Template structure --> Compared structure
+        d_TC = calc_manhattan(s1, s2, verbose)
 
-        # Compare Original --> Predicted structure
-        d_OP = manhattan(s2, s1, verbose)
+        # Compared structure --> Template structure
+        d_CT = calc_manhattan(s2, s1, verbose)
 
-        dist = (((d_OP + d_PO) + (s1.gap + s2.gap)) / (s1.coordinates.size + s2.coordinates.size))
+        dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
-            print(f'({d_OP} + {d_PO}) + ({s1.gap} + {s2.gap})) / ({s1.coordinates.size} + {s2.coordinates.size})')
+            print(f'({d_CT} + {d_TC}) + ({s1.gap} + {s2.gap})) / ({len(s1.coordinates)} + {len(s2.coordinates)})')
         return dist
 
     elif s1.coordinates.size == 0:
@@ -404,7 +413,7 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
         return None
 
 
-def manhattan(struct_1, struct_2, verbose=False):
+def calc_manhattan(struct_1, struct_2, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -441,9 +450,12 @@ def manhattan(struct_1, struct_2, verbose=False):
         if point_dist:
             nearest_points.append(min(point_dist))
             if verbose:
-                print(f'Nearest Manhattan distance {str(point_1)}-{str(point_2)}' + '\n' + str(min(point_dist)) + '\n')
+                print(f'Nearest Manhattan distance '
+                      f'{str(point_1)}-{str(struct_2.coordinates[point_dist.index(min(point_dist))])}' +
+                      '\n' + str(min(point_dist)) + '\n')
+                print('----------------------------------')
 
-    # print(nearest_dist)
+    # print(nearest_dist)point_dist
     distance = sum(nearest_points)
 
     return distance
@@ -470,7 +482,9 @@ def main():
                                                  "The default computation mode is pairwise. Using -ensemble argument, "
                                                  "user can calculate AptaMat distance for an ensemble of structure.")
 
-    parser.add_argument('-v', '--verbose', help="increase output verbosity.",
+    parser.add_argument('-v',
+                        '--verbose',
+                        help="Increase output verbosity.",
                         action="store_true")
     parser.add_argument('-structures',
                         nargs='+',
@@ -537,14 +551,11 @@ def main():
             template_struct.distance = 0
 
         else:
-
-            if not args.ensemble:
-                result_print(template_struct, compared_struct)
-
             compared_struct.distance = compute_distance(struct_1=template_struct,
                                                         struct_2=compared_struct,
                                                         verbose=args.verbose)
             if not args.ensemble:
+                result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
 
     if args.ensemble and len(struct_list) > 2:
