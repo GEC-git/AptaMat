@@ -48,7 +48,7 @@ AptaMat is a flexible Python script which can take several arguments:
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
 - `-ensemble`(Optionnal) which indicates whether the input secondary structures are part of an ensemble
 
-    usage: AptaMat.py [-h] [-v] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble]
+      usage: AptaMat.py [[-h]] [[-v]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] 
     
 Both `structures` and `files` are independent functions in the script and cannot be called at the same time.
 
@@ -57,46 +57,46 @@ the template structure for the comparison. The following input are the compared 
 limitations. Quotes are necessary.
 
 
-    usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...]
+      usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...]
 
 
 The `weight` optionnal argument must be an array of float in 0 to 1 range showing identical size than input `structures` array. 
 This argument is not compatible with `files` as the script is expecting this information to be in the input file. 
 
 
-    usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...]
+      usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...]
     
     
 The `files` argument must be a formatted file. Multiple files can be parsed. The first structure encountered 
 during the parsing is used as the template structure. The others are the compared structures.
 
     
-    usage: AptaMat.py -files FILES [FILES ...]
+      usage: AptaMat.py -files FILES [FILES ...]
     
 
 The input must be a text file, containing at least secondary structures, and accept additional 
 information such as Title, Sequence, Structure index and Weight . If several files are provided, the function parses the files one
 by one and always takes the first structure encountered as the template structure. Files must be formatted as follows: 
 
-    >5HRU
-    TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
-    --Template--
-    ((((.........(((((.....)))))))))
-    [ weight ]
-    --Compared--
-    .........(((.(((((.....))))).)))
-    [ weight ]
-    ..........((.((((.......)))).)).
-    [ weight ]
+      >5HRU
+      TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
+      --Template--
+      ((((.........(((((.....)))))))))
+      [ weight ]
+      --Compared--
+      .........(((.(((((.....))))).)))
+      [ weight ]
+      ..........((.((((.......)))).)).
+      [ weight ]
 
 
 `ensemble` is an optionnal argument which allow to calculate AptaMat distance value for an ensemble of structure
 instead of calculating pairwise distance.
 
 
-    usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...] -ensemble
-        or
-    usage: AptaMat.py -files FILES [FILES ...] -ensemble
+      usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...] -ensemble
+          or
+      usage: AptaMat.py -files FILES [FILES ...] -ensemble
 
 
 Examples
@@ -105,73 +105,73 @@ Examples
 ### structures function
 First introducing a simple example with 2 structures:
 
-    $ AptaMat.py -structures "(((...)))" "((.....))"
-     (((...)))
-     ((.....))
-    > AptaMat : 0.4
+      $ AptaMat.py -structures "(((...)))" "((.....))"
+       (((...)))
+       ((.....))
+      > AptaMat : 0.4
     
 Then, it is possible to input several structures:
     
-    $ AptaMat.py -structures "(((...)))" "((.....))" ".(.....)." "(.......)"
-    structure0 - structure1
-     (((...)))
-     ((.....))
-    > AptaMat : 0.4
+      $ AptaMat.py -structures "(((...)))" "((.....))" ".(.....)." "(.......)"
+      structure0 - structure1
+       (((...)))
+       ((.....))
+      > AptaMat : 0.4
     
-    structure0 - structure2
-     (((...)))
-     .(.....).
-    > AptaMat : 1
+      structure0 - structure2
+       (((...)))
+       .(.....).
+      > AptaMat : 1
     
-    structure0 - structure3
-     (((...)))
-     (.......)
-    > AptaMat : 1.5
+      structure0 - structure3
+       (((...)))
+       (.......)
+      > AptaMat : 1.5
 
 ### files function
 Taking the above file example:
 
-    $ AptaMat.py -files example.fa
-    Template - Compared1
-     ((((.........(((((.....)))))))))
-     .........(((.(((((.....))))).)))
-    > AptaMat:
-      1.588235294117647
+      $ AptaMat.py -files example.fa
+      Template - Compared1
+       ((((.........(((((.....)))))))))
+       .........(((.(((((.....))))).)))
+      > AptaMat:
+        1.588235294117647
 
-    Template - Compared2
-     ((((.........(((((.....)))))))))
-     ..........((.((((.......)))).)).
-    > AptaMat:
-      1.6666666666666667
+      Template - Compared2
+       ((((.........(((((.....)))))))))
+       ..........((.((((.......)))).)).
+      > AptaMat:
+        1.6666666666666667
 
 ### ensemble with input structures and weights
 The four dotbracket used with `-structures` argument can be complete with `-weights` and `-ensemble`:
 
-    $ AptaMat.py -structures "(((...)))" "((.....))" ".(.....)." "(.......)" -weights 0 0.5 0.3 0.2 -ensemble
+      $ AptaMat.py -structures "(((...)))" "((.....))" ".(.....)." "(.......)" -weights 0 0.5 0.3 0.2 -ensemble
     
-    > AptaMat of structure set 
-      0.8
+      > AptaMat of structure set 
+        0.8
 
 ### ensemble in file
 This time, we consider the above file as an ensemble and we complete the structure informations with weights
     
-    >5HRU
-    TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
-    --Template--
-    ((((.........(((((.....)))))))))
-    --Compared1--
-    .........(((.(((((.....))))).)))
-    [ 0.6 ]
-    --Compared2--
-    ..........((.((((.......)))).)).
-    [ 0.4 ]
+      >5HRU
+      TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
+      --Template--
+      ((((.........(((((.....)))))))))
+      --Compared1--
+      .........(((.(((((.....))))).)))
+      [ 0.6 ]
+      --Compared2--
+      ..........((.((((.......)))).)).
+      [ 0.4 ]
 
 Here is the result:
 
-    $ AptaMat.py -files example.fa
+      $ AptaMat.py -files example.fa
     
-    > AptaMat of structure set 
-      3.2549019607843137
+      > AptaMat of structure set 
+        3.2549019607843137
 
 
 Note
