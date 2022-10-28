@@ -154,7 +154,7 @@ The four dotbracket used with `-structures` argument can be complete with `-weig
 
 ### ensemble in file
 This time, we consider the above file as an ensemble and we complete the structure informations with weights
-    
+      
       >5HRU
       TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
       --Template--
@@ -167,7 +167,6 @@ This time, we consider the above file as an ensemble and we complete the structu
       [ 0.4 ]
 
 Here is the result:
-
       $ AptaMat.py -files example.fa
     
       > AptaMat of structure set 
@@ -180,3 +179,8 @@ Note
 For the moment, no features have been included to check whether the base pair is able to exist or not, according 
 to literature. You must be careful about the sequence input and the base pairing associate.
 
+Citation
+------------
+If you are using AptaMat in your research, please support us by citing our preprint: Binet T., Avalle B., Felipe MD., Maffucci I. (2022). AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures. *bioRxiv*. doi: https://doi.org/10.1101/2022.05.04.490414
+
+Article have been submitted.
