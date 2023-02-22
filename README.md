@@ -47,8 +47,9 @@ AptaMat is a flexible Python script which can take several arguments:
 - `-weigths` (Optionnal) followed by weight values between 0 and 1 to indicate optionnal weight indices
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
 - `-ensemble`(Optionnal) which indicates whether the input secondary structures are part of an ensemble
+- `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
 
-      usage: AptaMat.py [[-h]] [[-v]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] 
+      usage: AptaMat.py [-h] [-v] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]]
     
 Both `structures` and `files` are independent functions in the script and cannot be called at the same time.
 
@@ -176,11 +177,15 @@ Here is the result:
 Note
 ------------
 
+Since AptaMat does not include automatic structure alignment, the choice of the software is up to the users.
+
+Our papers observation have been made using Manhattan distance. Cutoff decision may be guided by the topic studied
+and also by the choice of the distance method (Euclidean or Manhattan).
+
 For the moment, no features have been included to check whether the base pair is able to exist or not, according 
-to literature. You must be careful about the sequence input and the base pairing associate.
+to literature. You must be careful about the sequence input and the base pairing associated.
+
 
 Citation
 ------------
-If you are using AptaMat in your research, please support us by citing our preprint: Binet T., Avalle B., Felipe MD., Maffucci I. (2022). AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures. *bioRxiv*. doi: https://doi.org/10.1101/2022.05.04.490414
-
-Article have been submitted.
+If you are using AptaMat in your research, please support us by citing us : Thomas Binet, Bérangère Avalle, Miraine Dávila Felipe, Irene Maffucci, AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures, Bioinformatics, Volume 39, Issue 1, January 2023, btac752, https://doi.org/10.1093/bioinformatics/btac752
