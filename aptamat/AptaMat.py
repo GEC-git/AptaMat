@@ -1,15 +1,21 @@
 #! /usr/bin/env python3
 import argparse
-import string
-import os, sys
-import warnings
-import numpy as np
+import os
 import pathlib
+import string
+import sys
+import warnings
 from copy import deepcopy
+
+import numpy as np
 from scipy.spatial.distance import cityblock, euclidean
 
 np.set_printoptions(threshold=sys.maxsize)
 
+
+#############################################################
+#           CLASS
+#############################################################
 
 class Parse:
     """
@@ -119,38 +125,6 @@ class Parse:
         return structures
 
 
-class Weight:
-    """
-    Methods to adjust weight values in a set of structures
-    """
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def adjust(structures, w):
-        #warnings.warn('Included weights does not result in ensemble distribution of 100% \n Adjusting weight ...\n')
-        if len(structures) > len(w):
-            unfilled = len(structures) - len(w)
-
-            if sum(w) < 1:
-                proportion = (1 - sum(w)) / unfilled
-                for i in range(len(w), len(structures)):
-                    w.append(proportion)
-            else:
-                return ValueError(
-                    "Weights have been included in the set but cannot be completed for {} last structures\n"
-                    "Check your weight ratio.\n".format(unfilled))
-
-        if len(structures) < len(w):
-            w = w[0, len(structures)]
-
-        if sum(w) > 1:
-            w = [i * 100 / sum(w) for i in w]
-
-        return w
-
-
 class Dotbracket:
     """ Create a DotBracket object"""
     gap_penalty_matrix = [1, 1]
@@ -218,7 +192,7 @@ class Dotplot(Dotbracket):
             return self.matrix == other.matrix and self.coordinates == other.coordinates
 
     def __len__(self):
-        return (self.matrix.size, self.matrix.shape)
+        return self.matrix.size, self.matrix.shape
 
     def build_matrix(self):
         """
@@ -312,6 +286,10 @@ class SecondaryStructure(Dotplot):
         return len(self.dotbracket)
 
 
+#############################################################
+#           Internal Functions
+#############################################################
+
 def _warning(msg, *args, **kwargs):
     return str(msg) + '\n'
 
@@ -338,7 +316,21 @@ def _check_instance(obj):
     return obj
 
 
-def compute_distance(struct_1: object, struct_2: object, verbose=False):
+def _result_print(template_struct, compared_struct, weight=None):
+    print(template_struct.id, end=' ')
+    print('-', compared_struct.id)
+    if weight is not None:
+        print(f'Weigth= {str(weight)}')
+    print('', template_struct.dotbracket)
+    print('', compared_struct.dotbracket)
+    print('> AptaMat:\n', end='  ')
+
+
+#############################################################
+#           Functions
+#############################################################
+
+def compute_distance(struct_1: object, struct_2: object, method, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -362,13 +354,15 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
         Input SecondaryStructure, Dotplot or Dotbracket object.
     struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
         Input SecondaryStructure, Dotplot or Dotbracket object.
+    method: str
+        Method for distance calculation.
     verbose :
         True or False
 
     Returns
     -------
-        dist: float or None
-            The AptaMat distance between struct_1 and struct_2.
+        dist : float or None
+            The AptaMat distance between struct_1 and struct_2. None if structures are not folded
     """
 
     # Check input type before running calculation
@@ -384,6 +378,8 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
               f'{struct_2.id}\n'
               f'{struct_2.dotbracket}\n')
 
+    # Check length of compared structures
+    # Alignment is strongly recommended
     if len(s1) != len(s2):
         warnings.warn(
             "Input structures with different sizes.\n "
@@ -394,10 +390,10 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
 
     elif s1.coordinates.size > 0 and s2.coordinates.size > 0:
         # Template structure --> Compared structure
-        d_TC = calc_manhattan(s1, s2, verbose)
+        d_TC = pairwise_distance(s1, s2, method, verbose)
 
         # Compared structure --> Template structure
-        d_CT = calc_manhattan(s2, s1, verbose)
+        d_CT = pairwise_distance(s2, s1, method, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -413,7 +409,7 @@ def compute_distance(struct_1: object, struct_2: object, verbose=False):
         return None
 
 
-def calc_manhattan(struct_1, struct_2, verbose=False):
+def pairwise_distance(struct_1: object, struct_2: object, method, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -422,10 +418,12 @@ def calc_manhattan(struct_1, struct_2, verbose=False):
 
     Parameters
     ----------
-    struct_1 :  SecondaryStructure or Dotplot or Dotbracket
+    struct_1 : SecondaryStructure_or_Dotplot_or_Dotbracket
         Input SecondaryStructure, Dotplot or Dotbracket object.
-    struct_2: SecondaryStructure or Dotplot or Dotbracket
+    struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
         Input SecondaryStructure, Dotplot or Dotbracket object.
+    method: str
+        Method for distance calculation.
     verbose :
         True or False
 
@@ -440,13 +438,19 @@ def calc_manhattan(struct_1, struct_2, verbose=False):
     for point_1 in struct_1.coordinates:
         point_dist = []
         for point_2 in struct_2.coordinates:
-            Man_Dist = cityblock(point_1, point_2)
+            if method == "cityblock":
+                Pair_Dist = cityblock(point_1, point_2)
+                if verbose:
+                    print(f'  Manhattan distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
 
-            if verbose:
-                print(f'  Manhattan distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Man_Dist))
+            if method == "euclidean":
+                Pair_Dist = euclidean(point_1, point_2)
+                if verbose:
+                    print(f'  Euclidean distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
 
-            point_dist.append(Man_Dist)
+            point_dist.append(Pair_Dist)
 
+        # Keep the lowest distance for each point
         if point_dist:
             nearest_points.append(min(point_dist))
             if verbose:
@@ -461,21 +465,52 @@ def calc_manhattan(struct_1, struct_2, verbose=False):
     return distance
 
 
-def result_print(template_struct, compared_struct, weight=None):
-    print(template_struct.id, end=' ')
-    print('-', compared_struct.id)
-    if weight is not None:
-        print(f'Weigth= {str(weight)}')
-    print('', template_struct.dotbracket)
-    print('', compared_struct.dotbracket)
-    print('> AptaMat:\n', end='  ')
+def adjust_weight(structures, weight):
+    """
+    Function to adjust weight values in a set of structures.
+
+    ---
+    Parameters
+    ----------
+    structures : list
+        List of SecondaryStructure, Dotplot or Dotbracket object.
+    weight : list
+        List of weights.
+
+    Returns
+    -------
+        weight : list
+            List of adjusted weight
+    """
+    # warnings.warn('Included weights does not result in ensemble distribution of 100% \n Adjusting weight ...\n')
+    if len(structures) > len(weight):
+        unfilled = len(structures) - len(weight)
+
+        if sum(weight) < 1:
+
+            proportion = (1 - sum(weight)) / unfilled
+            for i in range(len(weight), len(structures)):
+                weight.append(proportion)
+        else:
+            return ValueError(
+                "Weights have been included in the set but cannot be completed for {} last structures\n"
+                "Check your weight ratio.\n".format(unfilled))
+
+    if len(structures) < len(weight):
+        weight = weight[0, len(structures)]
+
+    if sum(weight) > 1:
+        weight = [i * 100 / sum(weight) for i in weight]
+
+    return weight
 
 
 def main():
     parser = argparse.ArgumentParser(description="AptaMat is a simple script which aims to measure differences between "
                                                  "DNA or RNA secondary structures. The method is based on the "
-                                                 "comparison of binary matrices representing the secondary structures.\n"
-                                                 "AptaMat algorithm is compatible with the extended dotbracket notation.\n"
+                                                 "comparison of binary matrices representing the secondary "
+                                                 "structures.AptaMat algorithm is compatible with the extended\n"
+                                                 "dotbracket notation.\n"
                                                  "To compute the calculation, user can input the different dotbracket"
                                                  "structures to be compared, either in raw arguments or input file "
                                                  "argument.\n"
@@ -502,6 +537,10 @@ def main():
     parser.add_argument('-ensemble',
                         action='store_true',
                         help='Calculate AptaMat value for ensemble.')
+    parser.add_argument('-method',
+                        default='cityblock',
+                        nargs='?',
+                        choices=['cityblock', 'euclidean'])
 
     args = parser.parse_args()
 
@@ -514,18 +553,25 @@ def main():
 
     struct_list = []
     weights = []
+
+    ##################################
+    #  Input structures preparation  #
+    ##################################
     if args.structures is not None:
         if len(args.structures) < 2:
             raise ValueError('Missing one argument in -structures')
         if args.weights:
-            weights = Weight.adjust(args.structures, args.weights)
+            weights = adjust_weight(args.structures, args.weights)
 
         for i, structure in enumerate(args.structures):
-            struct = SecondaryStructure(dotbracket=structure, id='structure'+str(i))
+            struct = SecondaryStructure(dotbracket=structure, id='structure' + str(i))
             if weights:
                 struct.weight = weights[i]
             struct_list.append(struct)
 
+    ############################
+    #  Input file preparation  #
+    ############################
     if args.files is not None:
         if args.weights is not None:
             warnings.warn('Arguments "file" and "weights" are not compatible.\n'
@@ -535,15 +581,19 @@ def main():
         for file in args.files:
             structures = Parse.file(file)
             if not sum(struct.weight for struct in structures) == 1:
-                weights = Weight.adjust(structures,
+                weights = adjust_weight(structures,
                                         [struct.weight for struct in structures])
                 for struct, w in zip(structures, weights):
                     struct.weight = w
             struct_list += structures
 
+    # Stop the program whether structures input are not valid or not found.
     if not struct_list:
         raise ValueError('No valid structure parsed.\n')
 
+    ##########################
+    #  Distance calculation  #
+    ##########################
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -553,24 +603,28 @@ def main():
         else:
             compared_struct.distance = compute_distance(struct_1=template_struct,
                                                         struct_2=compared_struct,
+                                                        method=args.method,
                                                         verbose=args.verbose)
             if not args.ensemble:
-                result_print(template_struct, compared_struct)
+                _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
 
+    ##########################
+    #  Ensemble calculation  #
+    ##########################
     if args.ensemble and len(struct_list) > 2:
         set_distance = 0
         for compared_struct in struct_list[1:]:
             if all(s.weight == 0 for s in struct_list):
                 if args.verbose:
-                    weight = 1 /(len(struct_list) - 1)
-                    result_print(template_struct, compared_struct, weight)
+                    weight = 1 / (len(struct_list) - 1)
+                    _result_print(template_struct, compared_struct, weight)
                     print(compared_struct.distance * weight, end='\n\n')
                 set_distance += compared_struct.distance * (1 / (len(struct_list) - 1))
 
             else:
                 if args.verbose:
-                    result_print(template_struct, compared_struct, compared_struct.weight)
+                    _result_print(template_struct, compared_struct, compared_struct.weight)
                     print(compared_struct.distance * compared_struct.weight, end='\n\n')
                 set_distance += compared_struct.distance * compared_struct.weight
 
@@ -583,6 +637,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # start = time.time()
-    print('')
     main()
