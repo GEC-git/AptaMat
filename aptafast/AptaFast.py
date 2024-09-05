@@ -369,7 +369,7 @@ def _result_print(template_struct, compared_struct, weight=None):
 #           Functions
 #############################################################
 
-def compute_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):
+def compute_distance(struct_1: object, struct_2: object, method, cache: object, matrix_size: int, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -433,11 +433,11 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         if verbose:
             print("Template structure --> Compared structure")
         # Template structure --> Compared structure
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, verbose)
+        d_TC = pairwise_distance_optimised(s1, s2, method, cache, matrix_size, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, cache, matrix_size, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -454,14 +454,14 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
 
 
 # DOESN'T WORK FOR NOW, TO BE OPTIMISED.
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, verbose=False):
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, matrix_size: int, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
 
     The function returns the sum of the nearest distances found for each points.
     
-    This function uses spiraling search and cache to optimize the algorithm for very big molecules and numerous calculations.
+    This function uses double spiraling search and cache to optimize the algorithm for very big molecules and numerous calculations.
 
     Parameters
     ----------
@@ -482,28 +482,42 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
             manhattan distance
     """
     nearest_points=[]
-    print(struct_2.coordinates)
-    print(struct_1.coordinates)
+    
+    #print(struct_2.coordinates)
+    #print(struct_1.coordinates)
     for point_1 in struct_1.coordinates:
         i=point_1[0]
         j=point_1[1]
-        column=True
-        parity=-1
-        loop_pos = 1
-        point_dist=0
-        while [i,j] not in struct_2.coordinates:
-            if column:
-                j+=1*parity
-            else:
-                i+=1*parity
-            if not loop_pos%2:
-                column = not column
-                if parity:
-                    parity = -1
-                else:
-                    parity = 1
-            loop_pos+=1
         
+        ij_search=[]
+        
+        direction=["down","left","up","right"]
+        loop_pos=0
+        direction_switch=direction[0]
+        switch_count=0
+        
+        while [i,j] not in struct_2.coordinates:
+            
+            if direction_switch=="down":
+                j+=-1
+            elif direction_switch=="up":
+                j+=1
+            elif direction_switch=="right":
+                i+=1
+            elif direction_switch=="left":
+                i+=-1
+            
+            if loop_pos == (int(switch_count*(switch_count+1)/2) or switch_count*(switch_count+1)):
+                switch_count+=1
+                direction_switch=direction[switch_count%4]
+            
+            
+            loop_pos+=1
+            
+            ij_search.append([i,j])
+        
+        print("RECHERCHE 1: ",ij_search)
+            
         if verbose:
             print("Found nearest point : ",[i,j]," | ",end='')
           
@@ -708,6 +722,7 @@ def main():
     ##################################
     #  Input structures preparation  #
     ##################################
+    struct_sizes=[]
     if args.structures is not None:
         if len(args.structures) < 2:
             raise ValueError('Missing one argument in -structures')
@@ -716,6 +731,7 @@ def main():
 
         for i, structure in enumerate(args.structures):
             struct = SecondaryStructure(dotbracket=structure, id='structure' + str(i))
+            struct_sizes.append(len(struct))
             if weights:
                 struct.weight = weights[i]
             struct_list.append(struct)
@@ -747,6 +763,7 @@ def main():
     ##########################
     
     cache=CompressedCache()
+    size=max(struct_sizes)
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -758,6 +775,7 @@ def main():
                                                         struct_2=compared_struct,
                                                         method=args.method,
                                                         cache=cache,
+                                                        matrix_size=size,
                                                         verbose=args.verbose)
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
