@@ -461,7 +461,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
 
     The function returns the sum of the nearest distances found for each points.
     
-    This function uses double spiraling search and cache to optimize the algorithm for very big molecules and numerous calculations.
+    This function uses spiraling search and cache to optimize the algorithm for very big molecules and numerous calculations.
 
     Parameters
     ----------
@@ -507,16 +507,15 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
             elif direction_switch=="left":
                 i+=-1
             
-            if loop_pos == (int(switch_count*(switch_count+1)/2) or switch_count*(switch_count+1)):
-                switch_count+=1
+            if loop_pos == (int(switch_count*(switch_count+1)/2)):
                 direction_switch=direction[switch_count%4]
-            
-            
+                switch_count+=1
+
             loop_pos+=1
             
             ij_search.append([i,j])
         
-        print("RECHERCHE 1: ",ij_search)
+        print("RECHERCHE : ",ij_search)
             
         if verbose:
             print("Found nearest point : ",[i,j]," | ",end='')
