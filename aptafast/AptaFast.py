@@ -369,7 +369,7 @@ def _result_print(template_struct, compared_struct, weight=None):
 #           Functions
 #############################################################
 
-def compute_distance(struct_1: object, struct_2: object, method, cache: object, matrix_size: int, verbose=False):
+def compute_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -433,11 +433,11 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         if verbose:
             print("Template structure --> Compared structure")
         # Template structure --> Compared structure
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, matrix_size, verbose)
+        d_TC = pairwise_distance_optimised(s1, s2, method, cache, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, matrix_size, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, cache, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -454,7 +454,7 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
 
 
 # DOESN'T WORK FOR NOW, TO BE OPTIMISED.
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, matrix_size: int, verbose=False):
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -535,7 +535,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         if cache.cache_checking(str(point_1[0])+str(point_1[1])+str(i)+str(j)):
             point_dist=cache.cache_access(str(point_1[0])+str(point_1[1])+str(i)+str(j))
             if verbose:
-                print(f'  CACHE ACCESS | Distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
+                print(f'  CACHE ACCESS | {method} distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
         else:
             if method=="cityblock":
                 point_dist=cityblock(point_1, [i,j])
@@ -635,7 +635,7 @@ def pairwise_distance(struct_1: object, struct_2: object, method, cache: object,
                           '\n' + str(min(point_dist)) + '\n')
                     print('----------------------------------')
 
-    # print(nearest_dist)point_dist
+
     distance = sum(nearest_points)
 
     return distance
@@ -774,7 +774,6 @@ def main():
     ##########################
     
     cache=CompressedCache()
-    size=max(struct_sizes)
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -786,7 +785,6 @@ def main():
                                                         struct_2=compared_struct,
                                                         method=args.method,
                                                         cache=cache,
-                                                        matrix_size=size,
                                                         verbose=args.verbose)
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
