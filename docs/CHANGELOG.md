@@ -37,4 +37,6 @@
 
     Using multiprocessing since the search for the nearest point for each point are completely independant.
     
+    Determining the matrices of smallest distances for all points and using it directly in the calculations.
+    
 ### WEEK 2 - 09/09/2024 -> 15/09/2024.
