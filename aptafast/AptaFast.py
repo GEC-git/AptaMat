@@ -483,21 +483,22 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     """
     nearest_points=[]
     
-    print(struct_2.coordinates)
-    print(struct_1.coordinates)
+    struct2=[str(elt) for elt in struct_2.coordinates]
+    
     for point_1 in struct_1.coordinates:
         i=point_1[0]
         j=point_1[1]
-        print([i,j])
+        
         direction=["down","left","up","right"]
+        
         loop_pos=1
         direction_switch=direction[0]
         quarter_finished = False
         quarter_count = 0
         switch_count = 0
         
-        while [i,j] not in struct_2.coordinates:
-
+        while "[ " +str(i)+" "+str(j)+"]" not in struct2:
+            
             if direction_switch=="down":
                 j+=-1
             elif direction_switch=="up":
@@ -534,7 +535,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         if cache.cache_checking(str(point_1[0])+str(point_1[1])+str(i)+str(j)):
             point_dist=cache.cache_access(str(point_1[0])+str(point_1[1])+str(i)+str(j))
             if verbose:
-                print(f'  CACHE ACCESS | Manhattan distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
+                print(f'  CACHE ACCESS | Distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
         else:
             if method=="cityblock":
                 point_dist=cityblock(point_1, [i,j])
