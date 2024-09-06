@@ -483,21 +483,21 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     """
     nearest_points=[]
     
-    #print(struct_2.coordinates)
-    #print(struct_1.coordinates)
+    print(struct_2.coordinates)
+    print(struct_1.coordinates)
     for point_1 in struct_1.coordinates:
         i=point_1[0]
         j=point_1[1]
-        
-        ij_search=[]
-        
+        print([i,j])
         direction=["down","left","up","right"]
-        loop_pos=0
+        loop_pos=1
         direction_switch=direction[0]
-        switch_count=0
+        quarter_finished = False
+        quarter_count = 0
+        switch_count = 0
         
         while [i,j] not in struct_2.coordinates:
-            
+
             if direction_switch=="down":
                 j+=-1
             elif direction_switch=="up":
@@ -506,17 +506,28 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
                 i+=1
             elif direction_switch=="left":
                 i+=-1
-            
-            if loop_pos == (int(switch_count*(switch_count+1)/2)):
-                direction_switch=direction[switch_count%4]
-                switch_count+=1
 
+            if switch_count==0:
+                switch_count+=1
+                direction_switch=direction[switch_count%4]
+            elif switch_count==1:
+                switch_count+=1
+                quarter_count+=1
+            
+            if quarter_finished:
+                if loop_pos==quarter_count**2:
+                    direction_switch=direction[switch_count%4]
+                    switch_count +=1
+                    quarter_finished=False
+            else:
+                if loop_pos==quarter_count*(quarter_count+1):
+                    direction_switch=direction[switch_count%4]
+                    switch_count +=1
+                    quarter_finished=True
+                    quarter_count+=1
+            
             loop_pos+=1
-            
-            ij_search.append([i,j])
-        
-        print("RECHERCHE : ",ij_search)
-            
+
         if verbose:
             print("Found nearest point : ",[i,j]," | ",end='')
           
