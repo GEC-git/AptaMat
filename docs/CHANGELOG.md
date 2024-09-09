@@ -8,7 +8,7 @@
 
 - Added a compressed cache to store distances already calculated.
     
-    The coordinates are hashed to an hexadecimal number then stored in a dictionary.
+    The coordinates are hashed to an hexadecimal number then stored into a dictionary.
 
     Not very effective since the avoided calculation is just two substractions for manhattan distance and a square root for euclidean method.
 
@@ -40,3 +40,11 @@
     Determining the matrices of smallest distances for all points and using it directly in the calculations.
     
 ### WEEK 2 - 09/09/2024 -> 15/09/2024.
+
+- Implemented multiprocessing to process all the nearest points calculations.
+    - VERY effective in the case of bigger matrices. (720s to 40s on a 48 cores CPU with 1000x1000 matrices)
+    
+    - Now, the load is distributed across *n* cpu cores, *n* being chose by the user (with an educated prompt).
+    
+#### FUTURE CHANGES AND IDEAS
+
