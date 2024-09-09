@@ -12,7 +12,7 @@ import sys
 import warnings
 from copy import deepcopy
 import time as tm
-
+import multiprocessing as mp
 import numpy as np
 from scipy.spatial.distance import cityblock, euclidean
 
@@ -433,11 +433,15 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         if verbose:
             print("Template structure --> Compared structure")
         # Template structure --> Compared structure
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, verbose)
+        print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
+        nb_pool=int(input("How much do you want to use? "))
+        if nb_pool>mp.cpu_count() or nb_pool <=0:
+            return ValueError("Incorrect number of cores")
+        d_TC = pairwise_distance_optimised(s1, s2, method, cache, nb_pool, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, cache, nb_pool, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -452,9 +456,60 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         warnings.warn("Compared structure is not folded.\n")
         return None
 
+def calculation_core(point1, struct2):
+    """Independant function for determining the closest point
+    
+        This function still uses spiraling search which gives wrong distances for bigger matrices.
+        
+        Returns a tuple with:
+            - The point originating the search
+            - The closest point found to the first one
+    """
+    
+    i=point1[0]
+    j=point1[1]
+            
+    direction=["down","left","up","right"]
+            
+    loop_pos=1
+    direction_switch=direction[0]
+    quarter_finished = False
+    quarter_count = 0
+    switch_count = 0 
+    
+    while "[ " +str(i)+" "+str(j)+"]" not in struct2:
+                
+        if direction_switch=="down":
+            j+=-1
+        elif direction_switch=="up":
+            j+=1
+        elif direction_switch=="right":
+            i+=1
+        elif direction_switch=="left":
+            i+=-1
 
-# DOESN'T WORK FOR NOW, TO BE OPTIMISED.
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, verbose=False):
+        if switch_count==0:
+            switch_count+=1
+            direction_switch=direction[switch_count%4]
+        elif switch_count==1:
+            switch_count+=1
+            quarter_count+=1
+              
+        if quarter_finished:
+            if loop_pos==quarter_count**2:
+                direction_switch=direction[switch_count%4]
+                switch_count +=1
+                quarter_finished=False
+        else:
+            if loop_pos==quarter_count*(quarter_count+1):
+                direction_switch=direction[switch_count%4]
+                switch_count +=1
+                quarter_finished=True
+                quarter_count+=1
+        loop_pos+=1
+    return (list(point1),[i,j])
+
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, cpu_cores: int, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -475,6 +530,8 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         True or False
     cache:
         CompressedCache
+    cpu_cores: integer
+        Number of cores chosen. Used for creating the pool of processes
 
     Returns
     -------
@@ -484,78 +541,44 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     nearest_points=[]
     
     struct2=[str(elt) for elt in struct_2.coordinates]
-    
-    for point_1 in struct_1.coordinates:
-        i=point_1[0]
-        j=point_1[1]
-        
-        direction=["down","left","up","right"]
-        
-        loop_pos=1
-        direction_switch=direction[0]
-        quarter_finished = False
-        quarter_count = 0
-        switch_count = 0
-        
-        while "[ " +str(i)+" "+str(j)+"]" not in struct2:
-            
-            if direction_switch=="down":
-                j+=-1
-            elif direction_switch=="up":
-                j+=1
-            elif direction_switch=="right":
-                i+=1
-            elif direction_switch=="left":
-                i+=-1
-
-            if switch_count==0:
-                switch_count+=1
-                direction_switch=direction[switch_count%4]
-            elif switch_count==1:
-                switch_count+=1
-                quarter_count+=1
-            
-            if quarter_finished:
-                if loop_pos==quarter_count**2:
-                    direction_switch=direction[switch_count%4]
-                    switch_count +=1
-                    quarter_finished=False
-            else:
-                if loop_pos==quarter_count*(quarter_count+1):
-                    direction_switch=direction[switch_count%4]
-                    switch_count +=1
-                    quarter_finished=True
-                    quarter_count+=1
-            
-            loop_pos+=1
-
+    struct1=[elt for elt in struct_1.coordinates]
+    if verbose:
+        print("Creating pool on",cpu_cores,"cores.\n")
+    print("Working...\n")
+    pool=mp.Pool(cpu_cores)
+    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2) for i in range(len(struct1))]))
+    pool.terminate()
+    nearest_points=nearest_points[0]
+    print("Finished this pass.\nCalculating distance.")
+    point_dist_list=[]
+    for point_pairs in nearest_points:
         if verbose:
-            print("Found nearest point : ",[i,j]," | ",end='')
+            print("Found nearest point : ",point_pairs[1]," | ",end='')
           
-        if cache.cache_checking(str(point_1[0])+str(point_1[1])+str(i)+str(j)):
-            point_dist=cache.cache_access(str(point_1[0])+str(point_1[1])+str(i)+str(j))
+        if cache.cache_checking(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1])):
+            point_dist=cache.cache_access(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]))
             if verbose:
-                print(f'  CACHE ACCESS | {method} distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
+                print('CACHE ACCESS | {method} distance', point_pairs,'| Value:',point_dist)
         else:
             if method=="cityblock":
-                point_dist=cityblock(point_1, [i,j])
+                point_dist=cityblock(point_pairs[0],point_pairs[1])
                 
-                cache.cache_write(str(point_1[0])+str(point_1[1])+str(i)+str(j),point_dist)
-                cache.cache_write(str(i)+str(j)+str(point_1[0])+str(point_1[1]),point_dist)
+                cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
+                cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
                 if verbose:
-                    print(f' CACHE WRITE | Manhattan distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
+                    print('CACHE WRITE | Manhattan distance', point_pairs,'| Value:',point_dist)
                     
             elif method=="euclidean":
-                point_dist = euclidean(point_1, [i,j])
+                point_dist = euclidean(point_pairs[0],point_pairs[1])
             
-                cache.cache_write(str(point_1[0])+str(point_1[1])+str(i)+str(j),point_dist)
-                cache.cache_write(str(i)+str(j)+str(point_1[0])+str(point_1[1]),point_dist)
+                cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
+                cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
                 if verbose:
-                    print(f' CACHE WRITE | Manhattan distance {str(point_1)}-{str([i,j])}' + '\n  ' + str(point_dist))
+                    print('CACHE WRITE | Euclidean distance |',point_pairs,'| Value:',point_dist)
                     
-        nearest_points.append(point_dist)
+        point_dist_list.append(point_dist)
 
-    distance = sum(nearest_points)
+    distance = sum(point_dist_list) 
     return distance
 
 def pairwise_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):

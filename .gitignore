@@ -1,2 +1,5 @@
 .spyproject/
 .git/
+spiral_search_visualisation.py
+test.*
+
