@@ -45,6 +45,23 @@
     - VERY effective in the case of bigger matrices. (720s to 40s on a 48 cores CPU with 1000x1000 matrices)
     
     - Now, the load is distributed across *n* cpu cores, *n* being chose by the user (with an educated prompt).
+
+- Implemented double list search in place of spiraling search.
+
+    - This type of search uses the properties of naive search on sub matrices centered around the originating point. Since the points are very dispersed in the matrices, there's a good chance to find the closest one near the originating point.
+    
+    - With multiprocessing, it is around 2x faster for small matrices (~20x20 and a pool of 2 cores) and also 2x faster for bigger matrices (~1000x1000 and a pool of 4 cores).
+    
+    - For bigger matrices, this method still returns wrong results but for smaller ones it gives good results. I still don't know why, it requires further debugging.
+    
+    - **METHOD EXPLANATION** 
+        - For each points to be tested, we create two lists from the same starting list of candidates (*struct2*). The first one is sorted by the X coordinates and the second by the Y coordinates.
+        - We insert the originating point in the lists at the right places and we take its index.
+        - We test a certain number of points around the middle point created by the originating point and put them in two separated lists for X and Y coordinates. This number of points represent the length of the submatrice tested. This "*search_depth*" (aka. the number of points taken around the middle point) is determined by the length of the array tested (length <10 : depth = length/2 ELSE depth=10). 
+        - We then keep the intersection between these two arrays and now we have three use cases:
+            1. There are no points in the intersection array: we start again with a bigger submatrice.
+            2. There is a single point in the intersection : this is the closest point and we keep it.
+            3. There are several points : we test the individual distances and keep the smallest one. 
     
 #### FUTURE CHANGES AND IDEAS
 
