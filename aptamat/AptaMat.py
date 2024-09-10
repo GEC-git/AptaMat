@@ -5,6 +5,7 @@ import pathlib
 import string
 import sys
 import warnings
+import time as tm
 from copy import deepcopy
 
 import numpy as np
@@ -637,4 +638,7 @@ def main():
 
 
 if __name__ == '__main__':
+    start=tm.time()
     main()
+    finish=tm.time()
+    print(finish-start,"s")
