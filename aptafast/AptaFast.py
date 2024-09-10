@@ -456,58 +456,139 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         warnings.warn("Compared structure is not folded.\n")
         return None
 
-def calculation_core(point1, struct2):
+def calculation_core(point1, struct2, method):
     """Independant function for determining the closest point
     
-        This function still uses spiraling search which gives wrong distances for bigger matrices.
+        This function uses double list search - please read changelog for further explanations.
         
         Returns a tuple with:
             - The point originating the search
             - The closest point found to the first one
     """
     
-    i=point1[0]
-    j=point1[1]
-            
-    direction=["down","left","up","right"]
-            
-    loop_pos=1
-    direction_switch=direction[0]
-    quarter_finished = False
-    quarter_count = 0
-    switch_count = 0 
+    if len(struct2) <= 10:
+        search_depth=len(struct2)/2
+    else:
+        search_depth=10
     
-    while "[ " +str(i)+" "+str(j)+"]" not in struct2:
+    def Y(x): return x[1]
+    def X(y): return y  [0]
+    
+    X_axis=struct2[:]
+    Y_axis=struct2[:]
+    
+    struct2_str=[str(elt) for elt in struct2]
+    
+    
+    if str(point1) in struct2_str:
+        return (list(point1),list(point1))
+    else:
+        search_num=0
+        #print("BEFORE","X",X_axis,"Y",Y_axis)
+        X_axis.append(point1)
+        Y_axis.append(point1)
+        #print("INT","X",X_axis,"Y",Y_axis)
+        X_axis = sorted(X_axis, key=lambda pt : X(pt))
+        Y_axis = sorted(Y_axis, key=lambda pt : Y(pt))
+        #print("AFTER","X",X_axis,"Y",Y_axis)
+        X_axis_str=[str(elt) for elt in X_axis]
+        Y_axis_str=[str(elt) for elt in Y_axis]
+        
+        
+        X_index=int(X_axis_str.index(str(point1)))
+        Y_index=int(Y_axis_str.index(str(point1)))
+        finished = False
+        while not finished:
+            intersection=[]
+            
+            searching_list_X_ascend=X_axis[int(X_index+1):int(X_index+1+search_depth*search_num+search_depth)]
+            
+            X_descent_index_low=int(X_index-1-search_depth*search_num-search_depth)
+            if X_descent_index_low<0 : X_descent_index_low = 0
+            
+            X_descent_index_high=X_index
+            if X_descent_index_high<0 : X_descent_index_high = 0
+            
+            searching_list_X_descent=X_axis[X_descent_index_low:X_descent_index_high]
+            
+            searching_list_X = searching_list_X_descent+searching_list_X_ascend
+            
+            searching_list_Y_ascend=Y_axis[int(Y_index+1):int(Y_index+1+search_depth*search_num+search_depth)]
+            
+            Y_descent_index_low=int(Y_index-1-search_depth*search_num-search_depth)
+            if Y_descent_index_low<0 : Y_descent_index_low = 0
+            
+            Y_descent_index_high=Y_index
+            if Y_descent_index_high<0 : Y_descent_index_high = 0
+            
+            searching_list_Y_descent=Y_axis[Y_descent_index_low:Y_descent_index_high]
+           
+            searching_list_Y = searching_list_Y_descent+searching_list_Y_ascend
+            
+            searching_list_Y_str = [str(elt) for elt in searching_list_Y]
+            
+            intersection = [elt for elt in searching_list_X if str(elt) in searching_list_Y_str]
+            
+            #print("RECHERCHE X",searching_list_X,"RECHERCHE Y",searching_list_Y)
+            if intersection == []:
+                finished = False
+                search_num+=1
+            else:
+                finished=True
                 
-        if direction_switch=="down":
-            j+=-1
-        elif direction_switch=="up":
-            j+=1
-        elif direction_switch=="right":
-            i+=1
-        elif direction_switch=="left":
-            i+=-1
-
-        if switch_count==0:
-            switch_count+=1
-            direction_switch=direction[switch_count%4]
-        elif switch_count==1:
-            switch_count+=1
-            quarter_count+=1
-              
-        if quarter_finished:
-            if loop_pos==quarter_count**2:
-                direction_switch=direction[switch_count%4]
-                switch_count +=1
-                quarter_finished=False
+        if len(intersection)==1:
+            return (list(point1),intersection[0])
         else:
-            if loop_pos==quarter_count*(quarter_count+1):
-                direction_switch=direction[switch_count%4]
-                switch_count +=1
-                quarter_finished=True
-                quarter_count+=1
-        loop_pos+=1
-    return (list(point1),[i,j])
+            dist_dict={}
+            for elt in intersection:
+                if method=="cityblock":
+                    dist_dict[cityblock(point1,elt)]=elt
+                if method=="euclidean":
+                    dist_dict[euclidean(point1,elt)]=elt
+            
+            keep=min(dist_dict.keys())
+            return(point1,dist_dict[keep])
+        
+    # direction=["down","left","up","right"]
+            
+    # loop_pos=1
+    # direction_switch=direction[0]
+    # quarter_finished = False
+    # quarter_count = 0
+    # switch_count = 0 
+    
+    # while "[ " +str(i)+" "+str(j)+"]" not in struct2:
+                
+    #     if direction_switch=="down":
+    #         j+=-1
+    #     elif direction_switch=="up":
+    #         j+=1
+    #     elif direction_switch=="right":
+    #         i+=1
+    #     elif direction_switch=="left":
+    #         i+=-1
+
+    #     if switch_count==0:
+    #         switch_count+=1
+    #         direction_switch=direction[switch_count%4]
+    #     elif switch_count==1:
+    #         switch_count+=1
+    #         quarter_count+=1
+              
+    #     if quarter_finished:
+    #         if loop_pos==quarter_count**2:
+    #             direction_switch=direction[switch_count%4]
+    #             switch_count +=1
+    #             quarter_finished=False
+    #     else:
+    #         if loop_pos==quarter_count*(quarter_count+1):
+    #             direction_switch=direction[switch_count%4]
+    #             switch_count +=1
+    #             quarter_finished=True
+    #             quarter_count+=1
+    #     loop_pos+=1
+    
+    # return (list(point1),[i,j])
 
 def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, cpu_cores: int, verbose=False):
     """
@@ -540,16 +621,18 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     """
     nearest_points=[]
     
-    struct2=[str(elt) for elt in struct_2.coordinates]
-    struct1=[elt for elt in struct_1.coordinates]
+    struct2=[list(elt) for elt in struct_2.coordinates]
+    struct1=[list(elt) for elt in struct_1.coordinates]
     if verbose:
         print("Creating pool on",cpu_cores,"cores.\n")
-    print("Working...\n")
+        print("Working...\n")
+    
     pool=mp.Pool(cpu_cores)
-    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2) for i in range(len(struct1))]))
+    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method) for i in range(len(struct1))]))
     pool.terminate()
     nearest_points=nearest_points[0]
     print("Finished this pass.\nCalculating distance.")
+    
     point_dist_list=[]
     for point_pairs in nearest_points:
         if verbose:
@@ -558,15 +641,15 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         if cache.cache_checking(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1])):
             point_dist=cache.cache_access(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]))
             if verbose:
-                print('CACHE ACCESS | {method} distance', point_pairs,'| Value:',point_dist)
+                print(f'CACHE ACCESS | {method} distance', point_pairs,'| Value:',point_dist)
         else:
             if method=="cityblock":
                 point_dist=cityblock(point_pairs[0],point_pairs[1])
                 
                 cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
                 cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
-                if verbose:
-                    print('CACHE WRITE | Manhattan distance', point_pairs,'| Value:',point_dist)
+                if verbose: 
+                    print('CACHE WRITE | cityblock distance', point_pairs,'| Value:',point_dist)
                     
             elif method=="euclidean":
                 point_dist = euclidean(point_pairs[0],point_pairs[1])
@@ -574,11 +657,11 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
                 cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
                 cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
                 if verbose:
-                    print('CACHE WRITE | Euclidean distance |',point_pairs,'| Value:',point_dist)
+                    print('CACHE WRITE | euclidean distance |',point_pairs,'| Value:',point_dist)
                     
         point_dist_list.append(point_dist)
-
-    distance = sum(point_dist_list) 
+    
+    distance = sum(point_dist_list)
     return distance
 
 def pairwise_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):
