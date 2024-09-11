@@ -116,6 +116,7 @@
     - This needs to be very efficient and quick.
     
 - Taking a look at [GPU optimisation](https://developer.nvidia.com/how-to-cuda-python)
+
 - Taking a look at the placement of gaps and the minimisation of the AptaMat distance.
     - starting development of an alignment tool for the minimisation of the distance.
     
