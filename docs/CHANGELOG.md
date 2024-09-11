@@ -66,7 +66,7 @@
     - We found out why the results given by bigger matrices are wrong.
     
         - With a simple visualisation tool, we highlighted the points where the distance calculated is wrong, i.e. where the search for the closest point is wrong:
-        ![Example](STRUCT1\ +\ STRUCT2\ +\ DIFF.png "Difference of structures")
+        ![Example](STRUCT1_+_STRUCT2_+_DIFF.png)
         
         - In this screenshot, we can see:
             - In red and blue : the points respectively from the first structure and the one compared.
@@ -75,7 +75,7 @@
             - The arrows point to the nearest point calculated by our new method.
             
         - We now give a new screenshot which is centered around the point [413,457]
-            ![Example](X\ -\ Y\ SEARCH\ EXAMPLE\ FOR\ A\ WRONG\ POINT.png "Zoom on cluster")
+            ![Example](X_-_Y_SEARCH_EXAMPLE_FOR_A_WRONG_POINT.png)
             - In green : the search list sorted by the X coordinates.
             - In yellow : the search list sorted by the Y coordinates.
             - The intersection is pointed to by the arrow from the originating point.
