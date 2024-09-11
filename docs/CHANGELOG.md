@@ -82,14 +82,24 @@
                 - Unfortunately, it is not the nearest point. 
                 - This is due to the immediate proximity of a cluster of points which flaws the search.
             - To solve this problem, we need a bigger search depth. (It was set to ten)
-        
+        - for the example above, a search depth of a minimum of 26 is required. (tested manually)
         - How to determine a good value for the search depth?
             - We have some ideas : 
                 - Since clusters of points seem to indicate for a larger depth, we could find a way to calculate an index for points disparity.
-                - This index needs to be calculated rapidly and reliably.
-                
+                - This index needs to be calculated quickly and reliably.
+    
+        - For now, we don't know how to calculate this depth.
             
-            
+        - **Successfuly implemented double list search.**
+        
+        
     
 #### FUTURE CHANGES AND IDEAS
 
+- Having the depth automatically calculate for a certain matrix.
+    - This needs to be very efficient and quick.
+    
+- Taking a look at [GPU optimisation](https://developer.nvidia.com/how-to-cuda-python)
+- Taking a look at the placement of gaps and the minimisation of the AptaMat distance.
+    - starting development of an alignment tool for the minimisation of the distance.
+    

@@ -466,10 +466,10 @@ def calculation_core(point1, struct2, method):
             - The closest point found to the first one
     """
     
-    if len(struct2) <= 10:
+    if len(struct2) <= 26:
         search_depth=len(struct2)/2
     else:
-        search_depth=10
+        search_depth=26
     
     def Y(x): return x[1]
     def X(y): return y[0]
@@ -481,10 +481,8 @@ def calculation_core(point1, struct2, method):
     
     
     if str(point1) in struct2_str:
-        print("\nEARLY CONTINUE - ",point1)
         return (list(point1),list(point1))
     else:
-        print("\nNEW SEARCH - ",point1,"\n")
         search_num=0
         X_axis.append(point1)
         Y_axis.append(point1)
@@ -528,8 +526,6 @@ def calculation_core(point1, struct2, method):
             
             intersection = [elt for elt in searching_list_X if str(elt) in searching_list_Y_str]
             
-            print("RECHERCHE X",searching_list_X,"\nRECHERCHE Y",searching_list_Y)
-            print("NUMBER SEARCH",search_num,"SEARCH DEPTH",search_depth)
             if intersection == []:
                 finished = False
                 search_num+=1
@@ -624,9 +620,6 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
     
-    print("STRUCT1",struct1)
-    print("STRUCT2",struct2)
-    
     if verbose:
         print("Creating pool on",cpu_cores,"cores.\n")
         print("Working...\n")
@@ -665,7 +658,6 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
                     
         point_dist_list.append(point_dist)
         
-    print(nearest_points)
     distance = sum(point_dist_list)
     return distance
 
