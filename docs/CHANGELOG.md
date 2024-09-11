@@ -92,8 +92,24 @@
             
         - **Successfuly implemented double list search.**
         
+        - The structures used in this example are:
+        "(((((......(...[..).......)))).).........((....))...((((......((.]...)).....))))...((((.........(((((..(((.....)))..))))....)........(((((..(((...(((.((((((((((....({((((......)))))[[(...).(((....}]]))).......)))))))..))))))...)))..)))).)...)....(((((((........))))))).....(((((........)))))..)))..................................((....))............(..((((....))))..........).....................(.(((((((....((...((((.(((((.....(((....(((((.(((.((((...((((((.(......)))))))..)).)))..)))))))....)))....))))).))))..((((((((.(((((((.((((((......(((..((((..(((....))).))))...)))....)))))).))))))).....(((....))).))))))))...))..))))))).)..((((........))))..........(((.(((((((((..(((...((((......))))...)))...((....))........(((((...(((....)))....))))).(((((((....(((...)))....)).))).))....))))))))).)))..((.(...((((((.....((((((((((.(((....(((((((....))))))).....)))...(((..((.((........)))).)))..).))))))))).(.((.......))...)..))))))......).))............(.(((....))).)......." 
+        and
+        "((((((...................))))).).........((....))...((((......((.....)).....))))...((((.........((..(((((.....)))))..).)............((((((...((.((..((((((((.(....((((........))))[[(...).(((.....]])))....).)))))..)))..)).....))..))))))....)....((((..............)))).....(((((......)))))..)))..................................((....))...............((((....))))..................................((((....((.......((.........(..(((((.....))))).)..............))......(..(((.(((.((((..((((.........(((((....(((((((((..)))))))..))...))))).......))))...)))).))).).......(((....))).....))..)........))....))))...(((........)))..............(((.(((..(..(.(...((.....))...).)..................(.(((...((((....))))....))).)...(.((((....(....)....))).).).......)..))).))).....((.(...((((((.....(((((((((....((...((((.(......).))))...).).....(.(..((((........)))).).)....)))))))))....................))))))......).))...........(.(.(....).).).........................."
         
-    
+        They are purposefully complicated and long to represent a worst case scenario.
+        
+- The new verbose mode:  
+    - Speed of the algorithm with verbose mode enabled:
+        - Since the old approach printed out the nearest point found as it was calculated, the calculation needed to wait for the sentences to be printed (this meant that a 0.5s calculation would take ~6s when everything was printed out)
+        - With the new approach, the nearest point found are printed at the end of the calculation with the distance value.
+        - This allows for a more efficient calculation in verbose mode and it nearly doesn't impact peformances.
+    - What is said:
+        - When verbose mode is enabled, it indicates when a pool of cores is created and terminated and with how much cores.
+        - At the end of the calculation, every nearest point found is printed neatly with an indication of the cache used and the distance calculated.
+        - When inverting the structures, it indicates that the algorithm is creating a new pool of cores and changing the base structure.
+      
+        
 #### FUTURE CHANGES AND IDEAS
 
 - Having the depth automatically calculate for a certain matrix.
