@@ -61,7 +61,35 @@
         - We then keep the intersection between these two arrays and now we have three use cases:
             1. There are no points in the intersection array: we start again with a bigger submatrice.
             2. There is a single point in the intersection : this is the closest point and we keep it.
-            3. There are several points : we test the individual distances and keep the smallest one. 
+            3. There are several points : we test the individual distances and keep the smallest one.
+_____   
+    - We found out why the results given by bigger matrices are wrong.
+    
+        - With a simple visualisation tool, we highlighted the points where the distance calculated is wrong, i.e. where the search for the closest point is wrong:
+        ![Example](STRUCT1 + STRUCT2 + DIFF.png)
+        
+        - In this screenshot, we can see:
+            - In red and blue : the points respectively from the first structure and the one compared.
+            - in light blue and light red are the distances correctly calculated.
+            - In green : the common points between the two structures.
+            - The arrows point to the nearest point calculated by our new method.
+            
+        - We now give a new screenshot which is centered around the point [413,457]
+            ![Example](X - Y SEARCH EXAMPLE FOR A WRONG POINT.png)
+            - In green : the search list sorted by the X coordinates.
+            - In yellow : the search list sorted by the Y coordinates.
+            - The intersection is pointed to by the arrow from the originating point.
+                - Unfortunately, it is not the nearest point. 
+                - This is due to the immediate proximity of a cluster of points which flaws the search.
+            - To solve this problem, we need a bigger searche depth. (It was set to ten)
+        
+        - How to determine a good value for the search depth?
+            - We have some ideas : 
+                - Since clusters of points seem to indicate for a larger depth, we could find a way to calculate an index for points disparity.
+                - This index needs to be calculated rapidly and reliably.
+                
+            
+            
     
 #### FUTURE CHANGES AND IDEAS
 

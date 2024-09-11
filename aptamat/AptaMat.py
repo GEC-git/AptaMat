@@ -461,8 +461,9 @@ def pairwise_distance(struct_1: object, struct_2: object, method, verbose=False)
                 print('----------------------------------')
 
     # print(nearest_dist)point_dist
+    print(nearest_points)
     distance = sum(nearest_points)
-
+    
     return distance
 
 

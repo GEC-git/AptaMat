@@ -472,7 +472,7 @@ def calculation_core(point1, struct2, method):
         search_depth=10
     
     def Y(x): return x[1]
-    def X(y): return y  [0]
+    def X(y): return y[0]
     
     X_axis=struct2[:]
     Y_axis=struct2[:]
@@ -481,16 +481,15 @@ def calculation_core(point1, struct2, method):
     
     
     if str(point1) in struct2_str:
+        print("\nEARLY CONTINUE - ",point1)
         return (list(point1),list(point1))
     else:
+        print("\nNEW SEARCH - ",point1,"\n")
         search_num=0
-        #print("BEFORE","X",X_axis,"Y",Y_axis)
         X_axis.append(point1)
         Y_axis.append(point1)
-        #print("INT","X",X_axis,"Y",Y_axis)
         X_axis = sorted(X_axis, key=lambda pt : X(pt))
         Y_axis = sorted(Y_axis, key=lambda pt : Y(pt))
-        #print("AFTER","X",X_axis,"Y",Y_axis)
         X_axis_str=[str(elt) for elt in X_axis]
         Y_axis_str=[str(elt) for elt in Y_axis]
         
@@ -529,7 +528,8 @@ def calculation_core(point1, struct2, method):
             
             intersection = [elt for elt in searching_list_X if str(elt) in searching_list_Y_str]
             
-            #print("RECHERCHE X",searching_list_X,"RECHERCHE Y",searching_list_Y)
+            print("RECHERCHE X",searching_list_X,"\nRECHERCHE Y",searching_list_Y)
+            print("NUMBER SEARCH",search_num,"SEARCH DEPTH",search_depth)
             if intersection == []:
                 finished = False
                 search_num+=1
@@ -623,6 +623,10 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
+    
+    print("STRUCT1",struct1)
+    print("STRUCT2",struct2)
+    
     if verbose:
         print("Creating pool on",cpu_cores,"cores.\n")
         print("Working...\n")
@@ -660,7 +664,8 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
                     print('CACHE WRITE | euclidean distance |',point_pairs,'| Value:',point_dist)
                     
         point_dist_list.append(point_dist)
-    
+        
+    print(nearest_points)
     distance = sum(point_dist_list)
     return distance
 
