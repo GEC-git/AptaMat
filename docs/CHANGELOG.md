@@ -62,7 +62,7 @@
             1. There are no points in the intersection array: we start again with a bigger submatrice.
             2. There is a single point in the intersection : this is the closest point and we keep it.
             3. There are several points : we test the individual distances and keep the smallest one.
-_____   
+ 
     - We found out why the results given by bigger matrices are wrong.
     
         - With a simple visualisation tool, we highlighted the points where the distance calculated is wrong, i.e. where the search for the closest point is wrong:
