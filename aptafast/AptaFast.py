@@ -495,8 +495,11 @@ def calculation_core(point1, struct2, method):
         X_index=int(X_axis_str.index(str(point1)))
         Y_index=int(Y_axis_str.index(str(point1)))
         finished = False
+        
         while not finished:
+            
             intersection=[]
+            
             
             searching_list_X_ascend=X_axis[int(X_index+1):int(X_index+1+search_depth*search_num+search_depth)]
             
@@ -509,6 +512,7 @@ def calculation_core(point1, struct2, method):
             searching_list_X_descent=X_axis[X_descent_index_low:X_descent_index_high]
             
             searching_list_X = searching_list_X_descent+searching_list_X_ascend
+            
             
             searching_list_Y_ascend=Y_axis[int(Y_index+1):int(Y_index+1+search_depth*search_num+search_depth)]
             
@@ -524,6 +528,7 @@ def calculation_core(point1, struct2, method):
             
             searching_list_Y_str = [str(elt) for elt in searching_list_Y]
             
+            
             intersection = [elt for elt in searching_list_X if str(elt) in searching_list_Y_str]
             
             if intersection == []:
@@ -531,6 +536,7 @@ def calculation_core(point1, struct2, method):
                 search_num+=1
             else:
                 finished=True
+                
                 
         if len(intersection)==1:
             return (list(point1),intersection[0])
@@ -543,48 +549,9 @@ def calculation_core(point1, struct2, method):
                     dist_dict[euclidean(point1,elt)]=elt
             
             keep=min(dist_dict.keys())
-            return(point1,dist_dict[keep])
-        
-    # direction=["down","left","up","right"]
             
-    # loop_pos=1
-    # direction_switch=direction[0]
-    # quarter_finished = False
-    # quarter_count = 0
-    # switch_count = 0 
-    
-    # while "[ " +str(i)+" "+str(j)+"]" not in struct2:
-                
-    #     if direction_switch=="down":
-    #         j+=-1
-    #     elif direction_switch=="up":
-    #         j+=1
-    #     elif direction_switch=="right":
-    #         i+=1
-    #     elif direction_switch=="left":
-    #         i+=-1
+            return(point1,dist_dict[keep])
 
-    #     if switch_count==0:
-    #         switch_count+=1
-    #         direction_switch=direction[switch_count%4]
-    #     elif switch_count==1:
-    #         switch_count+=1
-    #         quarter_count+=1
-              
-    #     if quarter_finished:
-    #         if loop_pos==quarter_count**2:
-    #             direction_switch=direction[switch_count%4]
-    #             switch_count +=1
-    #             quarter_finished=False
-    #     else:
-    #         if loop_pos==quarter_count*(quarter_count+1):
-    #             direction_switch=direction[switch_count%4]
-    #             switch_count +=1
-    #             quarter_finished=True
-    #             quarter_count+=1
-    #     loop_pos+=1
-    
-    # return (list(point1),[i,j])
 
 def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, cpu_cores: int, verbose=False):
     """
@@ -628,6 +595,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method) for i in range(len(struct1))]))
     pool.terminate()
     nearest_points=nearest_points[0]
+    
     print("Finished this pass.\nCalculating distance.")
     
     point_dist_list=[]
@@ -660,89 +628,6 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         
     distance = sum(point_dist_list)
     return distance
-
-def pairwise_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):
-    """
-    Proceed to the point distance parsing between input struct_1 and struct_2 using
-    Manhattan distance.
-
-    The function returns the sum of the nearest distances found for each points.
-
-    Parameters
-    ----------
-    struct_1 : SecondaryStructure_or_Dotplot_or_Dotbracket
-        Input SecondaryStructure, Dotplot or Dotbracket object.
-    struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
-        Input SecondaryStructure, Dotplot or Dotbracket object.
-    method: str
-        Method for distance calculation.
-    verbose :
-        True or False
-    cache:
-        CompressedCache
-
-    Returns
-    -------
-        distance : float
-            manhattan distance
-    """
-
-    nearest_points = []
-
-    for point_1 in struct_1.coordinates:
-        point_dist = []
-        for point_2 in struct_2.coordinates:
-            jmp=False
-            if str(point_1) == str(point_2):
-                # Already the lowest distance possible so jumping.
-                Pair_Dist=0
-                nearest_points.append(Pair_Dist)
-                jmp=True
-                if verbose:
-                    print(f'  Manhattan distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
-                    print(f'Nearest Manhattan distance '
-                          f'{str(point_1)}-{str(point_2)}' +
-                          '\n' + str(0) + '\n')
-                    print('----------------------------------')
-                    
-            elif cache.cache_checking(str(point_1[0])+str(point_1[1])+str(point_2[0])+str(point_2[1])):
-                Pair_Dist=cache.cache_access(str(point_1[0])+str(point_1[1])+str(point_2[0])+str(point_2[1]))
-                if verbose:
-                    print(f'  CACHE ACCESS | Manhattan distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
-                    
-            else:
-                if method == "cityblock":
-                    Pair_Dist = cityblock(point_1, point_2)
-                    cache.cache_write(str(point_1[0])+str(point_1[1])+str(point_2[0])+str(point_2[1]),Pair_Dist)
-                    cache.cache_write(str(point_2[0])+str(point_2[1])+str(point_1[0])+str(point_1[1]),Pair_Dist)
-                    if verbose:
-                        print(f'  CACHE WRITE | Manhattan distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
-    
-                if method == "euclidean":
-                    Pair_Dist = euclidean(point_1, point_2)
-                    
-                    cache.cache_write(str(point_1[0])+str(point_1[1])+str(point_2[0])+str(point_2[1]),Pair_Dist)
-                    cache.cache_write(str(point_2[0])+str(point_2[1])+str(point_1[0])+str(point_1[1]),Pair_Dist)
-                    if verbose:
-                        print(f'  CACHE WRITE | Euclidean distance {str(point_1)}-{str(point_2)}' + '\n  ' + str(Pair_Dist))
-
-            point_dist.append(Pair_Dist)
-
-        # Keep the lowest distance for each point
-        if not jmp:
-            if point_dist:
-                nearest_points.append(min(point_dist))
-                if verbose:
-                    print(f'Nearest Manhattan distance '
-                          f'{str(point_1)}-{str(struct_2.coordinates[point_dist.index(min(point_dist))])}' +
-                          '\n' + str(min(point_dist)) + '\n')
-                    print('----------------------------------')
-
-
-    distance = sum(nearest_points)
-
-    return distance
-
 
 def adjust_weight(structures, weight):
     """
