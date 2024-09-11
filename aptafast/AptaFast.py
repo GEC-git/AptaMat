@@ -560,7 +560,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
 
     The function returns the sum of the nearest distances found for each points.
     
-    This function uses spiraling search and cache to optimize the algorithm for very big molecules and numerous calculations.
+    This function uses double list search, cache and multiprocessing to optimize the algorithm.
 
     Parameters
     ----------
