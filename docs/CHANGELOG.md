@@ -81,7 +81,7 @@
             - The intersection is pointed to by the arrow from the originating point.
                 - Unfortunately, it is not the nearest point. 
                 - This is due to the immediate proximity of a cluster of points which flaws the search.
-            - To solve this problem, we need a bigger searche depth. (It was set to ten)
+            - To solve this problem, we need a bigger search depth. (It was set to ten)
         
         - How to determine a good value for the search depth?
             - We have some ideas : 
