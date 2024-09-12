@@ -116,7 +116,8 @@
 - Further optimised the program to create a unique pool of cores for all calculations.
 
 
-**ADVICE ON NUMBER OF CORES TO BE USED**
+- **ADVICE ON NUMBER OF CORES TO BE USED**
+    
     - When testing a large number of big structures we recommend using a maximum of *6* cores.
     
     - When testing a large number of small structures, we recommend *4* cores.
