@@ -141,6 +141,10 @@
 
 - Taking a look at the placement of gaps and the minimisation of the AptaMat distance.
     - starting development of an alignment tool for the minimisation of the distance.
+    
+- **IF POSSIBLE**:
+    - improving the speed of file reading in the case of very big files.
+        - improving ram use in the case of big files.
+    
 
-- Making a random generator of oligonucleotides to test performances.
     
