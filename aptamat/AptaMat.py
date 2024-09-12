@@ -461,7 +461,6 @@ def pairwise_distance(struct_1: object, struct_2: object, method, verbose=False)
                 print('----------------------------------')
 
     # print(nearest_dist)point_dist
-    print(nearest_points)
     distance = sum(nearest_points)
     
     return distance
@@ -596,6 +595,7 @@ def main():
     ##########################
     #  Distance calculation  #
     ##########################
+    start=tm.time()
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -610,6 +610,8 @@ def main():
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
+    finish=tm.time()
+    print(finish-start,"s")
 
     ##########################
     #  Ensemble calculation  #
@@ -639,7 +641,5 @@ def main():
 
 
 if __name__ == '__main__':
-    start=tm.time()
     main()
-    finish=tm.time()
-    print(finish-start,"s")
+    

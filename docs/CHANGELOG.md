@@ -119,4 +119,6 @@
 
 - Taking a look at the placement of gaps and the minimisation of the AptaMat distance.
     - starting development of an alignment tool for the minimisation of the distance.
+
+- Making a random generator of oligonucleotides to test performances.
     

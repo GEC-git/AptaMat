@@ -369,7 +369,7 @@ def _result_print(template_struct, compared_struct, weight=None):
 #           Functions
 #############################################################
 
-def compute_distance(struct_1: object, struct_2: object, method, cache: object, verbose=False):
+def compute_distance(struct_1: object, struct_2: object, method, cache: object,nb_pool: int,pool: object, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -433,15 +433,14 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object, 
         if verbose:
             print("Template structure --> Compared structure")
         # Template structure --> Compared structure
-        print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
-        nb_pool=int(input("How much do you want to use? "))
+        
         if nb_pool>mp.cpu_count() or nb_pool <=0:
             return ValueError("Incorrect number of cores")
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, nb_pool, verbose)
+        d_TC = pairwise_distance_optimised(s1, s2, method, cache, pool, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, nb_pool, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, cache, pool, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -553,7 +552,7 @@ def calculation_core(point1, struct2, method):
             return(point1,dist_dict[keep])
 
 
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, cpu_cores: int, verbose=False):
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, pool: object, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -586,17 +585,12 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
-    
-    if verbose:
-        print("Creating pool on",cpu_cores,"cores.\n")
-        print("Working...\n")
-    
-    pool=mp.Pool(cpu_cores)
+
     nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method) for i in range(len(struct1))]))
-    pool.terminate()
+
     nearest_points=nearest_points[0]
-    
-    print("Finished this pass.\nCalculating distance.")
+    if verbose:
+        print("Finished this pass.\nCalculating distance.")
     
     point_dist_list=[]
     for point_pairs in nearest_points:
@@ -762,6 +756,12 @@ def main():
     ##########################
     
     cache=CompressedCache()
+    print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
+    nb=int(input("How much do you want to use? "))
+    print("Creating pool on",nb,"cores.\n")
+    print("Working...\n")
+    start=tm.time()
+    pooling=mp.Pool(nb)
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -773,11 +773,16 @@ def main():
                                                         struct_2=compared_struct,
                                                         method=args.method,
                                                         cache=cache,
+                                                        nb_pool=nb,
+                                                        pool=pooling,
                                                         verbose=args.verbose)
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
-
+    finish=tm.time()
+    pooling.terminate()
+    print(finish-start,"s")
+          
     ##########################
     #  Ensemble calculation  #
     ##########################
@@ -808,7 +813,4 @@ def main():
 
 
 if __name__ == '__main__':
-    start=tm.time()
     main()
-    finish=tm.time()
-    print(finish-start,"s")
