@@ -108,7 +108,29 @@
         - When verbose mode is enabled, it indicates when a pool of cores is created and terminated and with how much cores.
         - At the end of the calculation, every nearest point found is printed neatly with an indication of the cache used and the distance calculated.
         - When inverting the structures, it indicates that the algorithm is creating a new pool of cores and changing the base structure.
-      
+
+- Added a random weighted structure file generator.
+    - This creates a .fa file with a certain number of structures (default: 100).
+    - There are parameters to control the appearance of the structures (density, bias...)
+    
+- Further optimised the program to create a unique pool of cores for all calculations.
+
+
+**ADVICE ON NUMBER OF CORES TO BE USED**
+
+    - When testing a large number of big structures we recommend using a maximum of *6* cores.
+    
+    - When testing a large number of small structures, we recommend *4* cores.
+    
+    - When testing a very small number of structures, without taking into account the scale of the structures, always use *2* cores.
+    
+    - *SPEED COMPARISON*:
+        - For a random weighted structure file with 100 structures of length 500:
+            -  With 6 cores, we go from 20s of calculation with AptaMat to 6s with AptaFast.
+            
+        - In general, expect a 2 to 5 times improvement on speed regardless of file size, structure number and length.
+        
+    
         
 #### FUTURE CHANGES AND IDEAS
 
