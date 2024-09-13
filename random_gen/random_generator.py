@@ -1,7 +1,7 @@
 from random import random
 
 
-def random_gen(length=100, ratio_o_c=0.5, bias=0.6):
+def random_gen(length=1000, ratio_o_c=0.5, bias=0.6):
     """
         Generates a random dotbracket notation of length *length* and density *ratio_o_c*
     
@@ -14,7 +14,6 @@ def random_gen(length=100, ratio_o_c=0.5, bias=0.6):
     open_bracket = "("
     closing_bracket= ")"
 
-    opened=0
     output=""
     nb_open_bracket=0
     for i in range(length):
@@ -58,7 +57,7 @@ def dotbracket_verif(input_str):
     return not bool(nb)
 
 
-def file_struct_gen(nb_struct=10000):
+def file_struct_gen(nb_struct=1000):
     output=">Randomly generated structure file\n"
     """
 >Test File Weight
@@ -85,7 +84,7 @@ def file_struct_gen(nb_struct=10000):
             i+=1
     return output
 
-f=open("RandomWeightFile.fa","a")
+f=open("RandomWeightFile1000.fa","a")
 f.write(file_struct_gen())
 f.close()
 print("Successfuly created a randomly generated weighted structure file.")

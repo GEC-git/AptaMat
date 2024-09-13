@@ -130,12 +130,47 @@
             
         - In general, expect a 2 to 5 times improvement on speed regardless of file size, structure number and length.
         
+- **SEARCH_DEPTH CALCULATION**
     
+    - We chose to determine empirically the best depth for each matrix size. How did we do it?
+        1. We tested the accuracy of AptaFast for matrix sizes of 10, 25, 50, 75, 100, 250, 500 and 1000.
+            - For each size, we tested the search_depth limit at which the program started to give improper results.
+                - We used a randomly generated set of 1000 dotbracket structures for each size. (density = 0.5; bias = 0.6)
+        2. We plotted the result on a graph and chose a linear regression to have a depth for each size value.
+            - Here is this plot with all the regression parameters:
+            !["Graph"](LINEAR_REGRESSION_GRAPH.png)
+            !["Parameters"]("LINEAR_REGRESSION_PARAMETERS.png")
+            
+            - The exact points plotted were:
+            
+            |X|Y|
+            |:-----:|:-----:|
+            |10|3|
+            |25|4|
+            |50|5|
+            |75|5|
+            |100|6|
+            |250|7|
+            |500|9|
+            |1000|13|
+            
+        3. We now have a mathematical equation to calculate the search_depth with respect to the length of the structure: *depth = 0.009125 x length + 4.207*
+            - For security purposes, we added 2 to the result to counter the rounding error.
+        
+    - Adding a new `-speed` parameter.
+        - When using the program on 1000x1000 non-aligned matrices taken from a real database, we found a minimal search depth to be 26, not 13 as given by the equation.
+            - That is why we decided to add a "speed" parameter defaulted to "slow" which determines the greedyness of the algorithm regarding the depth.
+            
+        - When set to slow (**recomended**) the program doubles the search_depth given by the equation to counter extreme cases.
+        
+        - Why the name 'speed' and not 'greedyness' ?
+            - because lowering the depth of search theoretically improves the calculation speed.
+            - In reality it *MIGHT* improve speed by a little when comparing very big structures.
+                - When testing a file with 10000 weighted structures of length 100 on 6 cores, we saw no difference in speed whether the speed was set to "slow" or "quick".
+                - That is why we chose "slow" as default. 
         
 #### FUTURE CHANGES AND IDEAS
 
-- Having the depth automatically calculate for a certain matrix.
-    - This needs to be very efficient and quick.
     
 - Taking a look at [GPU optimisation](https://developer.nvidia.com/how-to-cuda-python)
 
