@@ -472,7 +472,6 @@ def calculation_core(point1, struct2, method, speed, length):
     else:
         return ValueError("The speed value is incorrect")
     
-    print(search_depth,speed)
     def Y(x): return x[1]
     def X(y): return y[0]
     

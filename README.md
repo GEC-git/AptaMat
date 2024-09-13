@@ -49,6 +49,7 @@ FOR APTAMAT:
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
 - `-ensemble`(Optionnal) which indicates whether the input secondary structures are part of an ensemble
 - `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
+
 ADDED FOR APTAFAST ONLY:
 - `-speed` indicates the risk taken by the algorithm when calculating the searchg depth. (default: slow) Can be set to quick if the user is confident in its data.
 
