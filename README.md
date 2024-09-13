@@ -41,16 +41,20 @@ Use of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
 Usage
 ------------
 
-AptaMat is a flexible Python script which can take several arguments:
+AptaMat/AptaFast are flexible Python scripts which can take several arguments:
 
+FOR APTAMAT:
 - `-structures` followed by secondary structures written in dotbracket format
 - `-weigths` (Optionnal) followed by weight values between 0 and 1 to indicate optionnal weight indices
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
 - `-ensemble`(Optionnal) which indicates whether the input secondary structures are part of an ensemble
 - `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
+ADDED FOR APTAFAST ONLY:
+- `-speed` indicates the risk taken by the algorithm when calculating the searchg depth. (default: slow) Can be set to quick if the user is confident in its data.
 
       usage: AptaMat.py [-h] [-v] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]]
-    
+      usage: AptaFast.py [-h] [-v] [-speed [{slow,quick}]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]]
+      
 Both `structures` and `files` are independent functions in the script and cannot be called at the same time.
 
 The `structures` argument must be a string formatted secondary structures array. The first input structure is 

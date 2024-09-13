@@ -369,7 +369,7 @@ def _result_print(template_struct, compared_struct, weight=None):
 #           Functions
 #############################################################
 
-def compute_distance(struct_1: object, struct_2: object, method, cache: object,nb_pool: int,pool: object, verbose=False):
+def compute_distance(struct_1: object, struct_2: object, method, cache: object,nb_pool: int,pool: object,speed:str, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -436,11 +436,11 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object,n
         
         if nb_pool>mp.cpu_count() or nb_pool <=0:
             return ValueError("Incorrect number of cores")
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, pool, verbose)
+        d_TC = pairwise_distance_optimised(s1, s2, method, cache, pool, speed, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, pool, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, cache, pool, speed, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -455,8 +455,9 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object,n
         warnings.warn("Compared structure is not folded.\n")
         return None
 
-def calculation_core(point1, struct2, method):
-    """Independant function for determining the closest point
+def calculation_core(point1, struct2, method, speed, length):
+    """
+        Independant function for determining the closest point
     
         This function uses double list search - please read changelog for further explanations.
         
@@ -464,12 +465,14 @@ def calculation_core(point1, struct2, method):
             - The point originating the search
             - The closest point found to the first one
     """
-    
-    if len(struct2) <= 26:
-        search_depth=len(struct2)/2
+    if speed=="quick":
+        search_depth=int(0.009125*length+4.207)+2
+    elif speed=="slow":
+        search_depth=(int(0.009125*length+4.207)+2)*2
     else:
-        search_depth=26
+        return ValueError("The speed value is incorrect")
     
+    print(search_depth,speed)
     def Y(x): return x[1]
     def X(y): return y[0]
     
@@ -552,7 +555,7 @@ def calculation_core(point1, struct2, method):
             return(point1,dist_dict[keep])
 
 
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, pool: object, verbose=False):
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, pool: object,speed:str, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -585,8 +588,8 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
-
-    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method) for i in range(len(struct1))]))
+    
+    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,speed,len(struct_2)) for i in range(len(struct1))]))
 
     nearest_points=nearest_points[0]
     if verbose:
@@ -679,6 +682,13 @@ def main():
                         '--verbose',
                         help="Increase output verbosity.",
                         action="store_true")
+    
+    parser.add_argument('-speed', 
+                        default='slow',
+                        help="Using greedy or non greedy depth calculation",
+                        nargs='?',
+                        choices=['slow','quick'])
+
     parser.add_argument('-structures',
                         nargs='+',
                         type=str,
@@ -699,7 +709,8 @@ def main():
                         default='cityblock',
                         nargs='?',
                         choices=['cityblock', 'euclidean'])
-
+    
+    
     args = parser.parse_args()
 
     if len(sys.argv) == 1:
@@ -775,14 +786,14 @@ def main():
                                                         cache=cache,
                                                         nb_pool=nb,
                                                         pool=pooling,
+                                                        speed=args.speed,
                                                         verbose=args.verbose)
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
     finish=tm.time()
     pooling.terminate()
-    print(finish-start,"s")
-          
+    print(finish-start,"s")    
     ##########################
     #  Ensemble calculation  #
     ##########################
@@ -797,7 +808,6 @@ def main():
                     _result_print(template_struct, compared_struct, weight)
                     print(compared_struct.distance * weight, end='\n\n')
                 set_distance += compared_struct.distance * (1 / (len(struct_list) - 1))
-
             else:
                 if args.verbose:
                     _result_print(template_struct, compared_struct, compared_struct.weight)
@@ -810,7 +820,6 @@ def main():
         raise ValueError('Not enough input structure to work as a set.\n')
     else:
         pass
-
 
 if __name__ == '__main__':
     main()
