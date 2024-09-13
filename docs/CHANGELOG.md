@@ -139,7 +139,7 @@
         2. We plotted the result on a graph and chose a linear regression to have a depth for each size value.
             - Here is this plot with all the regression parameters:
             !["Graph"](LINEAR_REGRESSION_GRAPH.png)
-            !["Parameters"]("LINEAR_REGRESSION_PARAMETERS.png")
+            !["Parameters"](LINEAR_REGRESSION_PARAMETERS.png)
             
             - The exact points plotted were:
             
