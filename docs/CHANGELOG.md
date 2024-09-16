@@ -207,7 +207,10 @@
     - We see no difference in speed when calculating distance for intermediate to smaller structure for aptafast.
     - Parsing file may be faster but there is a need to find a better way to calculate the dotplot matrix or even completely bypass the matrix and going from dotbracket to coordinates directly.
 
-
+- Changed the way random_gen.py behaves to generate more realistic structures and to be more reliable and quick.
+    - Now, seeing this pattern is impossible : `()`
+    - We adjusted the bias and density parameters.
+    - the verify function now tests the length of the returned structure.
     
 - Supplementary performance test with realistic randomly generated structure files:
     - It seems that with smaller structures, the change in matrix size altered the speed of aptafast in a bad way when comparing it with aptamat which contradicts what we saw last week.
