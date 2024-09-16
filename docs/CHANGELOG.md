@@ -116,7 +116,7 @@
 - Further optimised the program to create a unique pool of cores for all calculations.
 
 
-- **ADVICE ON NUMBER OF CORES TO BE USED**
+- **ADVICE ON NUMBER OF CORES TO USE**
     
     - When testing a large number of big structures we recommend using a maximum of *6* cores.
     
@@ -169,8 +169,12 @@
                 - When testing a file with 10000 weighted structures of length 100 on 6 cores, we saw no difference in speed whether the speed was set to "slow" or "quick".
                 - That is why we chose "slow" as default. 
         
+- **WARNING** :
+    - It seems important to specify that, for all the performance tests, we used the random structure generator which generates structures impossible to find in real life.
+
 #### FUTURE CHANGES AND IDEAS
 
+- Improving the random structure generation to create realistic dotbracket notation for performance tests.
     
 - Taking a look at [GPU optimisation](https://developer.nvidia.com/how-to-cuda-python)
 
@@ -180,6 +184,20 @@
 - **IF POSSIBLE**:
     - improving the speed of file reading in the case of very big files.
         - improving ram use in the case of big files.
+
+
+### WEEK 3 - 16/09/2024 -> 22/09/2024.
+
+- After testing performances, we can conclude on a speed difference between the 'quick' and 'slow' parameters.
+    - For smaller structures, 'quick' is several seconds faster than 'slow': for 25 000 20-length structures, 'quick' took 79s while 'slow' took 82s
+    - For intermediate structures, 'slow' seems to be faster (482s vs 460s for 20 000 250-length structures and 129s vs 125s for 20 000 50-length structures)
+    - For very big structures, we can see an improvement in speed with the 'quick' parameter (for 250 5000-length structures, 'quick' ran in 214s vs 255s for 'slow')
+
+- What we reccomend : 
+    - You can use the 'quick' parameter for small structures if you want a bit more speed without a loss in precision. 
+    - Using 'slow' for intermediate structures (from 100 to 1000 in size) is mandatory for precision. Speed is not impacted.
+    - For bigger structures (2000 and onwards) the 'quick' parameter can be used to improve the speed. Precision is still satisfactory.
+    - If you don't know the sizes or if you are undecided, please stick with the default parameter set to 'slow'.
     
 
-    
+
