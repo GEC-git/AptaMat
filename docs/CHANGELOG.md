@@ -201,3 +201,14 @@
     
 
 
+- Succesfully divided RAM usage by at least 8 when parsing a file.
+    - using uint8 (1byte) instead of default float64 (8bytes) when parsing a file.
+    - This greatly improved speed on very big structures (from 214s to 175s for 250 5000-length structures)
+    - We see no difference in speed when calculating distance for intermediate to smaller structure.
+    - Parsing file may be faster but there is a need to find a better way to calculate the dotplot matrix or even completely bypass the matrix and going from dotbracket to coordinates directly.
+    
+    
+    
+    
+    
+
