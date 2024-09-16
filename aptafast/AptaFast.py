@@ -451,7 +451,7 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object,n
         warnings.warn("Compared structure is not folded.\n")
         return None
 
-def calculation_core(point1, struct2, method, speed, length):
+def calculation_core(point1, struct2, method, search_depth):
     """
         Independant function for determining the closest point
     
@@ -461,13 +461,7 @@ def calculation_core(point1, struct2, method, speed, length):
             - The point originating the search
             - The closest point found to the first one
     """
-    if speed=="quick":
-        search_depth=int(0.009125*length+4.207)+2
-    elif speed=="slow":
-        search_depth=(int(0.009125*length+4.207)+2)*2
-    else:
-        return ValueError("The speed value is incorrect")
-    
+
     def Y(x): return x[1]
     def X(y): return y[0]
     
@@ -584,7 +578,14 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
     
-    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,speed,len(struct_2)) for i in range(len(struct1))]))
+    if speed=="quick":
+        search_depth=int(0.009125*len(struct_2)+4.207)+2
+    elif speed=="slow":
+        search_depth=(int(0.009125*len(struct_2)+4.207)+2)*2
+    else:
+        return ValueError("The speed value is incorrect")
+    
+    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,search_depth) for i in range(len(struct1))]))
 
     nearest_points=nearest_points[0]
     if verbose:
