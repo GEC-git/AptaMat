@@ -204,13 +204,13 @@
 - Succesfully divided RAM usage by at least 8 when parsing a file.
     - using uint8 (1byte) instead of default float64 (8bytes) when parsing a file.
     - This greatly improved speed on very big structures (from 214s to 175s for 250 5000-length structures)
-    - We see no difference in speed when calculating distance for intermediate to smaller structure.
+    - We see no difference in speed when calculating distance for intermediate to smaller structure for aptafast.
     - Parsing file may be faster but there is a need to find a better way to calculate the dotplot matrix or even completely bypass the matrix and going from dotbracket to coordinates directly.
 
 
     
 - Supplementary performance test with realistic randomly generated structure files:
-    - It seems that with smaller structures, the change in matrix size altered the speed of aptafast in a bad way. 
+    - It seems that with smaller structures, the change in matrix size altered the speed of aptafast in a bad way when comparing it with aptamat which contradicts what we saw last week.
         - You can expect aptafast to be around 1.5 to 2 times slower. We still don't know why it happens and we need to do more tests.
     - For bigger structures, we see a real difference:
         - with 5000 1000-length weighted structure file, we see these results:
