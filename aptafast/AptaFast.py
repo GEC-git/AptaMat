@@ -248,8 +248,7 @@ class Dotplot(Dotbracket):
         """
         opening = '([{<' + string.ascii_uppercase
         closing = ')]}>' + string.ascii_lowercase
-        matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)))
-
+        matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)),dtype=np.uint8)
         for i, db1 in enumerate(self.dotbracket):
             open_db = 0
 
@@ -270,10 +269,9 @@ class Dotplot(Dotbracket):
                         open_db -= 1
 
                     if closing.find(db2) == opening.find(db1) and open_db == 0:
-                        matrix[i, j] = 1
+                        matrix[i, j] = np.uint8(1)
                         break
-
-        matrix = np.asarray(matrix).astype(int)
+        #matrix = np.asarray(matrix).astype(np.uint8)
         return matrix
 
     def get_coordinates(self):
@@ -290,10 +288,8 @@ class Dotplot(Dotbracket):
         for r, row in enumerate(self.matrix):
             # print(r)
             for c, col in enumerate(row):
-                if col == 1:
-                    # print(c)
+                if col:
                     dot = [r + 1, c + 1]
-                    # print(dot)
                     coordinates.append(dot)
         coordinates = np.asarray(coordinates)
         return coordinates
