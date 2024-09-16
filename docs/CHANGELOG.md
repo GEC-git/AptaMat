@@ -206,9 +206,23 @@
     - This greatly improved speed on very big structures (from 214s to 175s for 250 5000-length structures)
     - We see no difference in speed when calculating distance for intermediate to smaller structure.
     - Parsing file may be faster but there is a need to find a better way to calculate the dotplot matrix or even completely bypass the matrix and going from dotbracket to coordinates directly.
+
+
     
+- Supplementary performance test with realistic randomly generated structure files:
+    - It seems that with smaller structures, the change in matrix size altered the speed of aptafast in a bad way. 
+        - You can expect aptafast to be around 1.5 to 2 times slower. We still don't know why it happens and we need to do more tests.
+    - For bigger structures, we see a real difference:
+        - with 5000 1000-length weighted structure file, we see these results:
+        
+        |/|SPEED|RAM USAGE|
+        |:-----:|:-----:|:-----:|
+        |SPEED 'SLOW'|434s|8.2Go|
+        |SPEED 'QUICK'|334s|8.2Go|
+        |APTAMAT|1077s|45.3Go|
+        
+    - additionnal tests need to be conducted for smaller structures (under 100-length) and for accuracy.
     
-    
-    
-    
+
+
 
