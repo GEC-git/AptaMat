@@ -226,6 +226,33 @@
         
     - additionnal tests need to be conducted for smaller structures (under 100-length) and for accuracy.
     
+    
+- After additionnal testing, we can conclude that AptaMat is substantially faster than aptafast for smaller structures.
+    - This surely comes from the fact that singlethreaded performance is very important in the case of AptaMat. 
+    - Moreover, when calculating with a very small number of points, the naive implementation is still faster because there is a sequence of very small and efficient operations that are very fast when running sequentially.
+    - When calculating bigger structures, the double-list method becomes faster because the number of points to be tested in the naive implementation is enormous.
+    
+**IMPORTANT CONCLUSION ON PERFORMANCE**
+- Spatialization of the search for the nearest point is efficient in the case of very big matrices and structures.
+- For smaller structures, the naive search is faster. We could implement that with aptafast. We would test what the threshold would be when aptafast becomes faster so that, when reached, we switch method from naive to double list.
 
+#### FUTURE CHANGES AND IDEAS
 
+- **Making a definitive aptafast implementation with:**
+    - multiprocessing
+    - GPU optimizing using PyCuda
+    - Naive + double list search
 
+-**HOW:**
+    - Having the search for the nearest point be done by the GPU for each point.
+    - Implementing multiprocessing at a higher level:
+        - At the structure level and not point level.
+            - This means that we would allocate the comparison for a structure on a single thread which will call the GPU for the nearest point search.
+    - Using Naive search or double list search with a threshold using the GPU.
+    
+**FIRST THING TO DO:**
+- A non GPU optimised version of aptafast.
+    - It would do the same but we would use multiprocessing at a lower level.
+    - This would be usable on any system.
+    - You wouldn't need an nVidia GPU to run the program. (or any GPU at all)
+   
