@@ -243,7 +243,7 @@
     - GPU optimizing using PyCuda
     - Naive + double list search
 
--**HOW:**
+- **HOW:**
     - Having the search for the nearest point be done by the GPU for each point.
     - Implementing multiprocessing at a higher level:
         - At the structure level and not point level.
