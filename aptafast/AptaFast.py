@@ -130,42 +130,6 @@ class Parse:
 
         return structures
 
-# TO BE CONVERTED TO A SINGLETON FOR FUTURE USE
-
-class CompressedCache:
-    """Creates the structure of the cache and all the methods to manage it"""
-    cache={}
-    def __init__(self, start_cache:dict={}):
-        self.cache=start_cache
-        
-
-    def hasher(self,coordinates:str):
-        """returns the hashed version of coordinates"""
-        hashed=""
-        for char in coordinates:
-            hashed+=str(ord(char))
-        return str(hex(int(hashed)))
-
-    @classmethod
-    def cache_checking(self, coordinates:str):
-        """for checking if a value exists"""
-        if self.hasher(self,coordinates) in self.cache:
-            return True
-        return False
-    
-    @classmethod
-    def cache_access(self,coordinates:str):
-        """for accessing the cache"""
-        #print("ACCESS", coordinates)
-        return self.cache[self.hasher(self,coordinates)]
-
-    @classmethod
-    def cache_write(self,coordinates:str,manhattan_distance:int):
-        """for writing in the cache"""
-        #print("WRITING", coordinates)
-        self.cache[self.hasher(self,coordinates)]=manhattan_distance
-    
-
 class Dotbracket:
     """Create a DotBracket object"""
     gap_penalty_matrix = [1, 1]
@@ -365,7 +329,7 @@ def _result_print(template_struct, compared_struct, weight=None):
 #           Functions
 #############################################################
 
-def compute_distance(struct_1: object, struct_2: object, method, cache: object,nb_pool: int,pool: object,speed:str, verbose=False):
+def compute_distance(struct_1: object, struct_2: object, method, nb_pool: int, pool: object, speed:str, verbose=False):
     r"""
     Calculate distance between struct_1, struct_2 using Manhattan distance
     with ::
@@ -432,11 +396,11 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object,n
         
         if nb_pool>mp.cpu_count() or nb_pool <=0:
             return ValueError("Incorrect number of cores")
-        d_TC = pairwise_distance_optimised(s1, s2, method, cache, pool, speed, verbose)
+        d_TC = pairwise_distance_optimised(s1, s2, method, pool, speed, verbose)
         if verbose:
             print("Compared structure --> Template structure\n")
         # Compared structure --> Template structure
-        d_CT = pairwise_distance_optimised(s2, s1, method, cache, pool, speed, verbose)
+        d_CT = pairwise_distance_optimised(s2, s1, method, pool, speed, verbose)
 
         dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
         if verbose:
@@ -451,7 +415,7 @@ def compute_distance(struct_1: object, struct_2: object, method, cache: object,n
         warnings.warn("Compared structure is not folded.\n")
         return None
 
-def calculation_core(point1, struct2, method, search_depth):
+def calculation_core(point1, struct2, method, search_depth, verbose):
     """
         Independant function for determining the closest point
     
@@ -470,9 +434,11 @@ def calculation_core(point1, struct2, method, search_depth):
     
     struct2_str=[str(elt) for elt in struct2]
     
-    
     if str(point1) in struct2_str:
-        return (list(point1),list(point1))
+        if verbose:
+            print("Found nearest point",point1," - ",point1,"| Value:",0)
+        return 0
+
     else:
         search_num=0
         X_axis.append(point1)
@@ -485,6 +451,7 @@ def calculation_core(point1, struct2, method, search_depth):
         
         X_index=int(X_axis_str.index(str(point1)))
         Y_index=int(Y_axis_str.index(str(point1)))
+        
         finished = False
         
         while not finished:
@@ -530,7 +497,14 @@ def calculation_core(point1, struct2, method, search_depth):
                 
                 
         if len(intersection)==1:
-            return (list(point1),intersection[0])
+            if method=="cityblock":
+                if verbose:
+                    print("Found nearest point",point1," - ",intersection[0],"| Value:",cityblock(point1,intersection[0]))
+                return cityblock(point1,intersection[0])
+            if method=="euclidean":
+                if verbose:
+                    print("Found nearest point",point1," - ",intersection[0],"| Value:",euclidean(point1,intersection[0]))
+                return euclidean(point1,intersection[0])
         else:
             dist_dict={}
             for elt in intersection:
@@ -540,11 +514,30 @@ def calculation_core(point1, struct2, method, search_depth):
                     dist_dict[euclidean(point1,elt)]=elt
             
             keep=min(dist_dict.keys())
-            
-            return(point1,dist_dict[keep])
+            if verbose:
+                print("Found nearest point",point1," - ",dist_dict[keep],"| Value:",keep)
+            return keep
 
+def calculation_core_naive(point1, struct2, method, verbose):
+    struct2_str=[str(elt) for elt in struct2]
+    if str(point1) in struct2_str:
+        if verbose:
+            print("Found nearest point",point1," - ",point1,"| Value:",0)
+        return 0
+    else:
+        point_dist = {}
+        for point2 in struct2:
+            if method == "cityblock":
+                Pair_Dist = cityblock(point1, point2)
+            if method == "euclidean":
+                Pair_Dist = euclidean(point1, point2)
+            point_dist[Pair_Dist]=point2
+        keep=min(point_dist.keys())
+        if verbose:
+            print("Found nearest point",point1," - ",point_dist[keep],"| Value:",keep)
+        return keep
 
-def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cache: object, pool: object,speed:str, verbose=False):
+def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool: object, speed:str, verbose=False):
     """
     Proceed to the point distance parsing between input struct_1 and struct_2 using
     Manhattan distance.
@@ -563,8 +556,6 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
         Method for distance calculation.
     verbose :
         True or False
-    cache:
-        CompressedCache
     cpu_cores: integer
         Number of cores chosen. Used for creating the pool of processes
 
@@ -578,48 +569,24 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, cach
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
     
-    if speed=="quick":
-        search_depth=int(0.009125*len(struct_2)+4.207)+2
-    elif speed=="slow":
-        search_depth=(int(0.009125*len(struct_2)+4.207)+2)*2
-    else:
-        return ValueError("The speed value is incorrect")
-    
-    nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,search_depth) for i in range(len(struct1))]))
-
-    nearest_points=nearest_points[0]
-    if verbose:
-        print("Finished this pass.\nCalculating distance.")
-    
-    point_dist_list=[]
-    for point_pairs in nearest_points:
-        if verbose:
-            print("Found nearest point : ",point_pairs[1]," | ",end='')
-          
-        if cache.cache_checking(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1])):
-            point_dist=cache.cache_access(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]))
-            if verbose:
-                print(f'CACHE ACCESS | {method} distance', point_pairs,'| Value:',point_dist)
+    if True:#len(struct_2) >=350:
+        if speed=="quick":
+            search_depth=int(0.009125*len(struct_2)+4.207)+2
+        elif speed=="slow":
+            search_depth=(int(0.009125*len(struct_2)+4.207)+2)*2
         else:
-            if method=="cityblock":
-                point_dist=cityblock(point_pairs[0],point_pairs[1])
-                
-                cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
-                cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
-                if verbose: 
-                    print('CACHE WRITE | cityblock distance', point_pairs,'| Value:',point_dist)
-                    
-            elif method=="euclidean":
-                point_dist = euclidean(point_pairs[0],point_pairs[1])
+            return ValueError("The speed value is incorrect")
             
-                cache.cache_write(str(point_pairs[0][0])+str(point_pairs[0][1])+str(point_pairs[1][0])+str(point_pairs[1][1]),point_dist)
-                cache.cache_write(str(point_pairs[1][0])+str(point_pairs[1][1])+str(point_pairs[0][0])+str(point_pairs[0][1]),point_dist)
-                if verbose:
-                    print('CACHE WRITE | euclidean distance |',point_pairs,'| Value:',point_dist)
-                    
-        point_dist_list.append(point_dist)
+        nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,search_depth,verbose) for i in range(len(struct1))]))
+    #else:
+    #    nearest_points.append(pool.starmap(calculation_core_naive, [(struct1[i],struct2,method,verbose) for i in range(len(struct1))]))
+    
+    nearest_dist=nearest_points[0]
+    
+    if verbose:
+        print("Finished this pass.")
         
-    distance = sum(point_dist_list)
+    distance = sum(nearest_dist)
     return distance
 
 def adjust_weight(structures, weight):
@@ -761,8 +728,7 @@ def main():
     ##########################
     #  Distance calculation  #
     ##########################
-    
-    cache=CompressedCache()
+
     print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
     nb=int(input("How much do you want to use? "))
     print("Creating pool on",nb,"cores.\n")
@@ -779,7 +745,6 @@ def main():
             compared_struct.distance = compute_distance(struct_1=template_struct,
                                                         struct_2=compared_struct,
                                                         method=args.method,
-                                                        cache=cache,
                                                         nb_pool=nb,
                                                         pool=pooling,
                                                         speed=args.speed,

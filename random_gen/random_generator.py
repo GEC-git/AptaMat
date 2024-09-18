@@ -3,12 +3,14 @@ from random import random
 
 def random_gen(length=1000, ratio_o_c=0.8, bias=0.6):
     """
-        Generates a random dotbracket notation of length *length* and density *ratio_o_c*
+        Generates a random dotbracket notation of length *length*, density *ratio_o_c* and bias *bias*.
     
         What we call density is the number of brackets opened and closed.
         
         The density is dynamic so when a bracket is opened, a dot is more inclined to appear.
         When a dot is added, an open_bracket or a closing bracket is more likely to appear.
+        
+        The case `()` is not possible to appear for realistic purposes.
     """
     dot = "."
     open_bracket = "("
@@ -109,10 +111,10 @@ def dotbracket_verif(input_str,length):
     return not bool(nb)
 
 
-def file_struct_gen(nb_struct=5000):
+def file_struct_gen(nb_struct=10000):
     output=">Randomly generated structure file\n"
     i=0
-    lgth=1000
+    lgth=350
     while i < nb_struct:
         gen=random_gen(length=lgth)
         if dotbracket_verif(gen,lgth):
@@ -123,7 +125,7 @@ def file_struct_gen(nb_struct=5000):
             
     return output
 
-f=open("RandomWeightFile5000-1000.fa","a")
+f=open("RandomWeightFile10000-200.fa","a")
 f.write(file_struct_gen())
 f.close()
 print("Successfuly created a randomly generated weighted structure file.")
