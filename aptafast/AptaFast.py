@@ -569,7 +569,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
     
-    if True:#len(struct_2) >=350:
+    if False:#len(struct_2) >=350:
         if speed=="quick":
             search_depth=int(0.009125*len(struct_2)+4.207)+2
         elif speed=="slow":
@@ -578,8 +578,8 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool
             return ValueError("The speed value is incorrect")
             
         nearest_points.append(pool.starmap(calculation_core, [(struct1[i],struct2,method,search_depth,verbose) for i in range(len(struct1))]))
-    #else:
-    #    nearest_points.append(pool.starmap(calculation_core_naive, [(struct1[i],struct2,method,verbose) for i in range(len(struct1))]))
+    else:
+        nearest_points.append(pool.starmap(calculation_core_naive, [(struct1[i],struct2,method,verbose) for i in range(len(struct1))]))
     
     nearest_dist=nearest_points[0]
     

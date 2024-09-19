@@ -111,10 +111,9 @@ def dotbracket_verif(input_str,length):
     return not bool(nb)
 
 
-def file_struct_gen(nb_struct=10000):
+def file_struct_gen(nb_struct,lgth):
     output=">Randomly generated structure file\n"
     i=0
-    lgth=350
     while i < nb_struct:
         gen=random_gen(length=lgth)
         if dotbracket_verif(gen,lgth):
@@ -124,9 +123,10 @@ def file_struct_gen(nb_struct=10000):
             i+=1
             
     return output
-
-f=open("RandomWeightFile10000-200.fa","a")
-f.write(file_struct_gen())
+lgth=1000
+nb_struct=10000
+f=open("RandomWeightFile"+str(nb_struct)+"-"+str(lgth)+".fa","a")
+f.write(file_struct_gen(nb_struct,lgth))
 f.close()
 print("Successfuly created a randomly generated weighted structure file.")
         
