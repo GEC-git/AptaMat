@@ -236,13 +236,15 @@
 - Spatialization of the search for the nearest point is efficient in the case of very big matrices and structures.
 - For smaller structures, the naive search is faster. We could implement that with aptafast. We would test what the threshold would be when aptafast becomes faster so that, when reached, we switch method from naive to double list.
 
+**CLEANING**
+
 - Deleted Cache because it slowed things down.
 
 - Cleaned the program for a better efficiency.
 
 - Using Naive search because of better performances for structures under 250 of length. (please see performances tests below)
 
-**NEW PERFORMANCE TESTS**
+NEW PERFORMANCE TESTS:
 
 Coming soon.
 

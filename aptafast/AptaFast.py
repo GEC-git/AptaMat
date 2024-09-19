@@ -569,7 +569,7 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
     
-    if False:#len(struct_2) >=350:
+    if len(struct_2) >=250:
         if speed=="quick":
             search_depth=int(0.009125*len(struct_2)+4.207)+2
         elif speed=="slow":
