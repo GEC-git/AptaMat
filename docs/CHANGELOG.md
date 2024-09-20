@@ -212,7 +212,20 @@
         |APTAMAT|1077s|45.3Go|
         
     - additionnal tests need to be conducted for smaller structures (under 100-length) and for accuracy.
+
+- Successfuly implemented a faster file parser using a dictionnary and partial search.
+    - Expect a 1.33 times improvement of file parsing speed for all files.
+    - Accuracy is perfect, expect no coordinates errors.
     
+- Completely optimized file parsing with multiprocessing.
+    - If "quick" mode is selected, the program WILL use all the cores of the cpu.
+    - If "slow" mode is selected, the program will use half the cores of the cpu.
+    
+    - We saw an immediate improvement in overall speed:
+        - for a file with 1000  1000-length structure, we went from 130.21s to 61.37s (quick mode and 6 cores for calculations)
+            - The file parsing took 5s instead of 70s.
+
+- **First finished version of AptaFast without gpu optimization.**
 
 **CLEANING**
 
@@ -257,17 +270,9 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - It is still bound by the management of CPU cores, even if it's the exact same method used in AptaMat.
     - We still want to use it for smaller structure since the double list search becomes completely identical to the naive search (especially in the "SLOW" mode).
         - Why? : Because there is less instructions and less variables manipulated by the program in naive mode.
-    
-    
-    
-
-
-- Successfuly implemented a faster file parser using a dictionnary and partial search.
-    - Expect a 1.33 times improvement of file parsing speed for all files.
+      
     
 #### FUTURE CHANGES AND IDEAS
-
-- **Finding a way to optimize file parsing**
 
 - **Making a definitive aptafast implementation with:**
     - multiprocessing
