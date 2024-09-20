@@ -7,7 +7,7 @@
 import argparse
 import os
 import pathlib
-import string
+#import string
 import sys
 import warnings
 from copy import deepcopy
@@ -37,21 +37,21 @@ class Parse:
             raise FileNotFoundError
 
     @classmethod
-    def file(cls, file, verbose=False):
+    def file(cls, file, pool:object ,verbose=False):
         """
         Check file extension before parsing
         """
         if pathlib.Path(file).suffix in cls.suffix:
             if verbose:
                 print(f'Reading file: {file} ...\n')
-            out = cls.infile(file, verbose)
+            out = cls.infile(file, pool, verbose)
         else:
             raise AttributeError('{} extension not compatible. Please try with {}\n'.format(pathlib.Path(file).suffix,
                                                                                             ', '.join(cls.suffix)))
         return out
 
     @classmethod
-    def infile(cls, file, verbose=False):
+    def infile(cls, file, pool:object, verbose=False):
         """
         Structure parser from fasta formatted files
 
@@ -88,7 +88,8 @@ class Parse:
 
         lines = open(file).readlines()
         structures = []
-
+        non_parsed_struct=[]
+        non_parsed_weights=[]
         for i, line in enumerate(lines):
             if verbose:
                 print(line)
@@ -106,7 +107,8 @@ class Parse:
 
             elif Dotbracket.is_dotbracket(line):
                 dotbracket = line.strip()
-                struct = SecondaryStructure(dotbracket, sequence, id, file=file)
+                non_parsed_struct.append((dotbracket, sequence, id, file))
+                #struct = SecondaryStructure(dotbracket, sequence, id, file=file)
                 try:
                     lines[i + 1]
                 except IndexError:
@@ -115,14 +117,30 @@ class Parse:
                     if lines[i + 1].startswith(('>', '--')):
                         pass
                     elif not Dotbracket.is_dotbracket(line):
-                        struct.weight = float(lines[i + 1].split(sep=' ')[1])
+                        non_parsed_weights.append(float(line))
+                        #struct.weight = float(lines[i + 1].split(sep=' ')[1])
                     else:
-                        struct.weight = 0
+                        non_parsed_weights.append(0)
+                        #struct.weight = 0
 
             else:
                 continue
-
-            structures.append(struct)
+            
+        structures=pool.starmap(SecondaryStructure,  [(non_parsed_struct[i][0], non_parsed_struct[i][1], non_parsed_struct[i][2], non_parsed_struct[i][3]) for i in range(len(non_parsed_struct))])
+            
+        def get_id(struct):
+            num=""
+            for char in struct.id:
+                if 48<=ord(char)<=57:
+                    num+=char
+            return int(num)
+        
+        structures=sorted(structures, key=lambda struct : get_id(struct))
+        
+        for i,elt in enumerate(structures):
+            elt.weight = non_parsed_weights[i]
+                
+        #structures.append(struct)
 
         if not structures:
             return AttributeError("File content not compatible (malformed, corrupted or empty\n"
@@ -291,7 +309,7 @@ class SecondaryStructure(Dotplot):
                 raise AttributeError("File {} does not exist.\n".format(file))
             else:
                 self.file = file
-
+                
     def __eq__(self, ss):
         if isinstance(ss, SecondaryStructure):
             return self.dotbracket == ss.dotbracket
@@ -642,7 +660,6 @@ def adjust_weight(structures, weight):
 
     return weight
 
-
 def main():
     parser = argparse.ArgumentParser(description="AptaMat is a simple script which aims to measure differences between "
                                                  "DNA or RNA secondary structures. The method is based on the "
@@ -697,9 +714,18 @@ def main():
     if args.structures is not None and args.files is not None:
         raise KeyError('-structures and -files cannot be used at the same time.')
 
+
+    if args.speed == "quick":
+        pooling=mp.Pool(mp.cpu_count())
+        print("MODE: quick | using all cores for file parsing")
+    else:
+        pooling=mp.Pool(int(mp.cpu_count()/2))
+        print("MODE: slow | using half the cores for file parsing")
+    
     struct_list = []
     weights = []
     file_time_start=tm.time()
+    
     ##################################
     #  Input structures preparation  #
     ##################################
@@ -709,7 +735,7 @@ def main():
             raise ValueError('Missing one argument in -structures')
         if args.weights:
             weights = adjust_weight(args.structures, args.weights)
-
+            
         for i, structure in enumerate(args.structures):
             struct = SecondaryStructure(dotbracket=structure, id='structure' + str(i))
             struct_sizes.append(len(struct))
@@ -727,7 +753,7 @@ def main():
                           'include the values in {}.\n'.format(args.file))
 
         for file in args.files:
-            structures = Parse.file(file)
+            structures = Parse.file(file,pooling)
             if not sum(struct.weight for struct in structures) == 1:
                 weights = adjust_weight(structures,
                                         [struct.weight for struct in structures])
@@ -739,7 +765,7 @@ def main():
     if not struct_list:
         raise ValueError('No valid structure parsed.\n')
     file_time_finish=tm.time()
-    
+    pooling.terminate()
     ##########################
     #  Distance calculation  #
     ##########################
