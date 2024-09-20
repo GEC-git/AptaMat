@@ -188,19 +188,6 @@
 
 ### WEEK 3 - 16/09/2024 -> 22/09/2024.
 
-- After testing performances, we can conclude on a speed difference between the 'quick' and 'slow' parameters.
-    - For smaller structures, 'quick' is several seconds faster than 'slow': for 25 000 20-length structures, 'quick' took 79s while 'slow' took 82s
-    - For intermediate structures, 'slow' seems to be faster (482s vs 460s for 20 000 250-length structures and 129s vs 125s for 20 000 50-length structures)
-    - For very big structures, we can see an improvement in speed with the 'quick' parameter (for 250 5000-length structures, 'quick' ran in 214s vs 255s for 'slow')
-
-- What we reccomend : 
-    - You can use the 'quick' parameter for small structures if you want a bit more speed without a loss in precision. 
-    - Using 'slow' for intermediate structures (from 100 to 1000 in size) is mandatory for precision. Speed is not impacted.
-    - For bigger structures (2000 and onwards) the 'quick' parameter can be used to improve the speed. Precision is still satisfactory.
-    - If you don't know the sizes or if you are undecided, please stick with the default parameter set to 'slow'.
-    
-
-
 - Succesfully divided RAM usage by at least 8 when parsing a file.
     - using uint8 (1byte) instead of default float64 (8bytes) when parsing a file.
     - This greatly improved speed on very big structures (from 214s to 175s for 250 5000-length structures)
@@ -226,29 +213,55 @@
         
     - additionnal tests need to be conducted for smaller structures (under 100-length) and for accuracy.
     
-    
-- After additionnal testing, we can conclude that AptaMat is substantially faster than aptafast for smaller structures.
-    - This surely comes from the fact that singlethreaded performance is very important in the case of AptaMat. 
-    - Moreover, when calculating with a very small number of points, the naive implementation is still faster because there is a sequence of very small and efficient operations that are very fast when running sequentially.
-    - When calculating bigger structures, the double-list method becomes faster because the number of points to be tested in the naive implementation is enormous.
-    
-**IMPORTANT CONCLUSION ON PERFORMANCE**
-- Spatialization of the search for the nearest point is efficient in the case of very big matrices and structures.
-- For smaller structures, the naive search is faster. We could implement that with aptafast. We would test what the threshold would be when aptafast becomes faster so that, when reached, we switch method from naive to double list.
 
 **CLEANING**
 
 - Deleted Cache because it slowed things down.
 
 - Cleaned the program for a better efficiency.
-
+    - Now, calculation_core and calculation_core_naive handles the verbose mode and only returns the distance found, not the point.
+        - There is now no need to recalculate the distances when the pool of cores has finished.
+    - Verbose mode can be very unorganised since all the cores dumps their results on the screen as it is calculated.
+    
 - Using Naive search because of better performances for structures under 250 of length. (please see performances tests below)
 
-NEW PERFORMANCE TESTS:
+##### NEW PERFORMANCE TESTS:
 
-Coming soon.
+We tested 67 use cases with files of 10 000 structures of length ranging from 100 to 1000. All the times are in seconds.
+We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or naive method.
 
+!["With Line Correlation"](new_perf_test_line_corr.png)
+
+- In this screenshot of the tests, we have colored the cells line per line, so colors from any line are completely independant from another.
+    - We can see here how and when AptaFast becomes faster than AptaMat in each use cases. And also where using naive search in Aptafast is completely equivalent to the double list search.
+    - We can also see when naive search becomes slower: at around 250 in length, this is where we switch methods in the program.
+    
+    
+!["With all correlations"](new_perf_test_all_corr.png)
+
+- In this one, the colors in all cells are corelated. We can see how AptaFast is more homogeneous in its speed than AptaMat.
+
+- How to explain the sudden pics in time ?
+    - Since we used the same files for each lines, we can assume that we encountered some kind of "structural extreme" where the program encounters a worst case scenario for one of its mode (hence the pics for 2 cores at 250 length).
+    
+    
+**TEMPORARY CONCLUSION ON PERFORMANCE**
+
+- AptaMat is substantially faster than aptafast for smaller structures.
+    - This surely comes from the fact that singlethreaded performance is very important in the case of AptaMat. 
+    - Moreover, when calculating with a very small number of points, the naive implementation is still faster because there is a sequence of very small and efficient operations that are very fast when running sequentially.
+    - When calculating bigger structures, the double-list method becomes faster because the number of points to be tested in the naive implementation is enormous.
+    
+
+- AptaFast's naive implementation is not conclusively faster than the double list search for smaller structures.
+    - It is still bound by the management of CPU cores, even if it's the exact same method used in AptaMat.
+    - We still want to use it for smaller structure since the double list search becomes completely identical to the naive search (especially in the "SLOW" mode).
+        - Why? : Because there is less instructions and less variables manipulated by the program in naive mode.
+    
+    
 #### FUTURE CHANGES AND IDEAS
+
+- **Finding a way to optimize file parsing**
 
 - **Making a definitive aptafast implementation with:**
     - multiprocessing
@@ -261,10 +274,5 @@ Coming soon.
         - At the structure level and not point level.
             - This means that we would allocate the comparison for a structure on a single thread which will call the GPU for the nearest point search.
     - Using Naive search or double list search with a threshold using the GPU.
-    
-**FIRST THING TO DO:**
-- A non GPU optimised version of aptafast.
-    - It would do the same but we would use multiprocessing at a lower level.
-    - This would be usable on any system.
-    - You wouldn't need an nVidia GPU to run the program. (or any GPU at all)
+
    
