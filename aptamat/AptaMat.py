@@ -554,7 +554,7 @@ def main():
 
     struct_list = []
     weights = []
-
+    file_time_start=tm.time()
     ##################################
     #  Input structures preparation  #
     ##################################
@@ -591,7 +591,9 @@ def main():
     # Stop the program whether structures input are not valid or not found.
     if not struct_list:
         raise ValueError('No valid structure parsed.\n')
-
+    
+    file_time_finish=tm.time()
+    
     ##########################
     #  Distance calculation  #
     ##########################
@@ -611,8 +613,10 @@ def main():
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
     finish=tm.time()
-    print(finish-start,"s")
-
+    print("File parsing time:",round(file_time_finish-file_time_start,2),"s")
+    print("Calculation time:",round(finish-start,2),"s")
+    tot=round(finish-start,2)+round(file_time_finish-file_time_start,2)
+    print("Total: ",tot,"s")
     ##########################
     #  Ensemble calculation  #
     ##########################
