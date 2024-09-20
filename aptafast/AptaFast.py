@@ -210,31 +210,46 @@ class Dotplot(Dotbracket):
             matrix: np.ndarray
                 binary matrix.
         """
-        opening = '([{<' + string.ascii_uppercase
-        closing = ')]}>' + string.ascii_lowercase
+        # opening = '([{<' + string.ascii_uppercase
+        # closing = ')]}>' + string.ascii_lowercase
         matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)),dtype=np.uint8)
-        for i, db1 in enumerate(self.dotbracket):
-            open_db = 0
+        void=".-"
+        dict_par={}
+        for i,elt in enumerate(self.dotbracket):
+            if elt not in void:
+                dict_par[i]=elt
+        
+        while dict_par != {}:
+            index_list=list(dict_par.keys())
+            i=0
+            while dict_par[index_list[i]]==dict_par[index_list[i+1]]:
+                i+=1
+            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+            del(dict_par[index_list[i]])
+            del(dict_par[index_list[i+1]])
+        
+        # for i, db1 in enumerate(self.dotbracket):
+        #     open_db = 0
 
-            if db1 in opening:
+        #     if db1 in opening:
 
-                for j, db2 in enumerate(self.dotbracket):
+        #         for j, db2 in enumerate(self.dotbracket):
 
-                    if j < i:
-                        continue
+        #             if j < i:
+        #                 continue
 
-                    elif j == '.' or j == '-':
-                        continue
+        #             elif j == '.' or j == '-':
+        #                 continue
 
-                    elif db2 == db1:
-                        open_db += 1
+        #             elif db2 == db1:
+        #                 open_db += 1
 
-                    elif closing.find(db2) == opening.find(db1) and open_db > 0:
-                        open_db -= 1
+        #             elif closing.find(db2) == opening.find(db1) and open_db > 0:
+        #                 open_db -= 1
 
-                    if closing.find(db2) == opening.find(db1) and open_db == 0:
-                        matrix[i, j] = np.uint8(1)
-                        break
+        #             if closing.find(db2) == opening.find(db1) and open_db == 0:
+        #                 matrix[i, j] = np.uint8(1)
+        #                 break
         #matrix = np.asarray(matrix).astype(np.uint8)
         return matrix
 
@@ -568,7 +583,6 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool
     
     struct2=[list(elt) for elt in struct_2.coordinates]
     struct1=[list(elt) for elt in struct_1.coordinates]
-    
     if len(struct_2) >=250:
         if speed=="quick":
             search_depth=int(0.009125*len(struct_2)+4.207)+2
@@ -685,7 +699,7 @@ def main():
 
     struct_list = []
     weights = []
-
+    file_time_start=tm.time()
     ##################################
     #  Input structures preparation  #
     ##################################
@@ -724,7 +738,8 @@ def main():
     # Stop the program whether structures input are not valid or not found.
     if not struct_list:
         raise ValueError('No valid structure parsed.\n')
-
+    file_time_finish=tm.time()
+    
     ##########################
     #  Distance calculation  #
     ##########################
@@ -754,7 +769,10 @@ def main():
                 print(compared_struct.distance, end='\n\n')
     finish=tm.time()
     pooling.terminate()
-    print(finish-start,"s")    
+    print("File parsing time:",round(file_time_finish-file_time_start,2),"s")
+    print("Calculation time:",round(finish-start,2),"s")
+    tot=round(finish-start,2)+round(file_time_finish-file_time_start,2)
+    print("Total: ",tot,"s")
     ##########################
     #  Ensemble calculation  #
     ##########################

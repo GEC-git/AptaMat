@@ -259,6 +259,12 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
         - Why? : Because there is less instructions and less variables manipulated by the program in naive mode.
     
     
+    
+
+
+- Successfuly implemented a faster file parser using a dictionnary and partial search.
+    - Expect a 1.33 times improvement of file parsing speed for all files.
+    
 #### FUTURE CHANGES AND IDEAS
 
 - **Finding a way to optimize file parsing**
