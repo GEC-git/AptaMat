@@ -286,4 +286,32 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
             - This means that we would allocate the comparison for a structure on a single thread which will call the GPU for the nearest point search.
     - Using Naive search or double list search with a threshold using the GPU.
 
-   
+
+### WEEK 4 - 23/09/2024 -> 29/09/2024.
+
+**First Release of AptaFast**
+
+- We have know a semi-definitive implementation of AptaFast with overall algorithmic optimization and multiprocessing.
+
+- Some improvement could still be made regarding multiprocessing depth. Do we use it on a *per point* basis or *per structure* basis ? Testing still needs to be made.
+
+- Accuracy testing needs to be conducted on a more automated and higher level.
+
+**Words on GPU optimization**
+
+- We ruled out using PyCuda for GPU optimization because it is not very portable and requires very specific versions of cudatoolkit and other dependencies.
+
+- We could now use Numba which implements python commands to control and compile to nVidia's CUDA cores.
+    - There are compatibility issues with more complex Python commands (like Comprehension lists etc...)
+    - We don't think that using double list search with the GPU is possible.
+    - However, naive search could **maybe** be implemented and could be faster in certain intensive use cases.
+    
+
+#### FUTURE CHANGES AND IDEAS
+
+- Better GPU optimization ?
+
+- Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
+    - First, naive implemetation by testing all the possibilities.
+    - Then possible algorithmic optimization.
+    - In the end, maybe using a genetic algorithm.
