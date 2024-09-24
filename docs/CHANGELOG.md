@@ -291,20 +291,14 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 **First Release of AptaFast**
 
-- We have know a semi-definitive implementation of AptaFast with overall algorithmic optimization and multiprocessing.
+- We have know a definitive implementation of AptaFast with overall algorithmic optimization and multiprocessing.
 
 - Some improvement could still be made regarding multiprocessing depth. Do we use it on a *per point* basis or *per structure* basis ? Testing still needs to be made.
 
 - Accuracy testing needs to be conducted on a more automated and higher level.
 
-**Words on GPU optimization**
-
-- We ruled out using PyCuda for GPU optimization because it is not very portable and requires very specific versions of cudatoolkit and other dependencies.
-
-- We could now use Numba which implements python commands to control and compile to nVidia's CUDA cores.
-    - There are compatibility issues with more complex Python commands (like Comprehension lists etc...)
-    - We don't think that using double list search with the GPU is possible.
-    - However, naive search could **maybe** be implemented and could be faster in certain intensive use cases.
+**No GPU optimization**
+- We decided to abandon GPU optimization since it would be a problem for portability.
 
 **Definitive accuracy and speed testing**
 
@@ -324,9 +318,10 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - If you want the best accuracy and speed, we reccomend using the "SLOW" mode with 6 cores.
     - If you want the best speed regardless of perfect accuracy, use the "QUICK" mode with 6 cores.
 
+
 #### FUTURE CHANGES AND IDEAS
 
-- Better GPU optimization ?
+- Looking at clustering, small adjustements to aptafast in order to be compatible.
 
 - Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
     - First, naive implemetation by testing all the possibilities.
