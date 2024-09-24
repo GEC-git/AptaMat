@@ -776,6 +776,7 @@ def main():
     print("Working...\n")
     start=tm.time()
     pooling=mp.Pool(nb)
+    res=[]
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -793,12 +794,14 @@ def main():
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
+                res.append(compared_struct.distance)
     finish=tm.time()
     pooling.terminate()
-    print("File parsing time:",round(file_time_finish-file_time_start,2),"s")
-    print("Calculation time:",round(finish-start,2),"s")
-    tot=round(finish-start,2)+round(file_time_finish-file_time_start,2)
-    print("Total: ",tot,"s")
+    if args.verbose:
+        print("File parsing time:",round(file_time_finish-file_time_start,2),"s")
+        print("Calculation time:",round(finish-start,2),"s")
+        tot=round(finish-start,2)+round(file_time_finish-file_time_start,2)
+        print("Total: ",tot,"s")
     ##########################
     #  Ensemble calculation  #
     ##########################

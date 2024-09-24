@@ -598,6 +598,7 @@ def main():
     #  Distance calculation  #
     ##########################
     start=tm.time()
+    res=[]
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -612,6 +613,9 @@ def main():
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
+                res.append(compared_struct.distance)
+    
+    print(res)
     finish=tm.time()
     print("File parsing time:",round(file_time_finish-file_time_start,2),"s")
     print("Calculation time:",round(finish-start,2),"s")
