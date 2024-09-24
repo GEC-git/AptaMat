@@ -305,7 +305,24 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - There are compatibility issues with more complex Python commands (like Comprehension lists etc...)
     - We don't think that using double list search with the GPU is possible.
     - However, naive search could **maybe** be implemented and could be faster in certain intensive use cases.
-    
+
+**Definitive accuracy and speed testing**
+
+- Here is the updated performance test with an accuracy test:
+
+!["Perf + acc test"](new_perf_acc_tests.png)
+
+- We tested 10 new sets of 100 to 1000 length structures. There were 1000 structures in each of them.
+
+- The time now takes into account the file parsing time as well as the calculation time.
+
+- Accuracy and average deviation are calculated by taking to average of the accuracy (in %) and the average of the average devation for each pass.
+
+- We can see that, the bigger the structure is, the worse the accuracy becomes. BUT, the average deviation stays really small which is satisfactory.
+
+- SO:
+    - If you want the best accuracy and speed, we reccomend using the "SLOW" mode with 6 cores.
+    - If you want the best speed regardless of perfect accuracy, use the "QUICK" mode with 6 cores.
 
 #### FUTURE CHANGES AND IDEAS
 
