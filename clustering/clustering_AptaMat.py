@@ -1,21 +1,24 @@
 #! /usr/bin/env python3
 
-import os, sys, shutil
+### Path to AptaMat script must be updated
+import sys
+sys.path.insert(1, "/home/bcuvillier/Documents/AptaMat/aptamat")
+sys.path.insert(1, "/home/bcuvillier/Documents/AptaMat/aptafast")
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, adjusted_rand_score
-import AptaMat_align as AptaMat
+import AptaMat as AptaMat
+import AptaFast as AF
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.colors import ListedColormap
 import time
 import multiprocessing
-### Path to AptaMat script must be updated
-sys.path.insert(1, "/home/tbinet/PycharmProjects/AptaMat")
+
 
 ### Structure file to be used
-structure_file = 'dataset_family_dotbracket.txt'
+structure_file = 'dataset_family_dotbracket.dat'
 ### Change CORE value according to computer CPU available
 CORE = 40
 
@@ -197,7 +200,7 @@ with open(structure_file, 'r') as file:
             else:
                 try:
                     family[content[0]] += 1
-                except ValueError:
+                except KeyError:
                     family[content[0]] = 1
 
             if AptaMat.Dotbracket.is_dotbracket(content[3]):
@@ -217,17 +220,17 @@ print("Job started",time.asctime())
 results = []
 pool = multiprocessing.Pool(CORE)
 for result in pool.starmap(AptaMat.compute_distance,
-                           [(struct1, struct2) for struct1 in structure_list for struct2 in structure_list]):
+                           [(struct1, struct2,"cityblock") for struct1 in structure_list for struct2 in structure_list]):
     results.append(result)
 end = time.time()
 print("Job finished",time.asctime())
 print("Time elapsed = ", time.strftime("%H:%M:%S", time.gmtime(end-start)))
-
+pool.terminate()
 
 ### Build distance matrix using AptaMat distance in 'results' tuples
 matrix_element = []
 for i in results:
-    matrix_element.append(float(i[2]))
+    matrix_element.append(float(i))
 dist_matrix = matrix_element.reshape(N, N)
 
 
