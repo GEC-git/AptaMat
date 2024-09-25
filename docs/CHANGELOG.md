@@ -329,6 +329,6 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 - Looking at clustering, small adjustements to aptafast in order to be compatible.
 
 - Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
-    - First, naive implemetation by testing all the possibilities.
+    - First, naive implementation by testing all the possibilities.
     - Then possible algorithmic optimization.
     - In the end, maybe using a genetic algorithm.
