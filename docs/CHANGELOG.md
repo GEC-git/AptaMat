@@ -318,6 +318,11 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - If you want the best accuracy and speed, we reccomend using the "SLOW" mode with 6 cores.
     - If you want the best speed regardless of perfect accuracy, use the "QUICK" mode with 6 cores.
 
+**Changes in clustering**
+
+- Started understanding, fixing and cleaning clustering.
+
+- Updated file paths to Aptafast and aptamat.
 
 #### FUTURE CHANGES AND IDEAS
 
