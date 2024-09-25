@@ -129,8 +129,8 @@ def affinity_propagation(distance_matrix, standard, sigma=np.arange(1, 10, 0.1))
     ### Acquire expected clustering labels
     standard_labels = []
     cn = 0
-    for v in standard.values():
-        standard_labels += [cn] * v
+    for v in standard:#.values():
+        standard_labels.append(cn * v)
 
     if isinstance(sigma, (list, tuple, np.ndarray)):
         sigma_iter = sigma
@@ -231,13 +231,14 @@ pool.terminate()
 matrix_element = []
 for i in results:
     matrix_element.append(float(i))
-dist_matrix = matrix_element.reshape(N, N)
+    
+dist_matrix = np.array(matrix_element).reshape(N, N)
 
 
 ### Acquire data from Affinity Propagation clustering
-sigma_range = np.arange(5, 15, 0.1)
+sigma_range = np.arange(5, 34.1, 0.1)
 affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-    affinity_propagation(dist_matrix, np.arange(5, 15, 0.1))
+    affinity_propagation(dist_matrix, np.arange(5, 34.1, 0.1)) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
 
 
 ### Print all clustering calculated and associated sigma value
@@ -251,7 +252,8 @@ print("Optimal Silhouette score =", silhouette_best)
 print('Optimal Sigma =', sigma_best)
 labels = aff_prop_clust_best.labels_
 labels = renumber_by_rank(labels)
-dict_label = build_label_dict(list(labels))
+dict_label = build_label_dict(list(labels),family)
+
 
 
 ### Heatmap setup
