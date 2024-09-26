@@ -324,6 +324,12 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Updated file paths to Aptafast and aptamat.
 
+- Added CPU and GPU accelerated functions to view the affinity matrix using matplotlib and vispy.
+    - GPU function still work in progress.
+    
+- Cleaned a bit more.
+
+
 #### FUTURE CHANGES AND IDEAS
 
 - Looking at clustering, small adjustements to aptafast in order to be compatible.
