@@ -329,10 +329,23 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     
 - Cleaned a bit more.
 
+- Finished GPU accelerated affinity matrix visualizator.
+    - We can see the figures created by both histogram methods:
+    
+!["CPU"](3D_histogram_CPU.png)
+    - The histogram created with matplotlib, CPU accelerated.
+    
+!["GPU"](3D_histogram_GPU.png)
+    - The histogram created with vispy, GPU accelerated with an openGL implementation.
+    
+- The CPU implementation is very slow especially to turn in 3D space.
+
+- The GPU implementation may be a bit less readable but faster to display and explore.
+
+- Adapted AptaFast to work with the clustering algorithm.
+    - Clustering is two times faster.
 
 #### FUTURE CHANGES AND IDEAS
-
-- Looking at clustering, small adjustements to aptafast in order to be compatible.
 
 - Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
     - First, naive implementation by testing all the possibilities.
