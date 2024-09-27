@@ -231,11 +231,16 @@ class Dotplot(Dotbracket):
         # opening = '([{<' + string.ascii_uppercase
         # closing = ')]}>' + string.ascii_lowercase
         matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)),dtype=np.uint8)
-        void=".-"
+        par="()"
+        cro="[]"
+        #void=".-"
         dict_par={}
+        dict_cro={}
         for i,elt in enumerate(self.dotbracket):
-            if elt not in void:
+            if elt in par:
                 dict_par[i]=elt
+            elif elt in cro:
+                dict_cro[i]=elt
         
         while dict_par != {}:
             index_list=list(dict_par.keys())
@@ -245,30 +250,16 @@ class Dotplot(Dotbracket):
             matrix[index_list[i],index_list[i+1]]=np.uint8(1)
             del(dict_par[index_list[i]])
             del(dict_par[index_list[i+1]])
+            
+        while dict_cro != {}:
+            index_list=list(dict_cro.keys())
+            i=0
+            while dict_cro[index_list[i]]==dict_cro[index_list[i+1]]:
+                i+=1
+            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+            del(dict_cro[index_list[i]])
+            del(dict_cro[index_list[i+1]])
         
-        # for i, db1 in enumerate(self.dotbracket):
-        #     open_db = 0
-
-        #     if db1 in opening:
-
-        #         for j, db2 in enumerate(self.dotbracket):
-
-        #             if j < i:
-        #                 continue
-
-        #             elif j == '.' or j == '-':
-        #                 continue
-
-        #             elif db2 == db1:
-        #                 open_db += 1
-
-        #             elif closing.find(db2) == opening.find(db1) and open_db > 0:
-        #                 open_db -= 1
-
-        #             if closing.find(db2) == opening.find(db1) and open_db == 0:
-        #                 matrix[i, j] = np.uint8(1)
-        #                 break
-        #matrix = np.asarray(matrix).astype(np.uint8)
         return matrix
 
     def get_coordinates(self):
@@ -361,6 +352,110 @@ def _result_print(template_struct, compared_struct, weight=None):
 #############################################################
 #           Functions
 #############################################################
+
+def compute_distance_clustering(struct_1: object, struct_2: object, method, speed:str, verbose=False):
+    r"""
+    Calculate distance between struct_1, struct_2 using Manhattan distance without using multiprocessing as it is used at a higher level in clustering_AptaMat.
+    with ::
+        - struct_1 : Template structure
+        - struct_2 : Compared structure
+
+    The applied formula is the following
+
+    .. math::
+        D_AM(struct_1, struct_2) = \frac{\sum_{P\in P_A}d(P,P_B) + \sum_{P\in P_B}d(P,P_A) + N_G}{Card(P_A) + Card(P_B)}
+
+    Where, for any given point :math:`P = (x, y) ∈ R^2` and any finite subset
+    :math:`C ⊂ R^2`, we denote by :math:`Card(C)` the cardinal of C, and by :math:`d(P,C)` the
+    Manhattan distance from P to its nearest neighbor in C.
+    Where n distance (struct 1, struct 2) is the number of minimum distance handled between struct 1 and struct 2, and
+    n distance (struct 2, struct 1) the same with struct 2 and struct 1
+
+    Parameters
+    ----------
+    struct_1 :  SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    method: str
+        Method for distance calculation.
+    verbose :
+        True or False
+    cache :
+        CompressedCache passed through
+
+    Returns
+    -------
+        dist : float or None
+            The AptaMat distance between struct_1 and struct_2. None if structures are not folded
+    """
+
+    # Check input type before running calculation
+    s1 = deepcopy(struct_1)
+    s1 = _check_instance(s1)
+    s2 = deepcopy(struct_2)
+    s2 = _check_instance(s2)
+
+    if verbose:
+        print(f'Comparing :\n'
+              f'{struct_1.id}\n'
+              f'{struct_1.dotbracket}\n'
+              f'{struct_2.id}\n'
+              f'{struct_2.dotbracket}\n')
+
+    # Check length of compared structures
+    # Alignment is strongly recommended
+    if len(s1) != len(s2):
+        warnings.warn(
+            "Input structures with different sizes.\n "
+            "For accurate results, please perform sequence or structure alignment before. \n")
+
+    if s2 == s1:
+        return 0
+
+    elif s1.coordinates.size > 0 and s2.coordinates.size > 0:
+
+        # Template structure --> Compared structure
+        nearest_dist=[]
+        
+        struct2=[list(elt) for elt in struct_2.coordinates]
+        struct1=[list(elt) for elt in struct_1.coordinates]
+        if len(struct_2) >=200:
+            search_depth=30
+            for elt in struct1:
+                nearest_dist.append(calculation_core(elt, struct2, method, search_depth, verbose))
+        else:
+            for elt in struct1:
+                nearest_dist.append(calculation_core_naive(elt, struct2, method, verbose))
+        
+        d_TC = sum(nearest_dist)
+        
+        nearest_dist=[]
+        
+        # Compared structure --> Template structure
+        if len(struct_1) >=200:
+            search_depth=30
+            for elt in struct2:
+                nearest_dist.append(calculation_core(elt, struct1, method, search_depth, verbose))
+        else:
+            for elt in struct2:
+                nearest_dist.append(calculation_core_naive(elt, struct1, method, verbose))
+        
+        d_CT = sum(nearest_dist)
+
+        dist = (((d_CT + d_TC) + (s1.gap + s2.gap)) / (len(s1.coordinates) + len(s2.coordinates)))
+        if verbose:
+            print(f'({d_CT} + {d_TC}) + ({s1.gap} + {s2.gap})) / ({len(s1.coordinates)} + {len(s2.coordinates)})')
+        return dist
+
+    elif s1.coordinates.size == 0:
+        warnings.warn("Template structure is not folded.\n")
+        return None
+
+    else:
+        warnings.warn("Compared structure is not folded.\n")
+        return None
+
 
 def compute_distance(struct_1: object, struct_2: object, method, nb_pool: int, pool: object, speed:str, verbose=False):
     r"""
