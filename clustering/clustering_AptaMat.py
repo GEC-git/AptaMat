@@ -266,20 +266,20 @@ def affinity_visualization_GPU(precision=len(structure_list)):
             else:
                 tristogram[int(num*(precision-1)),i,j]=0
                 
-    canvas = scene.SceneCanvas(keys='interactive', bgcolor='k')
+    canvas = scene.SceneCanvas(keys='interactive', bgcolor='w')
     
     view = canvas.central_widget.add_view()
-    volume = scene.visuals.Volume(tristogram, parent=view.scene,cmap="hot")
+    volume = scene.visuals.Volume(tristogram, parent=view.scene,cmap="RdBu")
 
     view.camera = scene.cameras.TurntableCamera(parent=view.scene,up='z', fov=60)
     
     yax = scene.Axis(pos=[[-25, 0], [-25, precision]], tick_direction=(-1, 0),
-                     font_size=precision*10, axis_color='w', tick_color='w', text_color='w',
+                     font_size=precision*10, axis_color='k', tick_color='k', text_color='k',
                      parent=view.scene, axis_label="Y",axis_label_margin=precision*20,
                      major_tick_length=precision*5,minor_tick_length=precision*2,tick_label_margin=precision*10)
     
     xax = scene.Axis(pos=[[0, -25], [precision, -25]], tick_direction=(0,-1),
-                     font_size=precision*10, axis_color='w', tick_color='w', text_color='w',
+                     font_size=precision*10, axis_color='k', tick_color='k', text_color='k',
                      parent=view.scene, axis_label="X",axis_label_margin=precision*20,
                      major_tick_length=precision*5,minor_tick_length=precision*2,tick_label_margin=precision*10)
     
