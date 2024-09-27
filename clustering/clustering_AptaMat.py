@@ -17,6 +17,7 @@ from matplotlib.colors import ListedColormap
 import time
 import multiprocessing
 import vispy.plot as vp
+import vispy
 from vispy import scene
 from vispy import app
 
@@ -257,23 +258,39 @@ labels = aff_prop_clust_best.labels_
 labels = renumber_by_rank(labels)
 dict_label = build_label_dict(list(labels),family)
 
+#%%
+
 def affinity_visualization_GPU(precision=len(structure_list)):
-    tristogram = np.zeros((len(structure_list),len(structure_list), precision), dtype=np.uint8)
+    tristogram = np.zeros((precision, precision, precision), dtype=np.uint8)
     for i,elt in enumerate(affinity_matrix):
         for j,num in enumerate(elt):
-            tristogram[i,j,int(affinity_matrix[i,j]*(precision-1))]=affinity_matrix[i,j]*precision
-    canvas = scene.SceneCanvas(keys='interactive', bgcolor='w')
+            if i<=j:
+                tristogram[int(num*(precision-1)),i,j]=num*100
+            else:
+                tristogram[int(num*(precision-1)),i,j]=0
+                
+    canvas = scene.SceneCanvas(keys='interactive', bgcolor='k')
     
     view = canvas.central_widget.add_view()
-    volume = scene.visuals.Volume(tristogram, parent=view.scene)#,cmap="coolwarm")
+    volume = scene.visuals.Volume(tristogram, parent=view.scene,cmap="hot")
 
     view.camera = scene.cameras.TurntableCamera(parent=view.scene,up='z', fov=60)
-
-    axis = scene.visuals.XYZAxis(parent=view.scene)
+    
+    yax = scene.Axis(pos=[[-25, 0], [-25, precision]], tick_direction=(-1, 0),
+                     font_size=precision*10, axis_color='w', tick_color='w', text_color='w',
+                     parent=view.scene, axis_label="Y",axis_label_margin=precision*20,
+                     major_tick_length=precision*5,minor_tick_length=precision*2,tick_label_margin=precision*10)
+    
+    xax = scene.Axis(pos=[[0, -25], [precision, -25]], tick_direction=(0,-1),
+                     font_size=precision*10, axis_color='w', tick_color='w', text_color='w',
+                     parent=view.scene, axis_label="X",axis_label_margin=precision*20,
+                     major_tick_length=precision*5,minor_tick_length=precision*2,tick_label_margin=precision*10)
+    
     if __name__ == '__main__':
         canvas.show()
         app.run()
-        
+
+#%%
 def affinity_visualization_CPU():
     
     fig = plt.figure()
@@ -303,7 +320,7 @@ def affinity_visualization_CPU():
     ax.bar3d(xpos, ypos, zpos, dx, dy, dz, color=color_values)
     
     plt.show()
-
+#%%
 def Heatmap():
 ### Heatmap setup
     df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
@@ -339,5 +356,5 @@ def Heatmap():
     cax = plt.axes([0.98, 0.295, 0.02, 0.4])
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
-
+#%%
 affinity_visualization_GPU()
