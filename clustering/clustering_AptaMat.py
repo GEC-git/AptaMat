@@ -1,14 +1,10 @@
-#! /usr/bin/env python3
-
-### Path to AptaMat script must be updated
+### Path to AptaFast script must be updated
 import sys
-sys.path.insert(1, "/home/bcuvillier/Documents/AptaMat/aptamat")
 sys.path.insert(1, "/home/bcuvillier/Documents/AptaMat/aptafast")
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, adjusted_rand_score
-import AptaMat as AptaMat
 import AptaFast as AF
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -16,15 +12,15 @@ import matplotlib.colors as colors
 from matplotlib.colors import ListedColormap
 import time
 import multiprocessing
-import vispy.plot as vp
-import vispy
 from vispy import scene
 from vispy import app
 
 ### Structure file to be used
 structure_file = 'dataset_family_dotbracket.dat'
 ### Change CORE value according to computer CPU available
-CORE = 40
+print("This is a multiprocessed algorithm.")
+print("You have",multiprocessing.cpu_count(),"cores in your CPU.")
+CORE = int(input("Please input the number of cores you want to use:"))
 
 
 def build_label_dict(labels, family):
@@ -207,8 +203,8 @@ with open(structure_file, 'r') as file:
                 except KeyError:
                     family[content[0]] = 1
 
-            if AptaMat.Dotbracket.is_dotbracket(content[3]):
-                structure = AptaMat.SecondaryStructure(dotbracket=content[3], sequence=content[2],
+            if AF.Dotbracket.is_dotbracket(content[3]):
+                structure = AF.SecondaryStructure(dotbracket=content[3], sequence=content[2],
                                                        id=content[1].split('.')[0])
                 # AptaMat._create_fasta(structure)
                 structure_list.append(structure)
@@ -219,12 +215,13 @@ N = len(structure_list)
 ### Calculate AptaMat distance for each
 ### Each structure comparison result in a tuple (struct1, struct2, AptaMat distance)
 
+#AF.compute_distance(struct_1, struct_2, method, nb_pool, pool, speed)
 start = time.time()
 print("Job started",time.asctime())
 results = []
 pool = multiprocessing.Pool(CORE)
-for result in pool.starmap(AptaMat.compute_distance,
-                           [(struct1, struct2,"cityblock") for struct1 in structure_list for struct2 in structure_list]):
+for result in pool.starmap(AF.compute_distance_clustering,
+                           [(struct1, struct2,"cityblock","slow") for struct1 in structure_list for struct2 in structure_list]):
     results.append(result)
 end = time.time()
 print("Job finished",time.asctime())
@@ -258,7 +255,7 @@ labels = aff_prop_clust_best.labels_
 labels = renumber_by_rank(labels)
 dict_label = build_label_dict(list(labels),family)
 
-#%%
+
 
 def affinity_visualization_GPU(precision=len(structure_list)):
     tristogram = np.zeros((precision, precision, precision), dtype=np.uint8)
@@ -290,7 +287,7 @@ def affinity_visualization_GPU(precision=len(structure_list)):
         canvas.show()
         app.run()
 
-#%%
+
 def affinity_visualization_CPU():
     
     fig = plt.figure()
@@ -320,7 +317,7 @@ def affinity_visualization_CPU():
     ax.bar3d(xpos, ypos, zpos, dx, dy, dz, color=color_values)
     
     plt.show()
-#%%
+
 def Heatmap():
 ### Heatmap setup
     df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
@@ -356,5 +353,5 @@ def Heatmap():
     cax = plt.axes([0.98, 0.295, 0.02, 0.4])
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
-#%%
+
 affinity_visualization_GPU()
