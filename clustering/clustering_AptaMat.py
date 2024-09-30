@@ -1,6 +1,10 @@
-### Path to AptaFast script must be updated
 import sys
-sys.path.insert(1, "/home/bcuvillier/Documents/AptaMat/aptafast")
+import os
+
+current_dir = os.path.dirname(__file__)
+root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
+sys.path.append(root_path)
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
@@ -14,13 +18,9 @@ import time
 import multiprocessing
 from vispy import scene
 from vispy import app
+import argparse
 
-### Structure file to be used
-structure_file = 'dataset_family_dotbracket.dat'
-### Change CORE value according to computer CPU available
-print("This is a multiprocessed algorithm.")
-print("You have",multiprocessing.cpu_count(),"cores in your CPU.")
-CORE = int(input("Please input the number of cores you want to use:"))
+
 
 
 def build_label_dict(labels, family):
@@ -93,7 +93,7 @@ def renumber_by_rank(labels):
     return new_labels
 
 
-def affinity_propagation(distance_matrix, standard, sigma=np.arange(1, 10, 0.1)):
+def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 0.1)):
     """
     Affinity propagation clustering compute over the selected sigma value range and calculation of Calinski index,
     silhouette score and clustering accuracy.
@@ -127,10 +127,12 @@ def affinity_propagation(distance_matrix, standard, sigma=np.arange(1, 10, 0.1))
     """
 
     ### Acquire expected clustering labels
-    standard_labels = []
-    cn = 0
-    for v in standard:#.values():
-        standard_labels.append(cn * v)
+    if standard is not None:
+        standard_labels = []
+        for v in standard:
+            standard_labels.append(v)
+    else:
+        standard_labels=[i for i in range(len(distance_matrix))]
 
     if isinstance(sigma, (list, tuple, np.ndarray)):
         sigma_iter = sigma
@@ -187,77 +189,70 @@ def affinity_propagation(distance_matrix, standard, sigma=np.arange(1, 10, 0.1))
 
 
 ### Initialize dataset
-structure_list = []
-values = []
-family = {}
-with open(structure_file, 'r') as file:
-    for line in file:
-        content = line.strip().split()
-        if content:
-            # print(line)
-            if line.startswith('FAMILY'):
-                pass
-            else:
-                try:
-                    family[content[0]] += 1
-                except KeyError:
-                    family[content[0]] = 1
-
-            if AF.Dotbracket.is_dotbracket(content[3]):
-                structure = AF.SecondaryStructure(dotbracket=content[3], sequence=content[2],
-                                                       id=content[1].split('.')[0])
-                # AptaMat._create_fasta(structure)
-                structure_list.append(structure)
-
-### N for matrix size
-N = len(structure_list)
-
-### Calculate AptaMat distance for each
-### Each structure comparison result in a tuple (struct1, struct2, AptaMat distance)
-
-#AF.compute_distance(struct_1, struct_2, method, nb_pool, pool, speed)
-start = time.time()
-print("Job started",time.asctime())
-results = []
-pool = multiprocessing.Pool(CORE)
-for result in pool.starmap(AF.compute_distance_clustering,
-                           [(struct1, struct2,"cityblock","slow") for struct1 in structure_list for struct2 in structure_list]):
-    results.append(result)
-end = time.time()
-print("Job finished",time.asctime())
-print("Time elapsed = ", time.strftime("%H:%M:%S", time.gmtime(end-start)))
-pool.terminate()
-
-### Build distance matrix using AptaMat distance in 'results' tuples
-matrix_element = []
-for i in results:
-    matrix_element.append(float(i))
+def initialize_dataset(structure_file):
+    structure_list = []
+    values = []
+    family = {}
+    with open(structure_file, 'r') as file:
+        for line in file:
+            content = line.strip().split()
+            if content:
+                # print(line)
+                if line.startswith('FAMILY'):
+                    pass
+                else:
+                    try:
+                        family[content[0]] += 1
+                    except KeyError:
+                        family[content[0]] = 1
     
-dist_matrix = np.array(matrix_element).reshape(N, N)
+                if AF.Dotbracket.is_dotbracket(content[3]):
+                    structure = AF.SecondaryStructure(dotbracket=content[3], sequence=content[2],
+                                                           id=content[1].split('.')[0])
+                    # AptaMat._create_fasta(structure)
+                    structure_list.append(structure)
+    return structure_list,family
 
 
-### Acquire data from Affinity Propagation clustering
-sigma_range = np.arange(5, 34.1, 0.1)
-affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-    affinity_propagation(dist_matrix, np.arange(5, 34.1, 0.1)) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
+def calculation(structure_list,CORE,speed):
+    
+    ### N for matrix size
+    N = len(structure_list)
+    
+    ### Calculate AptaMat distance for each
+    ### Each structure comparison result in a tuple (struct1, struct2, AptaMat distance)
+    
+    #AF.compute_distance(struct_1, struct_2, method, nb_pool, pool, speed)
+    start = time.time()
+    print("Job started",time.asctime())
+    results = []
+    pool = multiprocessing.Pool(CORE)
+    for result in pool.starmap(AF.compute_distance_clustering,
+                               [(struct1, struct2,"cityblock",speed) for struct1 in structure_list for struct2 in structure_list]):
+        results.append(result)
+    end = time.time()
+    print("Job finished",time.asctime())
+    print("Time elapsed = ", time.strftime("%H:%M:%S", time.gmtime(end-start)))
+    pool.terminate()
+    
+    ### Build distance matrix using AptaMat distance in 'results' tuples
+    matrix_element = []
+    for i in results:
+        matrix_element.append(float(i))
+        
+    dist_matrix = np.array(matrix_element).reshape(N, N)
+    
+    
+    ### Acquire data from Affinity Propagation clustering
+    sigma_range = np.arange(5, 34.1, 0.1)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
+        affinity_propagation(dist_matrix, np.arange(5, 34.1, 0.1)) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
+
+    return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
 
-### Print all clustering calculated and associated sigma value
-# for s, sub in zip(sigma_range, sub_aff_prop):
-#    print(f"sigma {s} : ", sub[:], '\n')
-
-
-### Print Optimal values obtained from affinity propagation clustering
-print('Optimal Calinski Harabasz index =', aff_prop_calinski_best)
-print("Optimal Silhouette score =", silhouette_best)
-print('Optimal Sigma =', sigma_best)
-labels = aff_prop_clust_best.labels_
-labels = renumber_by_rank(labels)
-dict_label = build_label_dict(list(labels),family)
-
-
-
-def affinity_visualization_GPU(precision=len(structure_list)):
+def affinity_visualization_GPU(affinity_matrix, structure_list):
+    precision=len(structure_list)
     tristogram = np.zeros((precision, precision, precision), dtype=np.uint8)
     for i,elt in enumerate(affinity_matrix):
         for j,num in enumerate(elt):
@@ -288,7 +283,7 @@ def affinity_visualization_GPU(precision=len(structure_list)):
         app.run()
 
 
-def affinity_visualization_CPU():
+def affinity_visualization_CPU(affinity_matrix,structure_list):
     
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -318,7 +313,7 @@ def affinity_visualization_CPU():
     
     plt.show()
 
-def Heatmap():
+def heatmap(family, labels, dict_label):
 ### Heatmap setup
     df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
     s = df.sum()
@@ -354,4 +349,65 @@ def Heatmap():
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
 
-affinity_visualization_GPU()
+
+def main():
+    parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaFast to determine"
+                                     "a distribution of structures inputed from a file.")
+    parser.add_argument('-fp',
+                        '--filepath',
+                        type=str,
+                        nargs='+',
+                        help='Input file containing structures to be clustered.')
+    
+    parser.add_argument('-speed', 
+                        default='slow',
+                        help="Using greedy or non greedy depth calculation",
+                        nargs='?',
+                        choices=['slow','quick'])
+    
+    parser.add_argument('-visu',
+                        default=None,
+                        help="Using GPU or CPU accelerated affinity_matrix visualization. Default : None",
+                        nargs='?',
+                        choices=['GPU','CPU'])
+    
+    parser.add_argument('-heatmap',
+                        default=True,
+                        help="Displaying heatmap at the end, default = True",
+                        type=bool)
+    
+    args = parser.parse_args()
+    
+    ### Structure file to be used
+    structure_file=""
+    for elt in args.filepath:
+        structure_file+=str(elt)
+    
+    print("This is a multiprocessed algorithm.")
+    print("You have",multiprocessing.cpu_count(),"cores in your CPU.")
+    CORE = int(input("Please input the number of cores you want to use:"))
+    
+    structure_list,family=initialize_dataset(structure_file)
+    
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed)
+    
+    
+    ### Print Optimal values obtained from affinity propagation clustering
+    print('Optimal Calinski Harabasz index =', aff_prop_calinski_best)
+    print("Optimal Silhouette score =", silhouette_best)
+    print('Optimal Sigma =', sigma_best)
+    labels = aff_prop_clust_best.labels_
+    labels = renumber_by_rank(labels)
+    dict_label = build_label_dict(list(labels),family)
+    
+    if args.visu is not None:
+        if args.visu=="GPU":
+            affinity_visualization_GPU(affinity_matrix, structure_list)
+        if args.visu=="CPU":
+            affinity_visualization_CPU(affinity_matrix, structure_list)
+    
+    if bool(args.heatmap):
+        heatmap(family, labels, dict_label)
+    
+if __name__ == '__main__':
+    main()
