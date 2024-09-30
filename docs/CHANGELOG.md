@@ -347,7 +347,14 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 - Adapted AptaFast to work with the clustering algorithm.
     - Clustering is two times faster.
 
+
+- Finished cleaning up the clustering algorithm.
+
+- `clustering_AptaMat.py` is to be used in the command line.
+
 #### FUTURE CHANGES AND IDEAS
+
+- Adding a new way to visualize data with the clustering algorithm because the affinity matrix is very big and not very readable.
 
 - Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
     - First, naive implementation by testing all the possibilities.
