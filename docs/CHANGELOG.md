@@ -347,6 +347,14 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 - Adapted AptaFast to work with the clustering algorithm.
     - Clustering is two times faster.
 
+#### FUTURE CHANGES AND IDEAS
+
+- Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
+    - First, naive implementation by testing all the possibilities.
+    - Then possible algorithmic optimization.
+    - In the end, maybe using a genetic algorithm.
+
+### WEEK 5 - 30/09/2024 -> 06/10/2024
 
 - Finished cleaning up the clustering algorithm.
 
@@ -360,3 +368,4 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - First, naive implementation by testing all the possibilities.
     - Then possible algorithmic optimization.
     - In the end, maybe using a genetic algorithm.
+    
