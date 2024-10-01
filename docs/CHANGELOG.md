@@ -360,6 +360,8 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - `clustering_AptaMat.py` is to be used in the command line.
 
+- Work in progress : adding a way to visualize errors in the clustering to prepare for alignement.
+
 #### FUTURE CHANGES AND IDEAS
 
 - Adding a new way to visualize data with the clustering algorithm because the affinity matrix is very big and not very readable.

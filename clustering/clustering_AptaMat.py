@@ -191,7 +191,6 @@ def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 
 ### Initialize dataset
 def initialize_dataset(structure_file):
     structure_list = []
-    values = []
     family = {}
     with open(structure_file, 'r') as file:
         for line in file:
@@ -238,15 +237,17 @@ def calculation(structure_list,CORE,speed):
     ### Build distance matrix using AptaMat distance in 'results' tuples
     matrix_element = []
     for i in results:
-        matrix_element.append(float(i))
+        if i == None:
+            matrix_element.append(0)
+        else:
+            matrix_element.append(float(i))
         
     dist_matrix = np.array(matrix_element).reshape(N, N)
     
     
     ### Acquire data from Affinity Propagation clustering
-    sigma_range = np.arange(5, 34.1, 0.1)
     affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-        affinity_propagation(dist_matrix, np.arange(5, 34.1, 0.1)) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
+        affinity_propagation(dist_matrix) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
 
     return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
@@ -315,6 +316,7 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
+    print(family, labels, dict_label)
     df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
     s = df.sum()
     df = df[s.sort_values(ascending=False).index[:]]
@@ -322,10 +324,9 @@ def heatmap(family, labels, dict_label):
     family_percent = family_np / family_np.sum(axis=0) * 100
     family_np_t = np.transpose(family_np)
     family_p_t = np.transpose(family_percent)
-    
     clean_labels = [i.replace('_', ' ') for i in df.columns]
     
-    binary_m = cm.get_cmap('jet')
+    binary_m = plt.get_cmap('jet')
     colormap = ListedColormap(binary_m(np.linspace(0.2, 1, 100)))
     colormap.set_under(color='white')
     fig, ax = plt.subplots(figsize=(9, 9))
@@ -349,6 +350,36 @@ def heatmap(family, labels, dict_label):
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
 
+def error_visualization(labels, structure_list, family): #WIP
+    def Y(x): return x[1]
+    
+    maxi=0
+    diction={}
+    for elt in labels.values():
+        for item in elt.items():
+            if item[0] >= maxi:
+                maxi=item[0]
+            if item[0] not in diction:
+                diction[item[0]]=item[1]
+            else:
+                diction[item[0]]+=item[1]
+
+    x=[i for i in range(maxi+1)]
+
+    y=[]
+    for i in range(len(diction)):
+        y.append(diction[i])
+        
+    family_list=[]
+    for elt in family.items():
+        family_list.append((elt[0],elt[1]))
+
+        
+    y1b=sorted(family_list, key=lambda pt : Y(pt),reverse=True)
+    y1=[elt[1] for elt in y1b]
+    plt.plot(x,y,color="red")
+    plt.plot(x,y1,color="blue")
+    plt.show()
 
 def main():
     parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaFast to determine"
@@ -371,9 +402,9 @@ def main():
                         nargs='?',
                         choices=['GPU','CPU'])
     
-    parser.add_argument('-heatmap',
+    parser.add_argument('-errvis',
                         default=True,
-                        help="Displaying heatmap at the end, default = True",
+                        help="Displaying error visualizator and heatmap at the end, default = True",
                         type=bool)
     
     args = parser.parse_args()
@@ -406,7 +437,8 @@ def main():
         if args.visu=="CPU":
             affinity_visualization_CPU(affinity_matrix, structure_list)
     
-    if bool(args.heatmap):
+    if bool(args.errvis):
+        error_visualization(dict_label, structure_list, family)
         heatmap(family, labels, dict_label)
     
 if __name__ == '__main__':
