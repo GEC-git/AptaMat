@@ -316,7 +316,6 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
-    print(family, labels, dict_label)
     df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
     s = df.sum()
     df = df[s.sort_values(ascending=False).index[:]]
@@ -350,37 +349,6 @@ def heatmap(family, labels, dict_label):
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
 
-def error_visualization(labels, structure_list, family): #WIP
-    def Y(x): return x[1]
-    
-    maxi=0
-    diction={}
-    for elt in labels.values():
-        for item in elt.items():
-            if item[0] >= maxi:
-                maxi=item[0]
-            if item[0] not in diction:
-                diction[item[0]]=item[1]
-            else:
-                diction[item[0]]+=item[1]
-
-    x=[i for i in range(maxi+1)]
-
-    y=[]
-    for i in range(len(diction)):
-        y.append(diction[i])
-        
-    family_list=[]
-    for elt in family.items():
-        family_list.append((elt[0],elt[1]))
-
-        
-    y1b=sorted(family_list, key=lambda pt : Y(pt),reverse=True)
-    y1=[elt[1] for elt in y1b]
-    plt.plot(x,y,color="red")
-    plt.plot(x,y1,color="blue")
-    plt.show()
-
 def main():
     parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaFast to determine"
                                      "a distribution of structures inputed from a file.")
@@ -402,10 +370,10 @@ def main():
                         nargs='?',
                         choices=['GPU','CPU'])
     
-    parser.add_argument('-errvis',
-                        default=True,
-                        help="Displaying error visualizator and heatmap at the end, default = True",
-                        type=bool)
+    parser.add_argument('-cv',
+                        '--cluster_visualization',
+                        help="Displaying error visualizator and heatmap at the end",
+                        action="store_true")
     
     args = parser.parse_args()
     
@@ -437,8 +405,7 @@ def main():
         if args.visu=="CPU":
             affinity_visualization_CPU(affinity_matrix, structure_list)
     
-    if bool(args.errvis):
-        error_visualization(dict_label, structure_list, family)
+    if bool(args.cluster_visualization):
         heatmap(family, labels, dict_label)
     
 if __name__ == '__main__':
