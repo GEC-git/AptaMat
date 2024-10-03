@@ -331,7 +331,7 @@ def heatmap(family, labels, dict_label):
     binary_m = plt.get_cmap('jet')
     colormap = ListedColormap(binary_m(np.linspace(0.2, 1, 100)))
     colormap.set_under(color='white')
-    fig, ax = plt.subplots(figsize=(9, 9))
+    fig, ax = plt.subplots()
     im = ax.imshow(family_p_t, cmap=colormap, vmin=0.9)
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
     # ax.set_yticks(np.arange(len(rfam)), labels=rfam)
@@ -386,6 +386,10 @@ def main():
                         help="Depth of clustering calculation.")
     
     args = parser.parse_args()
+    if isinstance(args.depth,list):
+        depth=args.depth[0]
+    else:
+        depth=args.depth
     ### Structure file to be used
     structure_file=""
     for elt in args.filepath:
@@ -397,7 +401,7 @@ def main():
     
     structure_list,family=initialize_dataset(structure_file)
     
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed,args.depth[0])
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed,depth)
     
     
     ### Print Optimal values obtained from affinity propagation clustering
