@@ -213,7 +213,7 @@ def initialize_dataset(structure_file):
     return structure_list,family
 
 
-def calculation(structure_list,CORE,speed):
+def calculation(structure_list,CORE,speed,depth):
     
     ### N for matrix size
     N = len(structure_list)
@@ -247,7 +247,7 @@ def calculation(structure_list,CORE,speed):
     
     ### Acquire data from Affinity Propagation clustering
     affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-        affinity_propagation(dist_matrix) # LENGTH HAVE TO BE A MATCH WITH NB OF STRUCT
+        affinity_propagation(dist_matrix, sigma=np.arange(1, depth, 0.1)) 
 
     return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
@@ -316,10 +316,13 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
-    df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
+    #df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
+    df=pd.DataFrame(dict_label)
     s = df.sum()
     df = df[s.sort_values(ascending=False).index[:]]
     family_np = df.to_numpy()
+    family_np=np.nan_to_num(family_np)
+    
     family_percent = family_np / family_np.sum(axis=0) * 100
     family_np_t = np.transpose(family_np)
     family_p_t = np.transpose(family_percent)
@@ -332,9 +335,9 @@ def heatmap(family, labels, dict_label):
     im = ax.imshow(family_p_t, cmap=colormap, vmin=0.9)
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
     # ax.set_yticks(np.arange(len(rfam)), labels=rfam)
-    ax.set_xticks(np.arange(0, 18), labels=list(np.arange(0, 18)))
+    ax.set_xticks(np.arange(0, len(df)), labels=list(np.arange(0, len(df))))
     for i in range(len(df.columns)):
-        for j in np.arange(0, 18):
+        for j in np.arange(0, len(df)):
             if round(family_p_t[i, j]) == 0:
                 pass
             elif round(family_p_t[i, j]) < 75:
@@ -344,7 +347,7 @@ def heatmap(family, labels, dict_label):
                 text = ax.text(j, i, family_np_t[i, j],
                                ha="center", va="center", color="w")
     
-    plt.text(20, 1, 'Occupancy (%)', fontsize=14)
+    plt.text(len(df)+1, 1, 'Occupancy (%)', fontsize=14)
     cax = plt.axes([0.98, 0.295, 0.02, 0.4])
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
@@ -375,8 +378,14 @@ def main():
                         help="Displaying error visualizator and heatmap at the end",
                         action="store_true")
     
-    args = parser.parse_args()
+    parser.add_argument('-d',
+                        '--depth',
+                        type=int,
+                        default=10,
+                        nargs='+',
+                        help="Depth of clustering calculation.")
     
+    args = parser.parse_args()
     ### Structure file to be used
     structure_file=""
     for elt in args.filepath:
@@ -388,7 +397,7 @@ def main():
     
     structure_list,family=initialize_dataset(structure_file)
     
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed,args.depth[0])
     
     
     ### Print Optimal values obtained from affinity propagation clustering
@@ -405,7 +414,7 @@ def main():
         if args.visu=="CPU":
             affinity_visualization_CPU(affinity_matrix, structure_list)
     
-    if bool(args.cluster_visualization):
+    if args.cluster_visualization:
         heatmap(family, labels, dict_label)
     
 if __name__ == '__main__':
