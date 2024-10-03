@@ -362,9 +362,13 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Work in progress : adding a way to visualize errors in the clustering to prepare for alignement.
 
-- Finished fixing clustering algorithm.
-
 - Added a depth argument to control the number of times the affinity propagation is calculated with recursive parameters.
+
+- Finished cleaning and fixing the clustering algorithm.
+
+**NEW TESTS WITH NEW DATASETS**
+
+- Coming soon...
 
 #### FUTURE CHANGES AND IDEAS
 
