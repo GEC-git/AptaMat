@@ -150,7 +150,7 @@ class Parse:
 
 class Dotbracket:
     """Create a DotBracket object"""
-    gap_penalty_matrix = [1, 1]
+    gap_penalty_matrix = [0,0]
 
     def __init__(self, dotbracket: str, gap_penalty=None):
         self.dotbracket = None
@@ -181,15 +181,18 @@ class Dotbracket:
         self.gap = self.gap_penalty(gap_penalty)
 
     def gap_penalty(self, gap_penalty):
-        penalty = 0
-        for i, c in enumerate(self.dotbracket):
-            if c == '-' and self.dotbracket[i - 1] == '-':
-                penalty += gap_penalty[1]
-            elif c == '-':
-                penalty += gap_penalty[0]
-            else:
-                pass
-        return penalty
+        if not gap_penalty[0]:
+            return 0
+        else:
+            return self.dotbracket.count("-")*gap_penalty[0]
+        # for i, c in enumerate(self.dotbracket):
+        #     if c == '-' and self.dotbracket[i - 1] == '-':
+        #         penalty += gap_penalty[1]
+        #     elif c == '-':
+        #         penalty += gap_penalty[0]
+        #     else:
+        #         pass
+
 
     @staticmethod
     def is_dotbracket(dotbracket):
