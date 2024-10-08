@@ -414,7 +414,7 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 |METHOD|RANDOM|RANDOM|START|START|END|END|
 |:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
-|DEPTH|10|100|10|100|10|100|
+|PENALTY/DEPTH|10|100|10|100|10|100|
 |0|!["rdgap_d10_0"](clustering/rdgap_d10_0.png)|!["rdgap_d100_0"](clustering/rdgap_d100_0.png)|!["stgap_d10_0"](clustering/stgap_d10_0.png)|!["stgap_d100_0"](clustering/stgap_d100_0.png)|!["endgap_d10_0"](clustering/endgap_d10_0.png)|!["endgap_d100_0"](clustering/endgap_d100_0.png)|
 |1|!["rdgap_d10_1"](clustering/rdgap_d10_1.png)|!["rdgap_d100_1"](clustering/rdgap_d100_1.png)|!["stgap_d10_1"](clustering/stgap_d10_1.png)|!["stgap_d100_1"](clustering/stgap_d100_1.png)|!["endgap_d10_1"](clustering/endgap_d10_1.png)|!["endgap_d100_1"](clustering/endgap_d100_1.png)|
 |10|!["rdgap_d10_10"](clustering/rdgap_d10_10.png)|!["rdgap_d100_10"](clustering/rdgap_d100_10.png)|!["stgap_d10_10"](clustering/stgap_d10_10.png)|!["stgap_d100_10"](clustering/stgap_d100_10.png)|!["endgap_d10_10"](clustering/endgap_d10_10.png)|!["endgap_d100_10"](clustering/endgap_d100_10.png)|
