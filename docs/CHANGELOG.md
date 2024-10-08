@@ -374,7 +374,7 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     - Then possible algorithmic optimization.
     - In the end, maybe using a genetic algorithm.
     
-### WEEK 5 - 07/10/2024 -> 13/10/2024    
+### WEEK 6 - 07/10/2024 -> 13/10/2024    
 
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION**
 
