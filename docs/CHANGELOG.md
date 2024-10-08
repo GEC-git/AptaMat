@@ -366,16 +366,59 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Finished cleaning and fixing the clustering algorithm.
 
-**NEW TESTS WITH NEW DATASETS**
-
-- Coming soon...
 
 #### FUTURE CHANGES AND IDEAS
-
-- Adding a new way to visualize data with the clustering algorithm because the affinity matrix is very big and not very readable.
 
 - Implementing an alignement tool to minimize the AptaMat distance and making AptaMat more independant.
     - First, naive implementation by testing all the possibilities.
     - Then possible algorithmic optimization.
     - In the end, maybe using a genetic algorithm.
     
+### WEEK 5 - 07/10/2024 -> 13/10/2024    
+
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION**
+
+- We have conducted tests to know whether adding a gap penalty is a good strategy for future developments.
+
+- First, let's see the dataset used to make all these tests:
+    - There were 4 families of structures used from the bpRNA database.
+        - tmRNA
+        - CRW
+        - RFAM
+        - SRP
+    - each of these families had 29 structures for an affinity_matrix of size (29*4)^2 = 13456.
+        - There is enough structures and families to have significant results and not too many to have a relatively small calculation time (1min40s average)
+        
+- *Results*:
+    - We tested three naive gap placements with 7 gap penalty values: 0, 1, 5, 10, 100, 500 and 10000.
+        - Random gap placement, gaps are placed randomly.
+        - Starting gap placements, all the gaps are placed at the start of the structure.
+        - Ending gap placements, all the gaps are placed at the end of the structure.
+    - For the random gap placements, we ran the algorithm three times on each penalty values except for 10000.
+    - We ran all the simulations with two depths values : 10 (default) and 100.
+    
+*You can see the full results and the raw database in the repository in clustering/tests/*
+
+- First, let's see the baseline results without gaps:
+
+|DEPTH|10|100|
+|:-----:|:-----:|:-----:|
+|Results|!["nogap_d10"](clustering/nogap_d10.png)|!["nogap_d100"](clustering/nogap_d100.png)|
+
+- We can immediatly see that increasing the depth refines the precision and inverses the dispersion.
+    - BUT it also exacerbates the false positives or the underlying tendencies of the dataset regarding the AptaMat distance.
+
+- We need to be careful when using a bigger depth, that's why the default is set to 10.
+
+- Results viewed with ascending gap penalty:
+
+|METHOD|RANDOM|RANDOM|START|START|END|END|
+|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+|DEPTH|10|100|10|100|10|100|
+|0|!["rdgap_d10_0"](clustering/rdgap_d10_0.png)|!["rdgap_d100_0"](clustering/rdgap_d100_0.png)|!["stgap_d10_0"](clustering/stgap_d10_0.png)|!["stgap_d100_0"](clustering/stgap_d100_0.png)|!["endgap_d10_0"](clustering/endgap_d10_0.png)|!["endgap_d100_0"](clustering/endgap_d100_0.png)|
+|1|!["rdgap_d10_1"](clustering/rdgap_d10_1.png)|!["rdgap_d100_1"](clustering/rdgap_d100_1.png)|!["stgap_d10_1"](clustering/stgap_d10_1.png)|!["stgap_d100_1"](clustering/stgap_d100_1.png)|!["endgap_d10_1"](clustering/endgap_d10_1.png)|!["endgap_d100_1"](clustering/endgap_d100_1.png)|
+|10|!["rdgap_d10_10"](clustering/rdgap_d10_10.png)|!["rdgap_d100_10"](clustering/rdgap_d100_10.png)|!["stgap_d10_10"](clustering/stgap_d10_10.png)|!["stgap_d100_10"](clustering/stgap_d100_10.png)|!["endgap_d10_10"](clustering/endgap_d10_10.png)|!["endgap_d100_10"](clustering/endgap_d100_10.png)|
+|500|!["rdgap_d10_500"](clustering/rdgap_d10_500.png)|!["rdgap_d100_500"](clustering/rdgap_d100_500.png)|!["stgap_d10_500"](clustering/stgap_d10_500.png)|!["stgap_d100_500"](clustering/stgap_d100_500.png)|!["endgap_d10_500"](clustering/endgap_d10_500.png)|!["endgap_d100_500"](clustering/endgap_d100_500.png)|
+
+
+#### FUTURE CHANGES AND IDEAS
