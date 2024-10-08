@@ -150,7 +150,7 @@ class Parse:
 
 class Dotbracket:
     """Create a DotBracket object"""
-    gap_penalty_matrix = [0,0]
+    gap_penalty_matrix = [500,500]
 
     def __init__(self, dotbracket: str, gap_penalty=None):
         self.dotbracket = None
