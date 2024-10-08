@@ -19,7 +19,7 @@ import multiprocessing
 from vispy import scene
 from vispy import app
 import argparse
-
+from random import randint
 
 
 
@@ -221,7 +221,20 @@ def initialize_dataset(structure_file):
     return structure_list,family
 
 def align(struct,max_size):
-    return struct+(max_size-len(struct))*"-"
+    # fill=max_size-len(struct)
+    # struct_int=list(struct)
+    # while fill!=0:
+    #     rd=randint(0,len(struct_int))
+    #     if rd==len(struct_int):
+    #         struct_int.append("-")
+    #     else:
+    #         struct_int.insert(rd,"-")
+    #     fill-=1
+    # res=""
+    # for elt in struct_int:
+    #     res+=elt
+    # return res
+    return struct
     
 
 def calculation(structure_list,CORE,speed,depth):
