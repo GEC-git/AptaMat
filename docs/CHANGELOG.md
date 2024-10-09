@@ -422,13 +422,22 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - What can we see ?
 
-- Adding a gap penalty might be useless as it increases the number of clusters and dispersion, and decreases the precision en reliability of the results.
+- Adding a gap penalty might be useless as it increases the number of clusters and dispersion, and decreases the precision and reliability of the results.
 - It was expected to see that adding gaps with no penalty at the end of the structures yields no difference with the no gaps tests.
 - It is interesting to see that placing gaps might cancel false positives in the clustering (like the small cluster of bpRNA SRP at the first column almost disappearing at the cell random_gaps_depth=100_penalty=1 and completely disappearing at the cost of bigger dispersion at the cell random_gaps_depth=100_penalty=0).
 
 - So, there is a big interest in using gaps for alignment but the penalty added might be useless.
 
 
+**Strategy to make a good alignment algorithm ?**
+
+- Brute force : optimal but really intensive and not a good idea for very big structures.
+
+- Dynamic programming : good for solving sub problems but not optimal.
+
+- Genetic algorithm : training an algorithm for placing the gaps that is good with all types of structures.
+
+- Pattern recognition : might be the best of all solutions.
 
 #### FUTURE CHANGES AND IDEAS
 
