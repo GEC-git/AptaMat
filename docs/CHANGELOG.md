@@ -420,5 +420,16 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 |10|!["rdgap_d10_10"](clustering/rdgap_d10_10.png)|!["rdgap_d100_10"](clustering/rdgap_d100_10.png)|!["stgap_d10_10"](clustering/stgap_d10_10.png)|!["stgap_d100_10"](clustering/stgap_d100_10.png)|!["endgap_d10_10"](clustering/endgap_d10_10.png)|!["endgap_d100_10"](clustering/endgap_d100_10.png)|
 |500|!["rdgap_d10_500"](clustering/rdgap_d10_500.png)|!["rdgap_d100_500"](clustering/rdgap_d100_500.png)|!["stgap_d10_500"](clustering/stgap_d10_500.png)|!["stgap_d100_500"](clustering/stgap_d100_500.png)|!["endgap_d10_500"](clustering/endgap_d10_500.png)|!["endgap_d100_500"](clustering/endgap_d100_500.png)|
 
+- What can we see ?
+
+- Adding a gap penalty might be useless as it increases the number of clusters and dispersion, and decreases the precision en reliability of the results.
+- It was expected to see that adding gaps with no penalty at the end of the structures yields no difference with the no gaps tests.
+- It is interesting to see that placing gaps might cancel false positives in the clustering (like the small cluster of bpRNA SRP at the first column almost disappearing at the cell random_gaps_depth=100_penalty=1 and completely disappearing at the cost of bigger dispersion at the cell random_gaps_depth=100_penalty=0).
+
+- So, there is a big interest in using gaps for alignment but the penalty added might be useless.
+
+
 
 #### FUTURE CHANGES AND IDEAS
+
+- Making an alignment algorithm that minimize the aptamat distance.
