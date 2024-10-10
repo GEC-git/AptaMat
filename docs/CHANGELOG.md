@@ -376,6 +376,12 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
     
 ### WEEK 6 - 07/10/2024 -> 13/10/2024    
 
+- Finished gap paenalty tests.
+
+- Added AptAlign
+
+- Added the bruteforce alignment method (very slow but optimal).
+
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION**
 
 - We have conducted tests to know whether adding a gap penalty is a good strategy for future developments.
