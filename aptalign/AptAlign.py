@@ -7,7 +7,7 @@ sys.path.append(root_path)
 
 #import numpy as np
 import AptaFast as AF
-
+import tqdm
 import math as m
 #import time
 #import multiprocessing
@@ -75,69 +75,54 @@ def insert_str(string,num,char):
         res+=elt
     return res
 
-def double_mode_brute_force(struct1,struct2,max_size=0):
+
+def arrangement(struct,max_size):
     
+    fill=max_size-len(struct)
+    
+    struct_prealign=fill*"-"+struct
+    
+    #i=int(m.factorial(max_size)/m.factorial(fill))
+    
+    if find_dash(struct_prealign) == []:
+        return [struct_prealign]
+    
+    all_struct=[struct_prealign]
+    
+    temp_struct=struct_prealign
+    dashes=find_dash(temp_struct)
+    for i in range(fill):
+        for j,elt in enumerate(all_struct):
+            dashes=find_dash(elt)
+            for elt1 in one_range(dashes,i,elt,all_struct):
+                all_struct.append(elt1)
+    return all_struct
+
+def one_range(dashes,num,curr_struct,all_struct):
+    curr_dash=dashes[num]
+    res=[]
+    temp_struct=curr_struct
+    temp_struct=del_str(temp_struct,curr_dash)
+    temp_struct=insert_str(temp_struct,0,"-")
+    if temp_struct not in all_struct:
+        if temp_struct not in res:
+            res.append(temp_struct)
+    for i in range(1,len(curr_struct)):
+        temp_struct=del_str(temp_struct,i-1)
+        temp_struct=insert_str(temp_struct,i,"-")
+        if temp_struct not in all_struct:
+            if temp_struct not in res:
+                res.append(temp_struct)
+    return res
+
+def brute_force_calc(struct1,struct2,max_size=0):
     if len(struct1)>max_size: max_size=len(struct1)
     if len(struct2)>max_size: max_size=len(struct2)
-
-    
-    fill1=max_size-len(struct1)
-    fill2=max_size-len(struct2)
-    
-    struct1_prealign=fill1*"-"+struct1
-    struct2_prealign=fill2*"-"+struct2
-    
-    # on place le 1er gap -> len(struct1)+fill1 positions possibles ; on place le second gap -> len(struct1)+fill1-1 positions possibles : max_size factorielles/fill1 factorielle positions possibles.
-    i1 = int(m.factorial(max_size)/m.factorial(fill1))
-    i2 = int(m.factorial(max_size)/m.factorial(fill2))
-    if find_dash(struct2_prealign) == []:
-        i2=0
-    if find_dash(struct1_prealign) == []:
-        i1=0
-    all_struct1=[struct1_prealign]
-    all_struct2=[struct2_prealign]
-    
-    temp_struct1=struct1_prealign
-    ins=0
-    comb=0
-    print(i1,i2)
-    for i in range(i1):
-        dashes=find_dash(temp_struct1)
-        #print(dashes)
-        temp_struct1=del_str(temp_struct1,dashes[0])
-        temp_struct1=insert_str(temp_struct1,ins,"-")
-        if temp_struct1 not in all_struct1: 
-            all_struct1.append(temp_struct1)
-        ins+=1
-        if ins == len(temp_struct1):
-            comb+=1
-            if comb == len(temp_struct1):
-                comb=0
-            ins=0
-    
-    temp_struct2=struct2_prealign
-    ins=0
-    comb=0
-    for i in range(i2):
-        dashes=find_dash(temp_struct2)
-        print(dashes)
-        temp_struct2=del_str(temp_struct2,dashes[0])
-        temp_struct2=insert_str(temp_struct2,ins,"-")
-        
-        if temp_struct2 not in all_struct2: 
-            all_struct2.append(temp_struct2)
-        ins+=1
-        if ins == len(temp_struct2):
-            comb+=1
-            if comb == len(temp_struct2):
-                comb=0
-            ins=0
-    
-    return all_struct1, all_struct2
-
-    
-def brute_force_calc(l_struct1,l_struct2):
+    print("Generating arrangement")
+    l_struct1=arrangement(struct1,max_size)
+    l_struct2=arrangement(struct2,max_size)
     dict_dist={}
+    print("Calculating")
     for elt1 in l_struct1:
         for elt2 in l_struct2:
             dict_dist[AF.compute_distance_clustering(AF.SecondaryStructure(elt1),AF.SecondaryStructure(elt2), "cityblock", "slow")]=(elt1,elt2)
