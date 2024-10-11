@@ -381,6 +381,9 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 - Added AptAlign
 
 - Added the bruteforce alignment method (very slow but optimal).
+    - To be used with VERY small structures (max size 15 with 5 gaps to be usable)
+    
+- parallelized the distance calculation for the brute force method.
 
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION**
 
