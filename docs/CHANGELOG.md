@@ -451,3 +451,34 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 #### FUTURE CHANGES AND IDEAS
 
 - Making an alignment algorithm that minimize the aptamat distance.
+
+### WEEK 7 - 14/10/2024 -> 20/10/2024
+
+- Fixed the brute force search.
+
+- Added a new function to evaluate the placement of a single gap between two structures.
+
+**TESTING IMPACT OF THE PLACEMENT OF A SINGLE GAP**
+
+What structures to use ?
+
+We will be using 3 different type of structures, we will try to use reference structures as well as structures taken from datasets.
+
+- Small:
+    
+- Medium:
+
+- large:
+
+
+- SMALL RESULTS:
+- MEDIUM RESULTS:
+- LARGE RESULTS 
+
+*COMING SOON*
+
+#### TO BE DONE:
+
+- Retesting clustering with another method of alignment (MUSCLE algorithm...)
+
+- Programming pattern recognition to align structures.
