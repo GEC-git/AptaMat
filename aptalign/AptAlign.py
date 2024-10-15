@@ -5,53 +5,14 @@ current_dir = os.path.dirname(__file__)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
 sys.path.append(root_path)
 
-import numpy as np
 import AptaFast as AF
-import tqdm
-import math as m
 #import time
 import multiprocessing as mp
+import matplotlib.pyplot as plt
+import numpy as np
 
-
-### REUSING THE FUNCTION FROM `clustering_AptaMat.py` USING THE SAME FILE TYPE AND CONSTRUCTION
-
-def initialize_dataset(structure_file):
-    structure_list = []
-    family = {}
-    with open(structure_file, 'r') as file:
-        for line in file:
-            content = line.strip().split()
-            if content:
-                # print(line)
-                if line.startswith('FAMILY'):
-                    pass
-                else:
-                    try:
-                        family[content[0]] += 1
-                    except KeyError:
-                        family[content[0]] = 1
-    
-                if AF.Dotbracket.is_dotbracket(content[3]):
-                    structure = AF.SecondaryStructure(dotbracket=content[3], sequence=content[2],
-                                                           id=content[1].split('.')[0])
-                    # AptaMat._create_fasta(structure)
-                    structure_list.append(structure)
-    return structure_list,family
-
-
-
-def double_mode_init(struct1,struct2):
-    
-    if AF.Dotbracket.is_dotbracket(struct1):
-        structure_1 = AF.SecondaryStructure(dotbracket=struct1)
-    if AF.Dotbracket.is_dotbracket(struct2):
-        structure_2 = AF.SecondaryStructure(dotbracket=struct2)
-    
-    return structure_1,structure_2
-
-
-    
 def del_str(string,num):
+    """Dedicated function to delete the character in position *num* in a string"""
     string=list(string)
     del(string[num])
     res=""
@@ -60,6 +21,7 @@ def del_str(string,num):
     return res
     
 def find_dash(string):
+    """returns the positions of all dashes in a string"""
     res=[]
     string = list(string)
     for i,elt in enumerate(string):
@@ -68,6 +30,7 @@ def find_dash(string):
     return res
     
 def insert_str(string,num,char):
+    """dedicated function to insert the character *char* at position *num* in *string*"""
     string=list(string)
     string.insert(num,char)
     res=""
@@ -77,7 +40,12 @@ def insert_str(string,num,char):
 
 
 def arrangement(struct,max_size):
+    """This function calculates all the possible gap placement of one structure.
     
+    *struct* is the base structure.
+    *max_size* is the size of the alignment.
+    
+    """
     fill=max_size-len(struct)
     
     struct_prealign=fill*"-"+struct
@@ -123,6 +91,15 @@ def arrangement(struct,max_size):
     return all_struct
 
 def one_range(dashes,num,curr_struct,all_struct):
+    """returns a 'swoop' of gapped structures with respect to an existing gap and a current structure
+    
+        *dashes* is the list of positions of all gaps from curr_struct.
+        *num* is the gap number the swoop is made from
+        *curr_struct* is the structure from which the swoop is calculated
+        *all_struct* is the dictionnary of all already calculated structures.
+        
+        returns a list of new structures not already calculated
+    """
     curr_dash=dashes[num]
     res=[]
     temp_struct=curr_struct
@@ -140,15 +117,20 @@ def one_range(dashes,num,curr_struct,all_struct):
     return res
 
 def calc_dist(elt1,l_struct2):
+    """Module used in the multiprocessing to calculate a batch of distances"""
     res=[]
     for elt2 in l_struct2:
         res.append((AF.compute_distance_clustering(AF.SecondaryStructure(elt1),AF.SecondaryStructure(elt2), "cityblock", "slow"),elt1,elt2))
     return res
 
 def brute_force_calc(struct1,struct2,max_size=0):
+    """Function used to align two structures using a burte force method
     
-    print(max_size)
+    This calculates all possible alignments and returns the one with the smallest AptaMat distance.
     
+    max_size is the size the structure will be aligned to.
+        Is equal to the length of the biggest structure if under.
+    """
     if len(struct1)>max_size: max_size=len(struct1)
     if len(struct2)>max_size: max_size=len(struct2)
     print("Generating arrangement")
@@ -185,3 +167,61 @@ def brute_force_calc(struct1,struct2,max_size=0):
             choose=elt
             min=elt[0]
     return choose
+
+def one_range_impact(struct_base, struct_test,aff_dash="min"):
+    """Function designed to evaluate the impact of a single gap with the AptaMat distance
+    
+    struct_base and struct_test need to have a difference of 1 in their length.
+    
+    Returns an histogram of distances in regards to the position of the gap.
+    
+    aff_dash indicates where the dash is supposed to be inserted when displaying results.
+    Can be: 'min'[default],'max','start','end'.
+    """
+
+    temp_struct="-"+struct_test
+    L_struct_test=[temp_struct]
+    for i in range(1,len(temp_struct)):
+        temp_struct=del_str(temp_struct,i-1)
+        temp_struct=insert_str(temp_struct,i,"-")
+        L_struct_test.append(temp_struct)
+        
+    res=[]
+    for elt in L_struct_test:
+        res.append(AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct_base), "cityblock", "slow"))
+
+    aff_struct_test=[]
+    if aff_dash!='end' and aff_dash!='start':
+        i=0
+        already=False
+        while i != len(struct_test):
+            if aff_dash=='min':
+                if res[i] == min(res) and not already:
+                    aff_struct_test.append("-")
+                    already=True
+                else:
+                    aff_struct_test.append(struct_test[i])
+                    i+=1
+            elif aff_dash=='max':
+                if res[i] == max(res) and not already:
+                    aff_struct_test.append("-")
+                    already=True
+                else:
+                    aff_struct_test.append(struct_test[i])
+                    i+=1
+    elif aff_dash == 'end':
+        aff_struct_test=list(struct_test)
+        aff_struct_test.append("-")
+    elif aff_dash == 'start':
+        aff_struct_test.append("-")
+        for elt in struct_test:
+            aff_struct_test.append(elt)
+            
+    fig, ax = plt.subplots()
+    for i,elt in enumerate(list(struct_base)):
+        ax.bar(i,res[i], color='blue')
+        ax.text(i,-max(res)/20,elt)
+        ax.text(i,-1.5*max(res)/20,aff_struct_test[i])
+    ax.text(-len(struct_base)/10, -max(res)/20, "base")
+    ax.text(-len(struct_base)/10, -1.5*max(res)/20, "compared")
+    plt.show()

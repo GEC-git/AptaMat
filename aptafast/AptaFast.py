@@ -126,7 +126,6 @@ class Parse:
             else:
                 continue
             
-        structures=pool.starmap(SecondaryStructure,  [(non_parsed_struct[i][0], non_parsed_struct[i][1], non_parsed_struct[i][2], non_parsed_struct[i][3]) for i in range(len(non_parsed_struct))])
             
         def get_id(struct):
             num=""
@@ -150,7 +149,7 @@ class Parse:
 
 class Dotbracket:
     """Create a DotBracket object"""
-    gap_penalty_matrix = [0,0]
+    gap_penalty_matrix = [1,1]
 
     def __init__(self, dotbracket: str, gap_penalty=None):
         self.dotbracket = None
