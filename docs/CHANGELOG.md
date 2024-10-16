@@ -462,20 +462,45 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 What structures to use ?
 
-We will be using 3 different type of structures, we will try to use reference structures as well as structures taken from datasets.
+We will be using small, medium and large structures.
 
 - Small:
-    
+    - Reference: `(((....)))`
+    - Tested: 
+        1. `((.....))`
+        2. `(..).(..)`
+        3. `((..(.)))`
+        
 - Medium:
-
-- large:
-
+    - Reference: `((((((((..(.(((((.....[[))))).)[.....)]((((((]].....))))))..)))))))` (Purine_riboswitch    6UC7_B.pdb)
+    - Tested:     
+        1. `(((((((..(.(((((.....[[))))).)[.....)]((((((]].....))))))..)))))).` (Purine_riboswitch    2XNZ_A.pdb with an added dot at the end to match the size)
+        2. `(((..((((....[...)))).(((((.......)))))....(((((..]....))))))))...` (tRNA    6RFL_U.pdb with added dots at the end to match the size)
+        3. `(((((([..(.(((((.{{{.{{))))).)(.....])((((((}}()}}}))))))..)))))).` (bpRNA_PDB_247 with added dot at the end)
+        
+- Large:
+    - Reference: `(((((((.............((((((((.(...((((...((((((((([[[[[..(.(((((.]]]]].....))))).)................................(..(.((((((((..)))))))).)..)....((((((.((....)).))))))...(.....((.......))......)...............................................(((((.((...((([.[.[[[)))....)))))))..........]]]...].]...)))))...))))...))))..).))))))))...(((((.......))))))))))))....` (bpRNA_tmRNA_6 from `data_clustering_4_families_non_aligned.dat`)
+    - Tested:     
+        1. `(((((((............(((((((.((((((((((((((..((((([[[[(((((]]]]....)))))...............................(((((((.........)))))))((((((((((((((..[[[[[[[))))))))).))))).......]]]]]]]...(((((((((((.[[[[[[[))))))))))).........]]]]]]]..((((..(((.(((.[[[[[[[)))..)))..))))..........]]]]]]]...))))).....))))))..).))))))))))))))...(((((.......))))))))))))................` (bpRNA_tmRNA_28 with dots at the end to match the sizes)
+        2. `.................(((..(((((................................((((.........))))................................))))))))......(((......((((((((.((...(((((((.((((....(((((((....))))))).....)))).....(((....)))....((....)).)))))))..))))))))))(((..(.(((..((((((((.......))))))))))).....))))..((((((((....))))...))))))).((((((..........))))))..........................` (bpRNA_CRW_7727 with dots at the end to match the sizes)
+        3. `.....(((.(((((((((...[[[[.((((((((((.....)))))(((((....)))).)((...(((((...........(((((((((((((((((((((((((((.((((((((((((.....))))))))))))............)))))))))))))))))))))))))..)).......((((((.......))))))((((((((......))))))..)).)))..)))))))))))))...((((.....(((((....((((.]]]]))))))))).....))))......((((((((....))))))))...........................)))))))).` (bpRNA_RNP_398)
 
 - SMALL RESULTS:
-- MEDIUM RESULTS:
-- LARGE RESULTS 
+|REF-1|REF-2|REF-3|
+|:-----:|:-----:|:-----:|
+|!["SmallREF-1"](gap_results/Small_ref-1.png)|!["SmallREF-2"](gap_results/Small_ref-2.png)|!["SmallREF-3"](gap_results/Small_ref-3.png)|
 
-*COMING SOON*
+
+- MEDIUM RESULTS:
+|REF-1|REF-2|REF-3|
+|:-----:|:-----:|:-----:|
+|!["MediumREF-1"](gap_results/Medium_ref-1.png)|!["MediumREF-2"](gap_results/Medium_ref-2.png)|!["MediumREF-3"](gap_results/Medium_ref-3.png)|
+
+- LARGE RESULTS 
+|REF-1|REF-2|REF-3|
+|:-----:|:-----:|:-----:|
+|!["LargeREF-1"](gap_results/Large_ref-1.png)|!["LargeREF-2"](gap_results/Large_ref-2.png)|!["LargeREF-3"](gap_results/Large_ref-3.png)|
+
 
 #### TO BE DONE:
 
