@@ -460,6 +460,8 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 **TESTING IMPACT OF THE PLACEMENT OF A SINGLE GAP**
 
+We will test the impact of the placement of a single gap by calculating the AptaMat distance for each possible position of the gap within a tested structure. We will be using the same reference structure for each tests.
+
 What structures to use ?
 
 We will be using small, medium and large structures.
@@ -509,6 +511,12 @@ We will be using small, medium and large structures.
 |REF-2|REF-3|
 |:-----:|:-----:|
 |!["LargeREF-2_ZOOMED"](gap_results/Large_ref-2_ZOOMED.png)|!["LargeREF-3_ZOOMED"](gap_results/Large_ref-3_ZOOMED.png)|
+
+
+
+- What do these results show ?
+    - The homogeneous penalty applied with the insertion of a gap seems appropriate. We don't see any kind of tendencies in the results.
+    - When the results are displayed, the gaps are placed where it minimizes the AptaMat distance.
 
 #### TO BE DONE:
 
