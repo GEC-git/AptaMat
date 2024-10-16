@@ -517,6 +517,17 @@ We will be using small, medium and large structures.
 - What do these results show ?
     - The homogeneous penalty applied with the insertion of a gap seems appropriate. We don't see any kind of tendencies in the results.
     - When the results are displayed, the gaps are placed where it minimizes the AptaMat distance.
+    - When we see a certain trend in results (like in the medium results) it indicates high correlation between the two structures tested; i.e. they are very similar.
+    
+
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (CONTINUATION AND END)**
+
+- Please refer to the results obtained in WEEK6 to have context.
+
+- We want now to test clustering with:
+    - the same dataset BUT aligned with RNAlign2D.
+    - Another dataset with more structures and more families.
+        (Objective: 10 families with 150 structures)
 
 #### TO BE DONE:
 
