@@ -486,17 +486,20 @@ We will be using small, medium and large structures.
         3. `.....(((.(((((((((...[[[[.((((((((((.....)))))(((((....)))).)((...(((((...........(((((((((((((((((((((((((((.((((((((((((.....))))))))))))............)))))))))))))))))))))))))..)).......((((((.......))))))((((((((......))))))..)).)))..)))))))))))))...((((.....(((((....((((.]]]]))))))))).....))))......((((((((....))))))))...........................)))))))).` (bpRNA_RNP_398)
 
 - SMALL RESULTS:
+
 |REF-1|REF-2|REF-3|
 |:-----:|:-----:|:-----:|
 |!["SmallREF-1"](gap_results/Small_ref-1.png)|!["SmallREF-2"](gap_results/Small_ref-2.png)|!["SmallREF-3"](gap_results/Small_ref-3.png)|
 
 
 - MEDIUM RESULTS:
+
 |REF-1|REF-2|REF-3|
 |:-----:|:-----:|:-----:|
 |!["MediumREF-1"](gap_results/Medium_ref-1.png)|!["MediumREF-2"](gap_results/Medium_ref-2.png)|!["MediumREF-3"](gap_results/Medium_ref-3.png)|
 
 - LARGE RESULTS 
+
 |REF-1|REF-2|REF-3|
 |:-----:|:-----:|:-----:|
 |!["LargeREF-1"](gap_results/Large_ref-1.png)|!["LargeREF-2"](gap_results/Large_ref-2.png)|!["LargeREF-3"](gap_results/Large_ref-3.png)|
