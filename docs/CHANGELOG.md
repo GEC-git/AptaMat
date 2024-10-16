@@ -504,6 +504,11 @@ We will be using small, medium and large structures.
 |:-----:|:-----:|:-----:|
 |!["LargeREF-1"](gap_results/Large_ref-1.png)|!["LargeREF-2"](gap_results/Large_ref-2.png)|!["LargeREF-3"](gap_results/Large_ref-3.png)|
 
+- Let's zoom in on the second and third results for the large tests:
+
+|REF-2|REF-3|
+|:-----:|:-----:|
+|!["LargeREF-2_ZOOMED"](gap_results/Large_ref-2_ZOOMED.png)|!["LargeREF-3_ZOOMED"](gap_results/Large_ref-3_ZOOMED.png)|
 
 #### TO BE DONE:
 
