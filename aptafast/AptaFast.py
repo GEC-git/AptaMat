@@ -235,14 +235,18 @@ class Dotplot(Dotbracket):
         matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)),dtype=np.uint8)
         par="()"
         cro="[]"
+        acc="{}"
         #void=".-"
         dict_par={}
         dict_cro={}
+        dict_acc={}
         for i,elt in enumerate(self.dotbracket):
             if elt in par:
                 dict_par[i]=elt
             elif elt in cro:
                 dict_cro[i]=elt
+            elif elt in acc:
+                dict_acc[i]=elt
         
         while dict_par != {}:
             index_list=list(dict_par.keys())
@@ -261,6 +265,15 @@ class Dotplot(Dotbracket):
             matrix[index_list[i],index_list[i+1]]=np.uint8(1)
             del(dict_cro[index_list[i]])
             del(dict_cro[index_list[i+1]])
+            
+        while dict_acc != {}:
+            index_list=list(dict_acc.keys())
+            i=0
+            while dict_acc[index_list[i]]==dict_acc[index_list[i+1]]:
+                i+=1
+            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+            del(dict_acc[index_list[i]])
+            del(dict_acc[index_list[i+1]])
         
         return matrix
 
