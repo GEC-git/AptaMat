@@ -538,7 +538,11 @@ We will be using small, medium and large structures.
 |:-----:|:-----:|
 |!["RNALIGNED_simplemode"](clustering/RNALIGNED_simplemode.png)|!["RNALIGNED_pseudomode"](clustering/RNALIGNED_pseudomode.png)|
 
+- The worse results come from the fact that my dataset implements structures of varying sizes which can be significant when differentiating them.
+- We will need to use a better dataset with better choosen structures and families.
 
 #### TO DO LIST:
+
+- Making a new and bigger dataset with more correlated data for clustering and alignment tests.
 
 - Programming pattern recognition to align structures.
