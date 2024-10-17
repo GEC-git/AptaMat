@@ -458,6 +458,8 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Added a new function to evaluate the placement of a single gap between two structures.
 
+- Added functions in file_parser_cluster.py to convert from FASTA files to CLUSTER files and the over way around.
+
 **TESTING IMPACT OF THE PLACEMENT OF A SINGLE GAP**
 
 We will test the impact of the placement of a single gap by calculating the AptaMat distance for each possible position of the gap within a tested structure. We will be using the same reference structure for each tests.
@@ -529,8 +531,14 @@ We will be using small, medium and large structures.
     - Another dataset with more structures and more families.
         (Objective: 10 families with 150 structures)
 
-#### TO BE DONE:
 
-- Retesting clustering with another method of alignment (MUSCLE algorithm...)
+- RESULTS with the same dataset but aligned with RNAlign2D `(depth=100, gap_penalty=1)`.
+
+|SimpleMode|PseudoMode|
+|:-----:|:-----:|
+|!["RNALIGNED_simplemode"](clustering/RNALIGNED_simplemode.png)|!["RNALIGNED_pseudomode"](clustering/RNALIGNED_pseudomode.png)|
+
+
+#### TO DO LIST:
 
 - Programming pattern recognition to align structures.
