@@ -460,6 +460,8 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Added functions in file_parser_cluster.py to convert from FASTA files to CLUSTER files and the over way around.
 
+- Added a first order dynamic alignment function.
+
 **TESTING IMPACT OF THE PLACEMENT OF A SINGLE GAP**
 
 We will test the impact of the placement of a single gap by calculating the AptaMat distance for each possible position of the gap within a tested structure. We will be using the same reference structure for each tests.
