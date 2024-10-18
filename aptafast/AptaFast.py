@@ -420,10 +420,10 @@ def compute_distance_clustering(struct_1: object, struct_2: object, method, spee
 
     # Check length of compared structures
     # Alignment is strongly recommended
-    if len(s1) != len(s2):
-        warnings.warn(
-            "Input structures with different sizes.\n "
-            "For accurate results, please perform sequence or structure alignment before. \n")
+    # if len(s1) != len(s2):
+    #     warnings.warn(
+    #         "Input structures with different sizes.\n "
+    #         "For accurate results, please perform sequence or structure alignment before. \n")
 
     if s2 == s1:
         return 0

@@ -10,7 +10,6 @@ import AptaFast as AF
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 #import numpy as np
-from tqdm import *
 
 def del_str(string,num):
     """Dedicated function to delete the character in position *num* in a string"""
@@ -233,12 +232,13 @@ def dynamic_alignment(struct1,struct2,max_size=0):
     if len(struct2)>max_size: max_size=len(struct2)
     fill1=max_size-len(struct1)
     fill2=max_size-len(struct2)
-    
-    print("Generating alignment")
-    print("First Structure")
+
+    print("Generating Alignment")
+    print("\nFirst Structure")
     if fill1 != 0:
+        print("Placing gaps...")
         temp_struct1=struct1
-        for j in tqdm(range(fill1)):
+        for j in range(fill1):
             temp_struct1="-"+temp_struct1
             L_struct_test=[temp_struct1]
             for i in range(1,len(temp_struct1)):
@@ -246,17 +246,20 @@ def dynamic_alignment(struct1,struct2,max_size=0):
                 temp_struct1=insert_str(temp_struct1,i,"-")
                 L_struct_test.append(temp_struct1)
             res={}
-            for elt in L_struct_test:
+            for i,elt in enumerate(L_struct_test):
                 res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "slow")]=elt
+                print("\r"+str(round((j/fill1)*100,2))+"% | "+str(round(i/len(temp_struct1)*100,2))+"%",end="\r")
             keep=min(res.keys())
             temp_struct1=res[keep]
+    else:
+        print("No gaps to place, continuing...")
             
-        struct1 = temp_struct1
-    
-    print("Second Structure")
+
+    print("\nSecond Structure")
     if fill2 !=0:
+        print("Placing gaps...")
         temp_struct2=struct2
-        for j in tqdm(range(fill2)):
+        for j in range(fill2):
             temp_struct2="-"+temp_struct2
             L_struct_test=[temp_struct2]
             for i in range(1,len(temp_struct2)):
@@ -264,11 +267,14 @@ def dynamic_alignment(struct1,struct2,max_size=0):
                 temp_struct2=insert_str(temp_struct2,i,"-")
                 L_struct_test.append(temp_struct2)
             res={}
-            for elt in L_struct_test:
+            for i,elt in enumerate(L_struct_test):
                 res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct1), "cityblock", "slow")]=elt
+                print("\r"+str(round((j/fill2)*100,2))+"% | "+str(round(i/len(temp_struct2)*100,2))+"%",end="\r")
             keep=min(res.keys())
             temp_struct2=res[keep]
         
         struct2 = temp_struct2
+    else:
+        print("No gaps to place, continuing...")
         
     return struct1, struct2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "slow")
