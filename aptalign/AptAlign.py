@@ -9,7 +9,8 @@ import AptaFast as AF
 #import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
-import numpy as np
+#import numpy as np
+from tqdm import *
 
 def del_str(string,num):
     """Dedicated function to delete the character in position *num* in a string"""
@@ -136,7 +137,6 @@ def brute_force_calc(struct1,struct2,max_size=0):
     print("Generating arrangement")
     l_struct1=arrangement(struct1,max_size)
     l_struct2=arrangement(struct2,max_size)
-    dict_dist={}
     print("S1: ",len(l_struct1),"| S2: ", len(l_struct2))
     print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
     nb=int(input("How much do you want to use? "))
@@ -225,3 +225,50 @@ def one_range_impact(struct_base, struct_test,aff_dash="min"):
     ax.text(-len(struct_base)/10, -max(res)/20, "base")
     ax.text(-len(struct_base)/10, -1.5*max(res)/20, "compared")
     plt.show()
+    
+    
+def dynamic_alignment(struct1,struct2,max_size=0):
+    
+    if len(struct1)>max_size: max_size=len(struct1)
+    if len(struct2)>max_size: max_size=len(struct2)
+    fill1=max_size-len(struct1)
+    fill2=max_size-len(struct2)
+    
+    print("Generating alignment")
+    print("First Structure")
+    if fill1 != 0:
+        temp_struct1=struct1
+        for j in tqdm(range(fill1)):
+            temp_struct1="-"+temp_struct1
+            L_struct_test=[temp_struct1]
+            for i in range(1,len(temp_struct1)):
+                temp_struct1=del_str(temp_struct1,i-1)
+                temp_struct1=insert_str(temp_struct1,i,"-")
+                L_struct_test.append(temp_struct1)
+            res={}
+            for elt in L_struct_test:
+                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "slow")]=elt
+            keep=min(res.keys())
+            temp_struct1=res[keep]
+            
+        struct1 = temp_struct1
+    
+    print("Second Structure")
+    if fill2 !=0:
+        temp_struct2=struct2
+        for j in tqdm(range(fill2)):
+            temp_struct2="-"+temp_struct2
+            L_struct_test=[temp_struct2]
+            for i in range(1,len(temp_struct2)):
+                temp_struct2=del_str(temp_struct2,i-1)
+                temp_struct2=insert_str(temp_struct2,i,"-")
+                L_struct_test.append(temp_struct2)
+            res={}
+            for elt in L_struct_test:
+                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct1), "cityblock", "slow")]=elt
+            keep=min(res.keys())
+            temp_struct2=res[keep]
+        
+        struct2 = temp_struct2
+        
+    return struct1, struct2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "slow")
