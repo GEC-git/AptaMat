@@ -549,9 +549,9 @@ We will be using small, medium and large structures.
 
 - Programming pattern recognition to align structures.
 
-### WEEK 8 - 14/10/2024 -> 20/10/2024
+### WEEK 8 - 21/10/2024 -> 27/10/2024
 
-- Difficulties with making a new dataset.
+- Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test. (work in progress)
 
 - Testing the new alignment method : 
     - Seems to be A LOT faster than the brute force method. Obviously doesn't give optimal results but are they better than not aligning ?
