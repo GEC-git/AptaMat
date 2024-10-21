@@ -233,10 +233,10 @@ def dynamic_alignment(struct1,struct2,max_size=0):
     fill1=max_size-len(struct1)
     fill2=max_size-len(struct2)
 
-    print("Generating Alignment")
+    print("\nGenerating Alignment")
     print("\nFirst Structure")
     if fill1 != 0:
-        print("Placing gaps...")
+        print("Placing "+str(fill1)+" gaps...")
         temp_struct1=struct1
         for j in range(fill1):
             temp_struct1="-"+temp_struct1
@@ -247,17 +247,18 @@ def dynamic_alignment(struct1,struct2,max_size=0):
                 L_struct_test.append(temp_struct1)
             res={}
             for i,elt in enumerate(L_struct_test):
-                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "slow")]=elt
+                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "quick")]=elt
                 print("\r"+str(round((j/fill1)*100,2))+"% | "+str(round(i/len(temp_struct1)*100,2))+"%",end="\r")
             keep=min(res.keys())
             temp_struct1=res[keep]
+        struct1 = temp_struct1
     else:
         print("No gaps to place, continuing...")
             
 
     print("\nSecond Structure")
     if fill2 !=0:
-        print("Placing gaps...")
+        print("Placing "+str(fill2)+" gaps...")
         temp_struct2=struct2
         for j in range(fill2):
             temp_struct2="-"+temp_struct2
@@ -268,7 +269,7 @@ def dynamic_alignment(struct1,struct2,max_size=0):
                 L_struct_test.append(temp_struct2)
             res={}
             for i,elt in enumerate(L_struct_test):
-                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct1), "cityblock", "slow")]=elt
+                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct1), "cityblock", "quick")]=elt
                 print("\r"+str(round((j/fill2)*100,2))+"% | "+str(round(i/len(temp_struct2)*100,2))+"%",end="\r")
             keep=min(res.keys())
             temp_struct2=res[keep]
@@ -276,5 +277,6 @@ def dynamic_alignment(struct1,struct2,max_size=0):
         struct2 = temp_struct2
     else:
         print("No gaps to place, continuing...")
-        
-    return struct1, struct2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "slow")
+    print("\nFinished\n")
+    return struct1, struct2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "quick")
+
