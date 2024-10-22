@@ -552,7 +552,8 @@ We will be using small, medium and large structures.
 ### WEEK 8 - 21/10/2024 -> 27/10/2024
 
 - Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test. (work in progress)
-
+    - Created a webscraper to extract structures from the miRBase database website.
+    
 - Testing the new alignment method : 
     - Seems to be A LOT faster than the brute force method. Obviously doesn't give optimal results but are they better than not aligning ?
     
@@ -563,5 +564,5 @@ We will be using small, medium and large structures.
     `39.979`
     
     `RESULT FROM BRUTE FORCE ALIGNMENT`
-    `........(((((...[[[.))))).((((.((((((.(((((((((....(((.(((.((((((..(.(((..((((((((...))))))))))).....))))..((((((((.))))...))))))).((((((.)))))).((((....))))...)))))).).....(.(((...(((((.))))).)))).)).)))))).((((([[[...(((((.....((.]]])).)))))))))).))))))))))..((([[...(.((((.(.(((.(((((((.(((((((((((....(((((((..)))))))..)))))))))..)))))))))...(((((((((..)))))).)))...))))..))))..((((((.....]]....))))))))))...]]]`
-    `Coming soon`
+    `DID NOT FINISH: used all the ram before even comparing. (64GB of RAM + 140GB of swap)`
+    `BRUTE FORCE IS NOT A GOOD METHOD WHICH WAS EXPECTED`
