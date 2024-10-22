@@ -247,6 +247,7 @@ def file_converter_CLUSTER_to_FASTA():
             name=name.strip(".dbn")
             tbw+=">"+name+"\n"+sequence+"\n"+dotbracket
     f_created.write(tbw)
+    f_created.close()
             
     
     
