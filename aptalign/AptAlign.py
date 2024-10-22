@@ -138,7 +138,7 @@ def brute_force_calc(struct1,struct2,max_size=0):
     l_struct2=arrangement(struct2,max_size)
     print("S1: ",len(l_struct1),"| S2: ", len(l_struct2))
     print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
-    nb=int(input("How much do you want to use? "))
+    nb=48#int(input("How much do you want to use? "))
     print("Creating pool on",nb,"cores.\n")
     print("Working...\n")
     pooling=mp.Pool(nb)
