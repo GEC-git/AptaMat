@@ -2,7 +2,7 @@ import sys
 import os
 
 current_dir = os.path.dirname(__file__)
-root_path = os.path.abspath(os.path.join(current_dir,"..",'aptafast'))
+root_path = os.path.abspath(os.path.join(current_dir,"..","..",'aptafast'))
 sys.path.append(root_path)
 
 import AptaFast as AF
@@ -192,14 +192,15 @@ def file_parser_RNAlign():
     f.close()    
 
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/first_tests/clustering_dataset_CLUSTER_ALIGNED_pseudomode.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/first_tests/clustering_dataset_FASTA_ALIGNED_pseudomode.dat"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test2/data_clustering_MIR_scraped_1000_CLUSTER_RNALIGNED.fa",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test2/data_clustering_MIR_scraped_1000_FASTA_RNALIGNED.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
     for i, line in enumerate(lines):
         if line.startswith(">"):
             line1=line.strip(">\n")
+            line1=line1.replace(" ","_")
             tbw+=line1.strip("0123456789")+"    "+line1+".dbn    "
         elif not AF.Dotbracket.is_dotbracket(line):
             tbw+=line.strip("\n")+"    "

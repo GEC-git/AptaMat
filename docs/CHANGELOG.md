@@ -524,7 +524,7 @@ We will be using small, medium and large structures.
     - When we see a certain trend in results (like in the medium results) it indicates high correlation between the two structures tested; i.e. they are very similar.
     
 
-**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (CONTINUATION AND END)**
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (CONTINUATION)**
 
 - Please refer to the results obtained in WEEK6 to have context.
 
@@ -550,9 +550,6 @@ We will be using small, medium and large structures.
 - Programming pattern recognition to align structures.
 
 ### WEEK 8 - 21/10/2024 -> 27/10/2024
-
-- Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test. (work in progress)
-    - Created a webscraper to extract structures from the miRBase database website.
     
 - Testing the new alignment method : 
     - Seems to be A LOT faster than the brute force method. Obviously doesn't give optimal results but are they better than not aligning ?
@@ -566,3 +563,13 @@ We will be using small, medium and large structures.
     `RESULT FROM BRUTE FORCE ALIGNMENT`
     `DID NOT FINISH: used all the ram before even comparing. (64GB of RAM + 140GB of swap)`
     `BRUTE FORCE IS NOT A GOOD METHOD WHICH WAS EXPECTED`
+    
+
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
+
+- Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test.
+    - Created a webscraper to extract structures from the miRBase database website.
+    
+- First test with *?* families and 1000 structures.
+
+
