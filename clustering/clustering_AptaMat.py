@@ -195,6 +195,7 @@ def initialize_dataset(structure_file):
     with open(structure_file, 'r') as file:
         for line in file:
             content = line.strip().split()
+            #print(content)
             if content:
                 # print(line)
                 if line.startswith('FAMILY'):
