@@ -8,6 +8,7 @@ Example of URL
 """
 
 def single_page_scraper(page):
+    "Scrapes the dotbracket, sequence and family data of a single webpage"
     scrape=BeautifulSoup(page.text, 'html.parser')
     
     if scrape.find(id="hairpinSequence") is not None:
@@ -29,6 +30,7 @@ def single_page_scraper(page):
     return family, sequence, dotbracket
 
 def site_scraper(struct_nb):
+    "Scrapes the entire website of *struct_nb* structures"
     tbw=""
     for i in range(1,struct_nb):
         stri=str(i)
@@ -44,6 +46,7 @@ def site_scraper(struct_nb):
     return tbw
 
 def fasta_generator(nb):
+    "Creates a fasta file with all the scrape data to then be used in clustering"
     tbw=site_scraper(nb)
     f_created=open("data_clustering_scraped_"+str(nb)+".dat",'a')
     f_created.write(tbw)
