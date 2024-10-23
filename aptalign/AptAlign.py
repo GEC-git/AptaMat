@@ -124,7 +124,7 @@ def calc_dist(elt1,l_struct2):
     return res
 
 def brute_force_calc(struct1,struct2,max_size=0):
-    """Function used to align two structures using a burte force method
+    """Function used to align two structures using a brute force method
     
     This calculates all possible alignments and returns the one with the smallest AptaMat distance.
     
@@ -227,7 +227,24 @@ def one_range_impact(struct_base, struct_test,aff_dash="min"):
     
     
 def dynamic_alignment(struct1,struct2,max_size=0):
-    
+    """
+    Function to align two structures by adding gaps one by one in the optimal place.
+
+    Parameters
+    ----------
+    struct1 : dotbracket
+        First structure to align.
+    struct2 : dotbracket
+        Second structure to align.
+    max_size : int, optional
+        Size the structures take when aligned (controls the number of gaps). 
+        The default is 0 then it is converted to match the biggest of the two structures.
+
+    Returns
+    -------
+    The aligned structures with the resulting aptamat distance
+
+    """
     if len(struct1)>max_size: max_size=len(struct1)
     if len(struct2)>max_size: max_size=len(struct2)
     fill1=max_size-len(struct1)
