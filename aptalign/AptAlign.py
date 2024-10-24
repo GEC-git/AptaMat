@@ -226,7 +226,7 @@ def one_range_impact(struct_base, struct_test,aff_dash="min"):
     plt.show()
     
     
-def dynamic_alignment(struct1,struct2,max_size=0):
+def dynamic_alignment(struct1,struct2,max_size=0,depth=1):
     """
     Function to align two structures by adding gaps one by one in the optimal place.
 
