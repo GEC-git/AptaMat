@@ -570,6 +570,8 @@ We will be using small, medium and large structures.
 - Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test.
     - Created a webscraper to extract structures from the miRBase database website.
     
-- First test with *?* families and 1000 structures.
+- The tests were inconclusive with the scraper, we would need a dataset with actual RNA families and not organised by specie.
+    - (Please navigate to clustering/tests/Test2/ to see the actual data)
 
-
+- With the old dataset, we can't seem to find the same results. It becomes even worse when trying to align the dataset.
+    - (Please navigate to clustering/tests/Test3/ to see the actual data)
