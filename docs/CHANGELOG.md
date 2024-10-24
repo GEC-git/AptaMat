@@ -564,6 +564,7 @@ We will be using small, medium and large structures.
     `DID NOT FINISH: used all the ram before even comparing. (64GB of RAM + 140GB of swap)`
     `BRUTE FORCE IS NOT A GOOD METHOD WHICH WAS EXPECTED`
     
+- Seems to be working great with small structures!
 
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
 
@@ -575,3 +576,4 @@ We will be using small, medium and large structures.
 
 - With the old dataset, we can't seem to find the same results. It becomes even worse when trying to align the dataset.
     - (Please navigate to clustering/tests/Test3/ to see the actual data)
+    - We also tried with a higher recursion depth but nothing interesting came out.
