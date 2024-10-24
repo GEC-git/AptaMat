@@ -192,8 +192,8 @@ def file_parser_RNAlign():
     f.close()    
 
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test2/data_clustering_MIR_scraped_1000_CLUSTER_RNALIGNED.fa",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test2/data_clustering_MIR_scraped_1000_FASTA_RNALIGNED.fa"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_CLUSTER_ALIGNED.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_FASTA_ALIGNED.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
@@ -219,8 +219,8 @@ def find_spaces(string):
 
            
 def file_converter_CLUSTER_to_FASTA():
-    f_created=open("data_clustering_test_29x4_FASTA_NON_ALIGNED.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/first tests/clustering_dataset_NON_ALIGNED.dat"
+    f_created=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_FASTA.fa",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket.dat"
     lines=open(file_from).readlines()
     tbw=""
     for i, line in enumerate(lines):
@@ -246,7 +246,7 @@ def file_converter_CLUSTER_to_FASTA():
                 elif nb_space==3:
                     dotbracket+=elt
             name=name.strip(".dbn")
-            tbw+=">"+name+"\n"+sequence+"\n"+dotbracket
+            tbw+=">"+family+str(i)+"\n"+sequence+"\n"+dotbracket
     f_created.write(tbw)
     f_created.close()
             
