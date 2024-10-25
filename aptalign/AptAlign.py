@@ -226,7 +226,30 @@ def one_range_impact(struct_base, struct_test,aff_dash="min"):
     plt.show()
     
     
-def dynamic_alignment(struct1,struct2,max_size=0,depth=1):
+def dynamic_one_range(struct, struct2, fill):  
+    if fill != 0:
+        print("Placing "+str(fill)+" gaps...")
+        temp_struct=struct
+        for j in range(fill):
+            temp_struct="-"+temp_struct
+            L_struct_test=[temp_struct]
+            for i in range(1,len(temp_struct)):
+                temp_struct=del_str(temp_struct,i-1)
+                temp_struct=insert_str(temp_struct,i,"-")
+                L_struct_test.append(temp_struct)
+            res={}
+            for i,elt in enumerate(L_struct_test):
+                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "slow")]=elt
+                print("\r"+str(round((j/fill)*100,2))+"% | "+str(round(i/len(temp_struct)*100,2))+"%",end="\r")
+            keep=min(res.keys())
+            temp_struct=res[keep]
+        struct = temp_struct
+        return struct
+    else:
+        print("No gaps to place, continuing...")
+        return struct
+        
+def dynamic_alignment(struct1,struct2,max_size=0):
     """
     Function to align two structures by adding gaps one by one in the optimal place.
 
@@ -252,48 +275,13 @@ def dynamic_alignment(struct1,struct2,max_size=0,depth=1):
 
     print("\nGenerating Alignment")
     print("\nFirst Structure")
-    if fill1 != 0:
-        print("Placing "+str(fill1)+" gaps...")
-        temp_struct1=struct1
-        for j in range(fill1):
-            temp_struct1="-"+temp_struct1
-            L_struct_test=[temp_struct1]
-            for i in range(1,len(temp_struct1)):
-                temp_struct1=del_str(temp_struct1,i-1)
-                temp_struct1=insert_str(temp_struct1,i,"-")
-                L_struct_test.append(temp_struct1)
-            res={}
-            for i,elt in enumerate(L_struct_test):
-                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "quick")]=elt
-                print("\r"+str(round((j/fill1)*100,2))+"% | "+str(round(i/len(temp_struct1)*100,2))+"%",end="\r")
-            keep=min(res.keys())
-            temp_struct1=res[keep]
-        struct1 = temp_struct1
-    else:
-        print("No gaps to place, continuing...")
-            
-
+    struct1_1=dynamic_one_range(struct1, struct2, fill1)
+    
     print("\nSecond Structure")
-    if fill2 !=0:
-        print("Placing "+str(fill2)+" gaps...")
-        temp_struct2=struct2
-        for j in range(fill2):
-            temp_struct2="-"+temp_struct2
-            L_struct_test=[temp_struct2]
-            for i in range(1,len(temp_struct2)):
-                temp_struct2=del_str(temp_struct2,i-1)
-                temp_struct2=insert_str(temp_struct2,i,"-")
-                L_struct_test.append(temp_struct2)
-            res={}
-            for i,elt in enumerate(L_struct_test):
-                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct1), "cityblock", "quick")]=elt
-                print("\r"+str(round((j/fill2)*100,2))+"% | "+str(round(i/len(temp_struct2)*100,2))+"%",end="\r")
-            keep=min(res.keys())
-            temp_struct2=res[keep]
-        
-        struct2 = temp_struct2
-    else:
-        print("No gaps to place, continuing...")
+    struct2_2=dynamic_one_range(struct2, struct1, fill2)
+    
+    original_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "slow")
     print("\nFinished\n")
-    return struct1, struct2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "quick")
+    
+    return struct1_1, struct2_2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1_1),AF.SecondaryStructure(struct2_2), "cityblock", "slow"),original_dist
 
