@@ -7,193 +7,24 @@ sys.path.append(root_path)
 
 import AptaFast as AF
 
-def file_parser_clustering():
-    f=open("data_clustering_test_150x10_TBA_RNAlign.txt",'a')
-    f.write("FAMILY    PDB_chain    SEQUENCE    DOTBRACKET\n")
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_tmRNA_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=str(line1)
-                tbw+="    "
-                tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
+def fam_compteur_fa(file_from):
+    lines=open(file_from).readlines()
+    dico={}
+    for i, line in enumerate(lines):
+        if line.startswith(">"):
+            line1=line.strip(">\n")
+            line1=line1.replace(" ","_")
+            line1=line1.strip("0123456789")
+            if line1 not in dico:
+                dico[line1]=1
             else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line.strip("\n")
-        tbw+="\n"
-        f.write(tbw)        
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_CRW_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=str(line1)
-                tbw+="    "
-                tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line.strip("\n")
-        tbw+="\n"
-        f.write(tbw)
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_RFAM_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=str(line1)
-                tbw+="    "
-                tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line.strip("\n")
-        tbw+="\n"
-        f.write(tbw)
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_SRP_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=str(line1)
-                tbw+="    "
-                tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line.strip("\n")
-        tbw+="\n"
-        f.write(tbw)
-    f.close()
+                dico[line1]+=1
+    return dico
 
-def file_parser_RNAlign():
-    f=open("data_clustering_test_150x10_TBA_RNAlign.txt",'a')
-    #f.write("FAMILY    PDB_chain    SEQUENCE    DOTBRACKET\n")
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_tmRNA_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=">"+str(line1)+str(i)+"\n"
-                #tbw+="    "
-                #tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    #tbw+=line.strip("\n")+"    "
-                    tbw+=line
-                else:
-                    #tbw+=line.strip("\n")
-                    tbw+=line
-        #tbw+="\n"
-        f.write(tbw)        
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_CRW_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=">"+str(line1)+str(i)+"\n"
-                #tbw+="    "
-                #tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    #tbw+=line.strip("\n")+"    "
-                    tbw+=line
-                else:
-                    #tbw+=line.strip("\n")
-                    tbw+=line
-        #tbw+="\n"
-        f.write(tbw)
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_RFAM_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=">"+str(line1)+str(i)+"\n"
-                #tbw+="    "
-                #tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line
-                    #tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line
-                    #tbw+=line.strip("\n")
-        #tbw+="\n"
-        f.write(tbw)
-    
-    for i in range(1,151):
-        file = "/home/bcuvillier/Téléchargements/dbnFiles/bpRNA_SRP_"+str(i)+".dbn"
-        lines = open(file).readlines()
-        tbw=""
-        for j, line in enumerate(lines):
-            if j == 0:
-                line1=line.strip("#Name: _"+str(i)+"\n")
-                line2=line.strip("#Name: \n")
-                tbw+=">"+str(line1)+str(i)+"\n"
-                #tbw+="    "
-                #tbw+=str(line2)+".dbn    "
-            elif line.startswith("#"):
-                pass
-            else:
-                if not AF.Dotbracket.is_dotbracket(line):
-                    tbw+=line
-                    #tbw+=line.strip("\n")+"    "
-                else:
-                    tbw+=line
-                    #tbw+=line.strip("\n")
-        #tbw+="\n"
-        f.write(tbw)
-    f.close()    
 
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_CLUSTER_ALIGNED.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_FASTA_ALIGNED.fa"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
@@ -216,6 +47,48 @@ def find_spaces(string):
         if elt==" ":
             index.append(i)
     return index
+
+def file_converter_FASTA_to_CLUSTER_choices(nb_fam_max,nb_max_per_fam):
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_CHOICES.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000.fa"
+    lines=open(file_from).readlines()
+    tbw=""
+    f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
+    
+    fam=fam_compteur_fa(file_from)
+    dico_inter={}
+    for i, line in enumerate(lines):
+        if nb_fam_max == 0:
+            f.write(tbw)
+            f.close()
+        else:
+            if line.startswith(">"):
+                line1=line.strip(">\n")
+                line1=line1.replace(" ","_")
+                line1_fam=line1.strip("0123456789")
+                if line1_fam not in dico_inter:
+                    if fam[line1_fam]>nb_max_per_fam:
+                        dico_inter[line1_fam]=1
+                        nb_fam_max-=1
+                        allowed=True
+                        tbw+=line1_fam+"    "+line1+".dbn    "
+                    else:
+                        allowed = False
+                else:
+                    if fam[line1_fam]>nb_max_per_fam:
+                        if dico_inter[line1_fam]<nb_max_per_fam:
+                            dico_inter[line1_fam]+=1
+                            allowed=True
+                            tbw+=line1_fam+"    "+line1+".dbn    "
+                        else:
+                            allowed = False
+                    else:
+                        allowed = False
+                
+            elif not AF.Dotbracket.is_dotbracket(line) and allowed:
+                tbw+=line.strip("\n")+"    "
+            elif allowed:
+                tbw+=line
 
            
 def file_converter_CLUSTER_to_FASTA():
