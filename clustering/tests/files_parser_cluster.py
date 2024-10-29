@@ -23,8 +23,8 @@ def fam_compteur_fa(file_from):
 
 
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/datasets/data_clustering_BPRNA_RFAM_scraped_10000.fa"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_RNALIGNED_150x8.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_RNALIGNED_150x8.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
@@ -92,8 +92,8 @@ def file_converter_FASTA_to_CLUSTER_choices(nb_fam_max,nb_max_per_fam):
 
            
 def file_converter_CLUSTER_to_FASTA():
-    f_created=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket_FASTA.fa",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test3/dataset_family_dotbracket.dat"
+    f_created=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_NONALIGNED_8x150.fa",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_8x150.dat"
     lines=open(file_from).readlines()
     tbw=""
     for i, line in enumerate(lines):

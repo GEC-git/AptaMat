@@ -88,8 +88,7 @@ def renumber_by_rank(labels):
     for element in labels:
         for i, r in enumerate(ranked):
             if element == r[0]:
-                new_labels.append(i)
-
+                new_labels.append(i)     
     return new_labels
 
 
@@ -152,7 +151,7 @@ def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 
         affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
         clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=15, max_iter=1000,
                                          random_state=0).fit(affinity_matrix)
-
+        
         sub_aff_prop.append(clustering)
         calinski = calinski_harabasz_score(distance_matrix, clustering.labels_)
         silhouette = silhouette_score(affinity_matrix, clustering.labels_)
