@@ -566,7 +566,7 @@ We will be using small, medium and large structures.
     
 - Seems to be working great with small structures!
 
-**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (CONTINUATION)**
 
 - Difficulties with making a new dataset: we don't have enough differentiated dotbracket files to test.
     - Created a webscraper to extract structures from the miRBase database website.
@@ -577,3 +577,33 @@ We will be using small, medium and large structures.
 - With the old dataset, we can't seem to find the same results. It becomes even worse when trying to align the dataset.
     - (Please navigate to clustering/tests/Test3/ to see the actual data)
     - We also tried with a higher recursion depth but nothing interesting came out.
+    
+### WEEK 9 - 28/10/2024 -> 03/11/2024
+
+- Implemented a new web scraper to scrape families from the BPRNA database.
+
+**DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
+
+- New test with the new scraper :
+- With 8 families of 150 structures, without any alignment: (depth = 100)
+    
+    
+![150x8 NONALIGNED](clustering_newdataset/newer_dataset_150x8_d100_nonaligned.png)
+
+```
+RF00001= 5S ribosomal RNA
+RF00004= U2 spliceosomal RNA
+RF00005= tRNA
+RF00010= Bacterial RNase P class A
+RF00015= U4 spliceosomal RNA
+RF00020= U5 spliceosomal RNA
+RF00023= transfer-messenger RNA
+RF00162= SAM riboswitch aptamer (S box leader)
+```
+
+- With the same dataset, RNAligned (depth = 100).
+
+![150x8 ALIGNED](clustering_newdataset/newer_dataset_150x8_d100_rnaligned.png)
+
+- We can see that using the alignment tool greatly reduces the accuracy of the clustering. The length delta around between structures seems to be important to differentiate families. AptaMat seems to take that into account.
+- Still, the clustering results are nonetheless not very good.
