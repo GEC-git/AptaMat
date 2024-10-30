@@ -582,6 +582,12 @@ We will be using small, medium and large structures.
 
 - Implemented a new web scraper to scrape families from the BPRNA database.
 
+- literature search for existing alignment methods and algorithms.
+    - MARNA
+    - bpRNAlign
+    - MUSCLE...
+    
+
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
 
 - New test with the new scraper :
@@ -605,5 +611,5 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 ![150x8 ALIGNED](clustering_newdataset/newer_dataset_150x8_d100_rnaligned.png)
 
-- We can see that using the alignment tool greatly reduces the accuracy of the clustering. The length delta around between structures seems to be important to differentiate families. AptaMat seems to take that into account.
-- Still, the clustering results are nonetheless not very good.
+- We can see that using the alignment tool greatly reduces the accuracy of the clustering. The length delta between structures seems to be important to differentiate families. AptaMat seems to take that into account.
+- Still, the clustering results are not very good.
