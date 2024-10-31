@@ -92,6 +92,88 @@ def renumber_by_rank(labels):
     return new_labels
 
 
+def affinity_calculation(distance_matrix, standard_labels, sigma):
+    """Used for parallelizing the affinity_propagation calculation"""
+    affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
+    clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=20, max_iter=10000,
+                                     random_state=0).fit(affinity_matrix)
+    
+    #sub_aff_prop.append(clustering)
+    calinski = calinski_harabasz_score(distance_matrix, clustering.labels_)
+    silhouette = silhouette_score(affinity_matrix, clustering.labels_)
+    acc_score = adjusted_rand_score(standard_labels, clustering.labels_)
+    
+    return (clustering, calinski, silhouette, acc_score, sigma, affinity_matrix)
+
+def optimised_affinity_propagation(distance_matrix, CORE, standard=None, sigma=np.arange(1, 10, 0.1)):
+    ### Acquire expected clustering labels
+    if standard is not None:
+        standard_labels = []
+        for v in standard:
+            standard_labels.append(v)
+    else:
+        standard_labels=[i for i in range(len(distance_matrix))]
+
+    if isinstance(sigma, (list, tuple, np.ndarray)):
+        sigma_iter = sigma
+    elif isinstance(sigma, (int, float)):
+        sigma_iter = [sigma]
+
+    ### AffinityPropagation cluster creation applying various sigma value
+    ### Each iteration results in calculation of various clustering quality metrics
+    sub_aff_prop = []
+    aff_prop_calinski_best = 0
+    silhouette_best = -1
+    aff_prop_clust_best = None
+    acc_best = 0
+    sigma_best = 0
+    print("Recreating pool for affinity calculation.")
+    pool = multiprocessing.Pool(CORE)
+    results=[]
+    print("Job started")
+    for result in pool.starmap(affinity_calculation,
+                               [(distance_matrix, standard_labels, sigma) for sigma in sigma_iter]):
+        results.append(result)
+    pool.terminate()
+    print("Job Finished, fetching the best result.")
+    for elt in results:
+        
+        acc_score=elt[3]
+        calinski=elt[1]
+        silhouette=elt[2]
+        if acc_best < acc_score:
+            acc_best = acc_score
+            aff_prop_calinski_best = calinski
+            silhouette_best = silhouette
+            aff_prop_clust_best = elt[0]
+            sigma_best = elt[4]
+            aff=elt[5]
+
+        if aff_prop_calinski_best < calinski and silhouette_best < silhouette:
+            aff_prop_calinski_best = calinski
+            silhouette_best = silhouette
+            aff_prop_clust_best = elt[0]
+            sigma_best = elt[4]
+            aff=elt[5]
+
+        elif aff_prop_calinski_best > calinski and silhouette_best < silhouette:
+            if calinski + (5 * aff_prop_calinski_best / 100) > aff_prop_calinski_best:
+                aff_prop_calinski_best = calinski
+                silhouette_best = silhouette
+                aff_prop_clust_best = elt[0]
+                sigma_best = elt[4]
+                aff=elt[5]
+
+        elif aff_prop_calinski_best < calinski and silhouette_best > silhouette:
+            if silhouette + (20 * silhouette_best / 100) > silhouette_best:
+                aff_prop_calinski_best = calinski
+                silhouette_best = silhouette
+                aff_prop_clust_best = elt[0]
+                sigma_best = elt[4]
+                aff=elt[5]
+                
+    return aff, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
+
 def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 0.1)):
     """
     Affinity propagation clustering compute over the selected sigma value range and calculation of Calinski index,
@@ -147,9 +229,9 @@ def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 
     acc_best = 0
     sigma_best = 0
 
-    for sigma in sigma_iter:
+    for i,sigma in enumerate(sigma_iter):
         affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
-        clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=15, max_iter=1000,
+        clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=20, max_iter=10000,
                                          random_state=0).fit(affinity_matrix)
         
         sub_aff_prop.append(clustering)
@@ -183,7 +265,7 @@ def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 
                 silhouette_best = silhouette
                 aff_prop_clust_best = clustering
                 sigma_best = sigma
-
+        print("\r"+str(round((i/len(sigma_iter))*100,3))+"%",end="\r")
     return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
 
@@ -229,9 +311,7 @@ def calculation(structure_list,CORE,speed,depth):
     for result in pool.starmap(AF.compute_distance_clustering,
                                [(struct1, struct2,"cityblock",speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)
-    end = time.time()
-    print("Job finished",time.asctime())
-    print("Time elapsed = ", time.strftime("%H:%M:%S", time.gmtime(end-start)))
+    
     pool.terminate()
     
     ### Build distance matrix using AptaMat distance in 'results' tuples
@@ -247,8 +327,11 @@ def calculation(structure_list,CORE,speed,depth):
     
     ### Acquire data from Affinity Propagation clustering
     affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-        affinity_propagation(dist_matrix, sigma=np.arange(1, depth, 0.1)) 
-
+        optimised_affinity_propagation(dist_matrix, CORE, sigma=np.arange(1, depth, 0.1)) 
+     
+    end = time.time()
+    print("Job finished",time.asctime())
+    print("Time elapsed = ", time.strftime("%H:%M:%S", time.gmtime(end-start)))
     return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
 
