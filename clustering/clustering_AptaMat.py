@@ -92,10 +92,10 @@ def renumber_by_rank(labels):
     return new_labels
 
 
-def affinity_calculation(distance_matrix, standard_labels, sigma):
+def affinity_calculation(distance_matrix, standard_labels, sigma, depth):
     """Used for parallelizing the affinity_propagation calculation"""
     affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
-    clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=20, max_iter=10000,
+    clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=10, max_iter=depth,
                                      random_state=0).fit(affinity_matrix)
     
     #sub_aff_prop.append(clustering)
@@ -105,7 +105,7 @@ def affinity_calculation(distance_matrix, standard_labels, sigma):
     
     return (clustering, calinski, silhouette, acc_score, sigma, affinity_matrix)
 
-def optimised_affinity_propagation(distance_matrix, CORE, standard=None, sigma=np.arange(1, 10, 0.1)):
+def optimised_affinity_propagation(distance_matrix, CORE, depth, standard=None, sigma=np.arange(1, 10, 0.1)):
     ### Acquire expected clustering labels
     if standard is not None:
         standard_labels = []
@@ -132,7 +132,7 @@ def optimised_affinity_propagation(distance_matrix, CORE, standard=None, sigma=n
     results=[]
     print("Job started")
     for result in pool.starmap(affinity_calculation,
-                               [(distance_matrix, standard_labels, sigma) for sigma in sigma_iter]):
+                               [(distance_matrix, standard_labels, sigma, depth) for sigma in sigma_iter]):
         results.append(result)
     pool.terminate()
     print("Job Finished, fetching the best result.")
@@ -174,100 +174,6 @@ def optimised_affinity_propagation(distance_matrix, CORE, standard=None, sigma=n
                 
     return aff, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
-def affinity_propagation(distance_matrix, standard=None, sigma=np.arange(1, 10, 0.1)):
-    """
-    Affinity propagation clustering compute over the selected sigma value range and calculation of Calinski index,
-    silhouette score and clustering accuracy.
-
-    Parameters
-    ----------
-    distance_matrix : list
-        computed distance_matrix
-    standard : dict
-        Input expected clustering result
-    sigma : list_or_ndarray
-        sigma value array
-
-    Returns
-    -------
-        affinity_matrix : ndarray
-            computed affinity_matrix
-        aff_prop_clust_best : list
-            saved optimal affinity propagation clustering
-        aff_prop_calinski_best : float
-            saved optimal calinski index
-        silhouette_best: float
-            saved optimal silhouette score
-        acc_best : float
-            saved optimal clustering accuracy
-        sigma_best : float
-            saved optimal sigma value
-        sub_aff_prop : list
-            all computed affinity propagation
-
-    """
-
-    ### Acquire expected clustering labels
-    if standard is not None:
-        standard_labels = []
-        for v in standard:
-            standard_labels.append(v)
-    else:
-        standard_labels=[i for i in range(len(distance_matrix))]
-
-    if isinstance(sigma, (list, tuple, np.ndarray)):
-        sigma_iter = sigma
-    elif isinstance(sigma, (int, float)):
-        sigma_iter = [sigma]
-
-    ### AffinityPropagation cluster creation applying various sigma value
-    ### Each iteration results in calculation of various clustering quality metrics
-    sub_aff_prop = []
-    aff_prop_calinski_best = 0
-    silhouette_best = -1
-    aff_prop_clust_best = None
-    acc_best = 0
-    sigma_best = 0
-
-    for i,sigma in enumerate(sigma_iter):
-        affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
-        clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=20, max_iter=10000,
-                                         random_state=0).fit(affinity_matrix)
-        
-        sub_aff_prop.append(clustering)
-        calinski = calinski_harabasz_score(distance_matrix, clustering.labels_)
-        silhouette = silhouette_score(affinity_matrix, clustering.labels_)
-        acc_score = adjusted_rand_score(standard_labels, clustering.labels_)
-
-        if acc_best < acc_score:
-            acc_best = acc_score
-            aff_prop_calinski_best = calinski
-            silhouette_best = silhouette
-            aff_prop_clust_best = clustering
-            sigma_best = sigma
-
-        if aff_prop_calinski_best < calinski and silhouette_best < silhouette:
-            aff_prop_calinski_best = calinski
-            silhouette_best = silhouette
-            aff_prop_clust_best = clustering
-            sigma_best = sigma
-
-        elif aff_prop_calinski_best > calinski and silhouette_best < silhouette:
-            if calinski + (5 * aff_prop_calinski_best / 100) > aff_prop_calinski_best:
-                aff_prop_calinski_best = calinski
-                silhouette_best = silhouette
-                aff_prop_clust_best = clustering
-                sigma_best = sigma
-
-        elif aff_prop_calinski_best < calinski and silhouette_best > silhouette:
-            if silhouette + (20 * silhouette_best / 100) > silhouette_best:
-                aff_prop_calinski_best = calinski
-                silhouette_best = silhouette
-                aff_prop_clust_best = clustering
-                sigma_best = sigma
-        print("\r"+str(round((i/len(sigma_iter))*100,3))+"%",end="\r")
-    return affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
-
 
 ### Initialize dataset
 def initialize_dataset(structure_file):
@@ -295,7 +201,7 @@ def initialize_dataset(structure_file):
     return structure_list,family
 
 
-def calculation(structure_list,CORE,speed,depth):
+def calculation(structure_list, CORE, speed, depth, sigma_range):
     
     ### N for matrix size
     N = len(structure_list)
@@ -327,7 +233,7 @@ def calculation(structure_list,CORE,speed,depth):
     
     ### Acquire data from Affinity Propagation clustering
     affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop = \
-        optimised_affinity_propagation(dist_matrix, CORE, sigma=np.arange(1, depth, 0.1)) 
+        optimised_affinity_propagation(dist_matrix, CORE, depth, sigma=np.arange(1, sigma_range, 0.1)) 
      
     end = time.time()
     print("Job finished",time.asctime())
@@ -464,15 +370,27 @@ def main():
     parser.add_argument('-d',
                         '--depth',
                         type=int,
-                        default=10,
+                        default=1000,
                         nargs='+',
                         help="Depth of clustering calculation.")
+    
+    parser.add_argument('-sr',
+                        '--sigma_range',
+                        type=int,
+                        default=10,
+                        nargs='+',
+                        help="Range of clustering calculation.")
     
     args = parser.parse_args()
     if isinstance(args.depth,list):
         depth=args.depth[0]
     else:
         depth=args.depth
+        
+    if isinstance(args.sigma_range,list):
+        sigma_range=args.sigma_range[0]
+    else:
+        sigma_range=args.sigma_range
     ### Structure file to be used
     structure_file=""
     for elt in args.filepath:
@@ -484,7 +402,7 @@ def main():
     
     structure_list,family=initialize_dataset(structure_file)
     
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed,depth)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range)
     
     
     ### Print Optimal values obtained from affinity propagation clustering
