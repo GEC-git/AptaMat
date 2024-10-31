@@ -587,6 +587,10 @@ We will be using small, medium and large structures.
     - bpRNAlign
     - MUSCLE...
     
+- Further optimised clustering algorithm tomake the clustering calculation quicker : parallelization.
+    - Around 2 to 3 times faster than older versions.
+
+- Renamed depth argument in clustering to `sigma_range` and added a new `depth` argument to actually control the range.
 
 **DATASETS ALIGNMENT TESTS WITH DIFFERENT GAP IMPLEMENTATION (END)**
 
