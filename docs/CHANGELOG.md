@@ -617,3 +617,10 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 - We can see that using the alignment tool greatly reduces the accuracy of the clustering. The length delta between structures seems to be important to differentiate families. AptaMat seems to take that into account.
 - Still, the clustering results are not very good.
+
+- Last results: with very high precision parameters (sigma_range = 10000; depth = 1000): (9h40min of run time)
+
+![150x8 HP NONALIGNED](clustering_newdataset/newer_dataset_NONALIGNED_D10000_SR_1000_8x150.png)
+
+- The clustering algorithm still didn't converge and we see little to no improvement.
+
