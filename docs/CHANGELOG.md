@@ -626,8 +626,11 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 ### WEEK 10 - 04/11/2024 -> 10/11/2024
 
+- Added base classes to control an OOP based alignment.
 
+- Added the function to create the subdivision in patterns and separators.
+    - Doesn't take into account the structure-wide patterns for now.
 
 ### TO DO LIST:
 
-- Making an alignment algorithm with a structural alphabet.
+- Making an alignment algorithm with a structural alphabet. (WIP)
