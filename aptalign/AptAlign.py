@@ -11,6 +11,9 @@ import multiprocessing as mp
 import matplotlib.pyplot as plt
 #import numpy as np
 
+
+### NO OOP METHOD
+
 def del_str(string,num):
     """Dedicated function to delete the character in position *num* in a string"""
     string=list(string)
@@ -285,3 +288,155 @@ def dynamic_alignment(struct1,struct2,max_size=0):
     
     return struct1_1, struct2_2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1_1),AF.SecondaryStructure(struct2_2), "cityblock", "slow"),original_dist
 
+
+
+### NEW METHOD USING A STRUCTURAL ALPHABET AND OOP
+
+def slicer(sequence):
+    return 0
+
+class Structure():
+    """
+    Class representing an aligned or not dotbracket sequence.
+    
+    It is formed of two lists : one with its patterns and one with its separators.
+    """
+    def __init__(self, sequence):
+        self.raw=sequence
+        sep,pat=slicer(sequence)
+        self.separators=sep
+        self.patterns=pat
+        
+        self.pattern_nb=len(pat)
+        self.separator_nb=len(sep)
+        self.isaligned=False
+        
+        self.alignedsequence=""
+        self.alignedwith=None
+        
+    def __str__(self):
+        tbp="Type: Structure\n"
+        tbp+="Length: "+str(self.length)+"\n"
+        tbp+="Starting Sequence: "+self.raw+"\n"
+        if self.isaligned:
+            tbp+="Aligned sequence: "+self.alignedsequence+"\n"
+            tbp+="Aligned with:"+self.alignedwith.raw+"\n"
+        else:
+            tbp+="Not yet aligned\n"
+        return tbp
+    
+    @classmethod
+    def aligned(self):
+        self.isaligned=True
+        for pattern in self.patterns:
+            if not pattern.isaligned:
+                print("Structure not yet aligned")
+                self.isaligned=False
+        
+
+    def __eq__(self, other):
+        if isinstance(other, Structure):
+            return other.raw == self.raw
+        
+    @classmethod
+    def reagglomerate(self):
+        if self.isaligned:
+            
+            def get_order(motif):
+                return motif.nb
+            
+            non_ordered=[]
+            for pattern in self.patterns:
+                if not pattern.isaligned:
+                    print("The structure is not yet aligned, returning raw sequence")
+                    return self.raw
+                else:
+                    non_ordered.append(pattern)
+            for separator in self.separators:
+                non_ordered.append(separator)
+            ordered = sorted(non_ordered, key=lambda pt : get_order(pt))
+            
+            seq=""
+            for patsep in ordered:
+                seq+=patsep.sequence
+            return seq
+        
+        else:
+            print("The structure is not yet aligned, returning raw sequence")
+            return self.raw
+        
+    
+class Separator():
+    """
+    Class used to define a structure.
+    A separator is represented by an array of points separating two patterns.
+    
+    Example: 
+        In the structure `(((...)))...(.(((...))))` the three points in the middle is the separator.
+    """
+    def __init__(self,raw,raw_range,order):
+        self.nb=order
+        self.start=raw_range[0]
+        self.finish=raw_range[1]
+        self.length=raw_range[1]-raw_range[0]
+        self.sequence=raw
+
+    def __eq__(self,other):
+        if isinstance(other,Separator):
+            return self.length==other.length
+    
+    def __str__(self):
+        tbp="Type: Separator\n"
+        tbp+="Length: "+str(self.length)+"\n"
+        tbp+="Order:"+str(self.nb)+"\n"
+        tbp+="Sequence: "+self.raw+"\n"
+        return tbp
+    
+    @classmethod
+    def compare(self,other):
+        if isinstance(other,Separator):
+            return abs(self.length-other.length)
+        
+    
+class Pattern():
+    """
+    Class used to define a structure.
+    A pattern is represented by a smaller structure with a single opening and closing sequence.
+    
+    Example: `(((((..))..)))` is a pattern but `(..)(((.)))` isn't.
+    """
+    def __init__(self,raw,raw_range,order):
+        self.nb=order
+        self.start=raw_range[0]
+        self.finish=raw_range[1]
+        self.length=raw_range[1]-raw_range[0]
+        self.sequence=raw
+        
+        self.isaligned=False
+        self.alignedwith=None
+        self.alignedsequence=""
+
+    def __eq__(self,other):
+        if isinstance(other,Pattern):
+            return self.sequence==other.sequence
+    
+    @classmethod
+    def am_distance(self,other):
+        if isinstance(other,Pattern):
+            return AF.compute_distance_clustering(AF.SecondaryStructure(self.sequence),AF.SecondaryStructure(other.sequence), "cityblock", "slow")
+        
+    @classmethod
+    def aligned(self):
+        self.isaligned=False
+        
+    def __str__(self):
+        tbp="Type: Pattern\n"
+        tbp+="Length: "+str(self.length)+"\n"
+        tbp+="Order:"+str(self.nb)+"\n"
+        tbp+="Starting Sequence: "+self.raw+"\n"
+        if self.isaligned:
+            tbp+="Aligned sequence: "+self.alignedsequence+"\n"
+            tbp+="Aligned with: "+self.alignedwith.sequence+"\n"
+        else:
+            tbp+="Not yet aligned\n"
+        return tbp
