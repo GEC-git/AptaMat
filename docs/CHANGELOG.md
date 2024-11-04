@@ -624,3 +624,10 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 - The clustering algorithm still didn't converge and we see little to no improvement.
 
+### WEEK 10 - 04/11/2024 -> 10/11/2024
+
+
+
+### TO DO LIST:
+
+- Making an alignment algorithm with a structural alphabet.
