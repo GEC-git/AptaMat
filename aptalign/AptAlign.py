@@ -292,8 +292,175 @@ def dynamic_alignment(struct1,struct2,max_size=0):
 
 ### NEW METHOD USING A STRUCTURAL ALPHABET AND OOP
 
+
 def slicer(sequence):
-    return 0
+    order=0
+    sep=[]
+    pat=[]
+    if sequence[0]=="." or sequence[0]=="[" or sequence[0]=="{":
+        separator=True
+    else:
+        separator=False
+    new=True
+    seq=list(sequence)
+    i=1
+    while i!= len(seq):
+        if i==len(seq)-1:
+            end=True
+        else:
+            end=False
+        if new:
+            raw=""
+            start=i-1
+        if separator:
+            if end:
+                raw+=seq[i-1]
+                raw+=seq[i]
+                sep.append(Separator(raw,(start,i),order))
+                i+=1
+            elif seq[i-1]!="(" and seq[i] !="(":
+                raw+=seq[i-1]
+                new=False
+                i+=1
+            elif seq[i-1]!="(" and seq[i] == "(":
+                raw+=seq[i-1]
+                sep.append(Separator(raw,(start,i-1),order))
+                new=True
+                separator=False
+                order+=1
+                i+=1
+        else:
+            if new:
+                open_db=1
+            if open_db==0:
+                new=True
+                pat.append(Pattern(raw,(start,i-1),order))
+                order+=1
+                if seq[i] != "(":
+                    separator=True
+                else:
+                    separator=False
+            else:
+                if end:
+                    raw+=seq[i-1]
+                    raw+=seq[i]
+                    pat.append(Pattern(raw,(start,i),order))
+                    i+=1
+                elif seq[i-1]=="(" and new:
+                    raw+=seq[i-1]
+                    new=False
+                    i+=1
+                elif seq[i-1]=="(":
+                    raw+=seq[i-1]
+                    open_db+=1
+                    new=False
+                    i+=1
+                elif seq[i-1]==")":
+                    open_db-=1
+                    raw+=seq[i-1]
+                    new=False
+                    i+=1
+                else:
+                    raw+=seq[i-1]
+                    new=False
+                    i+=1
+                    
+    return sep,pat
+                
+"""EXAMPLE
+
+`print(Structure("(((.((((....)))).)))....................((((((........))))))(((((((...)))))))........................................((((((((...........(((((..)))))....))))))))..((((((.((((((..............))))))..))))))......."))`
+
+Results in:
+    
+Type: Structure
+Length: 210
+Starting Sequence: (((.((((....)))).)))....................((((((........))))))(((((((...)))))))........................................((((((((...........(((((..)))))....))))))))..((((((.((((((..............))))))..)))))).......
+                   
+Separators: 
+Separator number 1:
+Type: Separator
+Length: 20
+Order: 1
+Sequence: ....................
+Start: 20
+Finish: 39
+
+Separator number 2:
+Type: Separator
+Length: 40
+Order: 4
+Sequence: ........................................
+Start: 77
+Finish: 116
+
+Separator number 3:
+Type: Separator
+Length: 2
+Order: 6
+Sequence: ..
+Start: 160
+Finish: 161
+
+Separator number 4:
+Type: Separator
+Length: 7
+Order: 8
+Sequence: .......
+Start: 203
+Finish: 209
+
+______________________________________
+
+Patterns: 
+Pattern number 1:
+Type: Pattern
+Length: 21
+Order: 0
+Start: 0
+Finish: 20
+Starting Sequence: (((.((((....)))).)))
+Not yet aligned
+
+Pattern number 2:
+Type: Pattern
+Length: 21
+Order: 2
+Start: 40
+Finish: 60
+Starting Sequence: ((((((........))))))
+Not yet aligned
+
+Pattern number 3:
+Type: Pattern
+Length: 18
+Order: 3
+Start: 60
+Finish: 77
+Starting Sequence: (((((((...)))))))
+Not yet aligned
+
+Pattern number 4:
+Type: Pattern
+Length: 44
+Order: 5
+Start: 117
+Finish: 160
+Starting Sequence: ((((((((...........(((((..)))))....))))))))
+Not yet aligned
+
+Pattern number 5:
+Type: Pattern
+Length: 42
+Order: 7
+Start: 162
+Finish: 203
+Starting Sequence: ((((((.((((((..............))))))..))))))
+Not yet aligned
+
+______________________________________
+Not yet aligned
+"""
 
 class Structure():
     """
@@ -306,7 +473,7 @@ class Structure():
         sep,pat=slicer(sequence)
         self.separators=sep
         self.patterns=pat
-        
+        self.length=len(sequence)
         self.pattern_nb=len(pat)
         self.separator_nb=len(sep)
         self.isaligned=False
@@ -318,27 +485,34 @@ class Structure():
         tbp="Type: Structure\n"
         tbp+="Length: "+str(self.length)+"\n"
         tbp+="Starting Sequence: "+self.raw+"\n"
+        tbp+="\nSeparators: \n"
+        for i,elt in enumerate(self.separators):
+            tbp+="Separator number "+str(i+1)+":\n"+str(elt)+"\n"
+        tbp+="______________________________________\n"
+        tbp+="\nPatterns: \n"
+        for i,elt in enumerate(self.patterns):
+            tbp+="Pattern number "+str(i+1)+":\n"+str(elt)+"\n"
+        tbp+="______________________________________\n"
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
             tbp+="Aligned with:"+self.alignedwith.raw+"\n"
         else:
             tbp+="Not yet aligned\n"
         return tbp
-    
-    @classmethod
+
     def aligned(self):
         self.isaligned=True
         for pattern in self.patterns:
             if not pattern.isaligned:
-                print("Structure not yet aligned")
                 self.isaligned=False
+        if not self.isaligned:
+            print("Structure not yet aligned")
         
 
     def __eq__(self, other):
         if isinstance(other, Structure):
             return other.raw == self.raw
-        
-    @classmethod
+
     def reagglomerate(self):
         if self.isaligned:
             
@@ -348,7 +522,7 @@ class Structure():
             non_ordered=[]
             for pattern in self.patterns:
                 if not pattern.isaligned:
-                    print("The structure is not yet aligned, returning raw sequence")
+                    print("The patterns are not yet aligned, returning raw sequence")
                     return self.raw
                 else:
                     non_ordered.append(pattern)
@@ -372,13 +546,13 @@ class Separator():
     A separator is represented by an array of points separating two patterns.
     
     Example: 
-        In the structure `(((...)))...(.(((...))))` the three points in the middle is the separator.
+        In the structure `(((...)))...(.(((...))))` the three dots in the middle forms the separator.
     """
     def __init__(self,raw,raw_range,order):
         self.nb=order
         self.start=raw_range[0]
         self.finish=raw_range[1]
-        self.length=raw_range[1]-raw_range[0]
+        self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
 
     def __eq__(self,other):
@@ -388,11 +562,12 @@ class Separator():
     def __str__(self):
         tbp="Type: Separator\n"
         tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Order:"+str(self.nb)+"\n"
-        tbp+="Sequence: "+self.raw+"\n"
+        tbp+="Order: "+str(self.nb)+"\n"
+        tbp+="Sequence: "+self.sequence+"\n"
+        tbp+="Start: "+str(self.start)+"\n"
+        tbp+="Finish: "+str(self.finish)+"\n"
         return tbp
     
-    @classmethod
     def compare(self,other):
         if isinstance(other,Separator):
             return abs(self.length-other.length)
@@ -409,7 +584,7 @@ class Pattern():
         self.nb=order
         self.start=raw_range[0]
         self.finish=raw_range[1]
-        self.length=raw_range[1]-raw_range[0]
+        self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
         
         self.isaligned=False
@@ -420,20 +595,20 @@ class Pattern():
         if isinstance(other,Pattern):
             return self.sequence==other.sequence
     
-    @classmethod
     def am_distance(self,other):
         if isinstance(other,Pattern):
             return AF.compute_distance_clustering(AF.SecondaryStructure(self.sequence),AF.SecondaryStructure(other.sequence), "cityblock", "slow")
-        
-    @classmethod
+
     def aligned(self):
         self.isaligned=False
         
     def __str__(self):
         tbp="Type: Pattern\n"
         tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Order:"+str(self.nb)+"\n"
-        tbp+="Starting Sequence: "+self.raw+"\n"
+        tbp+="Order: "+str(self.nb)+"\n"
+        tbp+="Start: "+str(self.start)+"\n"
+        tbp+="Finish: "+str(self.finish)+"\n"
+        tbp+="Starting Sequence: "+self.sequence+"\n"
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
             tbp+="Aligned with: "+self.alignedwith.sequence+"\n"
