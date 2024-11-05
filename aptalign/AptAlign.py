@@ -292,176 +292,98 @@ def dynamic_alignment(struct1,struct2,max_size=0):
 
 ### NEW METHOD USING A STRUCTURAL ALPHABET AND OOP
 
-
-def slicer(sequence):
-    order=0
-    sep=[]
-    pat=[]
-    if sequence[0]=="." or sequence[0]=="[" or sequence[0]=="{":
-        separator=True
-    else:
-        separator=False
-    new=True
-    seq=list(sequence)
-    i=1
-    while i!= len(seq):
-        if i==len(seq)-1:
-            end=True
+def subdiv_finder(sequence,subdiv_param):
+    par="()"
+    #void=".-"
+    dict_par={}
+    dict_seq={}
+    for i,elt in enumerate(sequence):
+        if elt in par:
+            dict_par[i]=elt
+        dict_seq[i]=elt
+        
+    new_dict={}
+    subdiv={}
+    while dict_par != {}:
+        index_list=list(dict_par.keys())
+        i=0
+        while dict_par[index_list[i]]==dict_par[index_list[i+1]]:
+            i+=1
+        if not((index_list[i+1] - index_list[i]) > int(len(sequence)/subdiv_param)):
+            new_dict[index_list[i]]=dict_par[index_list[i]]
+            new_dict[index_list[i+1]]=dict_par[index_list[i+1]]
         else:
-            end=False
-        if new:
-            raw=""
-            start=i-1
-        if separator:
-            if end:
-                raw+=seq[i-1]
-                raw+=seq[i]
-                sep.append(Separator(raw,(start,i),order))
-                i+=1
-            elif seq[i-1]!="(" and seq[i] !="(":
-                raw+=seq[i-1]
-                new=False
-                i+=1
-            elif seq[i-1]!="(" and seq[i] == "(":
-                raw+=seq[i-1]
-                sep.append(Separator(raw,(start,i-1),order))
-                new=True
-                separator=False
-                order+=1
-                i+=1
-        else:
-            if new:
-                open_db=1
-            if open_db==0:
-                new=True
-                pat.append(Pattern(raw,(start,i-1),order))
-                order+=1
-                if seq[i] != "(":
-                    separator=True
-                else:
-                    separator=False
-            else:
-                if end:
-                    raw+=seq[i-1]
-                    raw+=seq[i]
-                    pat.append(Pattern(raw,(start,i),order))
-                    i+=1
-                elif seq[i-1]=="(" and new:
-                    raw+=seq[i-1]
-                    new=False
-                    i+=1
-                elif seq[i-1]=="(":
-                    raw+=seq[i-1]
-                    open_db+=1
-                    new=False
-                    i+=1
-                elif seq[i-1]==")":
-                    open_db-=1
-                    raw+=seq[i-1]
-                    new=False
-                    i+=1
-                else:
-                    raw+=seq[i-1]
-                    new=False
-                    i+=1
-                    
-    return sep,pat
-                
-"""EXAMPLE
+            subdiv[index_list[i]]=dict_par[index_list[i]]
+            subdiv[index_list[i+1]]=dict_par[index_list[i+1]]
+            
+        del(dict_par[index_list[i]])
+        del(dict_par[index_list[i+1]])
+        
+    for elt in subdiv.keys():
+        dict_seq[elt]="#"
+    new_seq=''
+    for elt in dict_seq.values():
+        new_seq+=elt
+        
+    return subdiv,new_seq
 
-`print(Structure("(((.((((....)))).)))....................((((((........))))))(((((((...)))))))........................................((((((((...........(((((..)))))....))))))))..((((((.((((((..............))))))..))))))......."))`
+"""EXAMPLE:
 
-Results in:
-    
-Type: Structure
-Length: 210
-Starting Sequence: (((.((((....)))).)))....................((((((........))))))(((((((...)))))))........................................((((((((...........(((((..)))))....))))))))..((((((.((((((..............))))))..)))))).......
-                   
-Separators: 
-Separator number 1:
-Type: Separator
-Length: 20
-Order: 1
-Sequence: ....................
-Start: 20
-Finish: 39
+subdiv_finder(".((((((..((((.......)))).(((((.......))))).....(((.....)))))))))..",2)
 
-Separator number 2:
-Type: Separator
-Length: 40
-Order: 4
-Sequence: ........................................
-Start: 77
-Finish: 116
-
-Separator number 3:
-Type: Separator
-Length: 2
-Order: 6
-Sequence: ..
-Start: 160
-Finish: 161
-
-Separator number 4:
-Type: Separator
-Length: 7
-Order: 8
-Sequence: .......
-Start: 203
-Finish: 209
-
-______________________________________
-
-Patterns: 
-Pattern number 1:
-Type: Pattern
-Length: 21
-Order: 0
-Start: 0
-Finish: 20
-Starting Sequence: (((.((((....)))).)))
-Not yet aligned
-
-Pattern number 2:
-Type: Pattern
-Length: 21
-Order: 2
-Start: 40
-Finish: 60
-Starting Sequence: ((((((........))))))
-Not yet aligned
-
-Pattern number 3:
-Type: Pattern
-Length: 18
-Order: 3
-Start: 60
-Finish: 77
-Starting Sequence: (((((((...)))))))
-Not yet aligned
-
-Pattern number 4:
-Type: Pattern
-Length: 44
-Order: 5
-Start: 117
-Finish: 160
-Starting Sequence: ((((((((...........(((((..)))))....))))))))
-Not yet aligned
-
-Pattern number 5:
-Type: Pattern
-Length: 42
-Order: 7
-Start: 162
-Finish: 203
-Starting Sequence: ((((((.((((((..............))))))..))))))
-Not yet aligned
-
-______________________________________
-Not yet aligned
+results in:
+    subdiv = {6: '(',58: ')',5: '(',59: ')',4: '(',60: ')',3: '(',61: ')',2: '(',62: ')',1: '(',63: ')'},
+    new_seq = '.######..((((.......)))).(((((.......))))).....(((.....)))######..'
 """
 
+def slicer(sequence):
+    pat=[]
+    sep=[]
+    par="()"
+    dict_par={}
+    dict_seq={}
+    for i,elt in enumerate(sequence):
+        if elt in par:
+            dict_par[i]=elt
+        dict_seq[i]=elt
+    open_db = 0
+    start = min(dict_par.keys())
+    finish=0
+    new=True
+    ranges=[]
+    for elt in dict_par.keys():
+        if dict_par[elt]=="(":
+            if new:
+                start=elt
+                new=False
+            open_db+=1
+        elif dict_par[elt]==")":
+            open_db-=1
+        if open_db==0:
+            finish=elt
+            ranges.append((start,finish+1))
+            new=True
+    
+    full_ranges=[]
+    ranges_sep=["|"]
+    for tup in ranges:
+        full_ranges.append(("PAT",[i for i in range(tup[0],tup[1])]))
+    for lst in full_ranges:
+        if ranges_sep[-1]!="|":
+            ranges_sep.append("|")
+        for elt in lst[1]:
+            ranges_sep.append(elt)
+        ranges_sep.append("|")
+    print(ranges_sep)
+    #WIP
+            
+    
+    
+"""   
+[('((((((........))))))', (1, 21)), ('(((((((...)))))))', (21, 38)), ('((((((((...........(((((..)))))....))))))))', (39, 82)), ('((((((.((((((..............))))))..))))))', (83, 124))]
+  .((((((........))))))               (((((((...)))))))               .((((((((...........(((((..)))))....))))))))               .((((((.((((((..............))))))..)))))).......
+
+"""
 class Structure():
     """
     Class representing an aligned or not dotbracket sequence.
@@ -470,7 +392,8 @@ class Structure():
     """
     def __init__(self, sequence):
         self.raw=sequence
-        sep,pat=slicer(sequence)
+        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
         self.length=len(sequence)
@@ -484,7 +407,9 @@ class Structure():
     def __str__(self):
         tbp="Type: Structure\n"
         tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Starting Sequence: "+self.raw+"\n"
+        tbp+="Raw Sequence: "+self.raw+"\n"
+        tbp+="Subdiv sequence: "+str(self.raw_nosubdiv)+"\n"
+        tbp+="Subdiv: "+str(self.subdiv)+"\n"
         tbp+="\nSeparators: \n"
         for i,elt in enumerate(self.separators):
             tbp+="Separator number "+str(i+1)+":\n"+str(elt)+"\n"
@@ -493,6 +418,7 @@ class Structure():
         for i,elt in enumerate(self.patterns):
             tbp+="Pattern number "+str(i+1)+":\n"+str(elt)+"\n"
         tbp+="______________________________________\n"
+
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
             tbp+="Aligned with:"+self.alignedwith.raw+"\n"
@@ -554,6 +480,13 @@ class Separator():
         self.finish=raw_range[1]
         self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
+        
+        subdiv=0
+        for elt in raw:
+            if elt == "#":
+                subdiv+=1
+        
+        self.subdiv_index=subdiv
 
     def __eq__(self,other):
         if isinstance(other,Separator):
@@ -566,6 +499,7 @@ class Separator():
         tbp+="Sequence: "+self.sequence+"\n"
         tbp+="Start: "+str(self.start)+"\n"
         tbp+="Finish: "+str(self.finish)+"\n"
+        tbp+="Subdiv index: "+str(self.subdiv_index)+"\n"
         return tbp
     
     def compare(self,other):
@@ -586,6 +520,12 @@ class Pattern():
         self.finish=raw_range[1]
         self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
+        
+        subdiv=0
+        for elt in raw:
+            if elt == "#":
+                subdiv+=1
+        self.subdiv_index=subdiv
         
         self.isaligned=False
         self.alignedwith=None
@@ -609,6 +549,7 @@ class Pattern():
         tbp+="Start: "+str(self.start)+"\n"
         tbp+="Finish: "+str(self.finish)+"\n"
         tbp+="Starting Sequence: "+self.sequence+"\n"
+        tbp+="Subdiv index: "+str(self.subdiv_index)+"\n"
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
             tbp+="Aligned with: "+self.alignedwith.sequence+"\n"
