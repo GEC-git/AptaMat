@@ -628,8 +628,12 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 - Added base classes to control an OOP based alignment.
 
-- Added the function to create the subdivision in patterns and separators.
-    - Doesn't take into account the structure-wide patterns for now.
+- Added a function to create and divise patterns and separators from the sequence.
+
+- Added a function to detect structure-wide subdivisions.
+    - Replaces the affected parentheses with hashtags and added a new index for future alignment : `subdiv_index`.
+
+- Rewritting of the first function.
 
 ### TO DO LIST:
 
