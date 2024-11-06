@@ -641,6 +641,41 @@ RF00162= SAM riboswitch aptamer (S box leader)
     
 - Updated the `Structure.reagglomerate()` function in order to support the new subdiv characters. 
 
+- Further tests of the dynamic alignment showed that is gives the same results as the bruteforce method for small patterns (less than 20 of size).
+    - It has also shown that giving a little bit of wiggle room for same-size patterns in term of alignment can give better results. (1 of wiggle room is recomended).
+    - With very different structures, it also showed that it gives exactly the same results as the bruteforce method (at least in terms of distance minimization).
+    
+- With those new tests, I can confidently say that this new alignment method will be close to but not optimal.
+
+- Created a precise method for alignment:
+
+```
+ ____________________
+ METHOD:
+     
+     MATCHING
+     
+     - comparing number of patterns
+     - comparing number of separators
+     
+     - comparing one by one the length and distance of the patterns and separators.
+         - taking into account subdivisions with the subdiv_index.
+     
+     - Having a one by one match with all the patterns of the smallest structure.
+         - A matched pattern in the bigger structure cannot have a smaller order than its match in the smaller structure.
+         - If the number of pattern is the same in both structure, there is a single way to match each pattern.
+         
+     ALIGNING
+     
+     - Using dynamic alignment to align each pattern with its match.
+         - mark them as aligned and input each other in the `self.alignedwith` variable.
+     
+     - When done, match the length of the two structures with gaps placed in the separators where it minimizes the distance.
+     
+     - Mark the structures as aligned and input each other in the `self.alignedwith` variable.
+ ____________________
+```
+
 ### TO DO LIST:
 
 - Making an alignment algorithm with a structural alphabet. (WIP)
