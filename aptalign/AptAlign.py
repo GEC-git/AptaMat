@@ -283,10 +283,9 @@ def dynamic_alignment(struct1,struct2,max_size=0):
     print("\nSecond Structure")
     struct2_2=dynamic_one_range(struct2, struct1, fill2)
     
-    original_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1),AF.SecondaryStructure(struct2), "cityblock", "slow")
     print("\nFinished\n")
     
-    return struct1_1, struct2_2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1_1),AF.SecondaryStructure(struct2_2), "cityblock", "slow"),original_dist
+    return struct1_1, struct2_2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1_1),AF.SecondaryStructure(struct2_2), "cityblock", "slow")
 
 
 
@@ -391,6 +390,7 @@ def slicer(sequence):
         dp_full_ranges.append(("SEP",[j for j in range(full_ranges[-1][1][-1]+1,len(sequence))]))
     
     order=0
+    pat_num=0
     for elt in dp_full_ranges:
         if elt[0]=="SEP":
             new_seq=''
@@ -402,7 +402,8 @@ def slicer(sequence):
             new_seq=''
             for nbs in elt[1]:
                 new_seq+=dict_seq[nbs]
-            pat.append(Pattern(new_seq,(elt[1][0],elt[1][-1]),order))
+            pat.append(Pattern(new_seq,(elt[1][0],elt[1][-1]),order,pat_num))
+            pat_num+=1
             order+=1
     
     return sep,pat
@@ -640,8 +641,9 @@ class Pattern():
     
     Example: `(((((..))..)))` is a pattern but `(..)(((.)))` isn't.
     """
-    def __init__(self,raw,raw_range,order):
+    def __init__(self,raw,raw_range,order,pat_num):
         self.nb=order
+        self.pattern_nb=pat_num
         self.start=raw_range[0]
         self.finish=raw_range[1]
         self.length=raw_range[1]-raw_range[0]+1
@@ -665,8 +667,10 @@ class Pattern():
         if isinstance(other,Pattern):
             return AF.compute_distance_clustering(AF.SecondaryStructure(self.sequence),AF.SecondaryStructure(other.sequence), "cityblock", "slow")
 
-    def aligned(self):
-        self.isaligned=False
+    def aligned(self,acc_pat,new_seq):
+        self.alignedwith=acc_pat
+        self.alignedsequence=new_seq
+        self.isaligned=True
         
     def __str__(self):
         tbp="Type: Pattern\n"
@@ -682,3 +686,62 @@ class Pattern():
         else:
             tbp+="Not yet aligned\n"
         return tbp
+
+def pattern_alignment(pat1, pat2):
+    
+    if len(pat1.sequence)==len(pat2.sequence):
+        max_size=len(pat1.raw)
+    else:
+        max_size=0
+        
+    seq1,seq2,new_dist=dynamic_alignment(pat1.sequence, pat2.sequence,max_size)
+    
+    pat1.aligned(pat2,seq1)
+    pat2.aligned(pat1,seq2)
+    
+    print("Aligned:",pat1,pat2)
+
+def oop_alignment(struct1, struct2):
+    """
+    
+    Main function to calculate a pattern based alignment.
+    
+    struct1: Structure
+    struct2: Structure
+    
+    ____________________
+    METHOD:
+        
+        MATCHING
+        
+        - comparing number of patterns
+        - comparing number of separators
+        
+        - comparing one by one the length and distance of the patterns and separators.
+            - taking into account subdivisions with the subdiv_index.
+        
+        - Having a one by one match with all the patterns of the smallest structure.
+            - A matched pattern in the bigger structure cannot have a smaller order than its match in the smaller structure.
+            - If the number of pattern is the same in both structure, there is a single way to match each pattern.
+            
+        ALIGNING
+        
+        - Using dynamic alignment to align each pattern with its match.
+            - mark them as aligned and input each other in the `self.alignedwith` variable.
+        
+        - When done, match the length of the two structures with gaps placed in the separators where it minimizes the distance.
+        
+        - Mark the structures as aligned and input each other in the `self.alignedwith` variable.
+    ____________________
+    
+    """
+
+    initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.sequence),AF.SecondaryStructure(struct2.sequence), "cityblock", "slow")
+    
+    pat_num1=len(struct1.patterns)
+    pat_num2=len(struct2.patterns)
+    
+    sep_num1=len(struct1.separators)
+    sep_num2=len(struct2.separators)
+    
+    #WIP
