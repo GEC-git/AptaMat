@@ -626,14 +626,20 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 ### WEEK 10 - 04/11/2024 -> 10/11/2024
 
-- Added base classes to control an OOP based alignment.
+- Added base classes to control an OOP based alignment:
+    - `Structure`
+    - `Pattern`
+    - `Separator`
 
-- Added a function to create and divise patterns and separators from the sequence.
+- Added the `slicer()` function to create and divise patterns and separators from the sequence.
 
-- Added a function to detect structure-wide subdivisions.
+- Added the `subdiv_finder()` function to detect structure-wide subdivisions.
     - Replaces the affected parentheses with hashtags and added a new index for future alignment : `subdiv_index`.
 
-- Rewritting of the first function.
+- Rewritting of the `slicer()` function is finished.
+    - It is now faster and less clunky. (using dictionnaries instead of strings)
+    
+- Updated the `Structure.reagglomerate()` function in order to support the new subdiv characters. 
 
 ### TO DO LIST:
 
