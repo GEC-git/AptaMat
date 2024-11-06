@@ -329,7 +329,7 @@ def subdiv_finder(sequence,subdiv_param):
 
 """EXAMPLE:
 
-subdiv_finder(".((((((..((((.......)))).(((((.......))))).....(((.....)))))))))..",2)
+`subdiv_finder(".((((((..((((.......)))).(((((.......))))).....(((.....)))))))))..",2)`
 
 results in:
     subdiv = {6: '(',58: ')',5: '(',59: ')',4: '(',60: ')',3: '(',61: ')',2: '(',62: ')',1: '(',63: ')'},
@@ -365,25 +365,140 @@ def slicer(sequence):
             new=True
     
     full_ranges=[]
-    ranges_sep=["|"]
     for tup in ranges:
         full_ranges.append(("PAT",[i for i in range(tup[0],tup[1])]))
-    for lst in full_ranges:
-        if ranges_sep[-1]!="|":
-            ranges_sep.append("|")
-        for elt in lst[1]:
-            ranges_sep.append(elt)
-        ranges_sep.append("|")
-    print(ranges_sep)
-    #WIP
+    
+    if sequence[0]!="(":
+        separator_start = True
+    else:
+        separator_start = False
+        
+    if sequence[-1]!=")":
+        separator_end = True
+    else:
+        separator_end = False
+        
+    dp_full_ranges=full_ranges[:]
+    insert=0
+    if separator_start:
+        dp_full_ranges.insert(0,("SEP",[j for j in range(full_ranges[0][1][0])]))
+        insert+=1
+    for i in range(1,len(full_ranges)):
+        if not(full_ranges[i-1][1][-1]+1==full_ranges[i][1][0]):
+            dp_full_ranges.insert(i+insert,("SEP",[j for j in range(full_ranges[i-1][1][-1]+1,full_ranges[i][1][0])]))
+            insert+=1
+    if separator_end:
+        dp_full_ranges.append(("SEP",[j for j in range(full_ranges[-1][1][-1]+1,len(sequence))]))
+    
+    order=0
+    for elt in dp_full_ranges:
+        if elt[0]=="SEP":
+            new_seq=''
+            for nbs in elt[1]:
+                new_seq+=dict_seq[nbs]
+            sep.append(Separator(new_seq,(elt[1][0],elt[1][-1]),order))
+            order+=1
+        if elt[0]=="PAT":
+            new_seq=''
+            for nbs in elt[1]:
+                new_seq+=dict_seq[nbs]
+            pat.append(Pattern(new_seq,(elt[1][0],elt[1][-1]),order))
+            order+=1
+    
+    return sep,pat
             
     
     
-"""   
-[('((((((........))))))', (1, 21)), ('(((((((...)))))))', (21, 38)), ('((((((((...........(((((..)))))....))))))))', (39, 82)), ('((((((.((((((..............))))))..))))))', (83, 124))]
-  .((((((........))))))               (((((((...)))))))               .((((((((...........(((((..)))))....))))))))               .((((((.((((((..............))))))..)))))).......
+"""EXAMPLE:
+
+`print(Structure(".((((((..((((.......)))).(((((.......))))).....(((.....))))))))).."))`
+
+results in:
+    
+'''
+Type: Structure
+Length: 66
+Raw Sequence: .((((((..((((.......)))).(((((.......))))).....(((.....)))))))))..
+Subdiv sequence: .######..((((.......)))).(((((.......))))).....(((.....)))######..
+Subdiv: {6: '(', 58: ')', 5: '(', 59: ')', 4: '(', 60: ')', 3: '(', 61: ')', 2: '(', 62: ')', 1: '(', 63: ')'}
+
+Separators: 
+Separator number 1:
+Type: Separator
+Length: 9
+Order: 0
+Sequence: .######..
+Start: 0
+Finish: 8
+Subdiv index: 6
+
+Separator number 2:
+Type: Separator
+Length: 1
+Order: 2
+Sequence: .
+Start: 24
+Finish: 24
+Subdiv index: 0
+
+Separator number 3:
+Type: Separator
+Length: 5
+Order: 4
+Sequence: .....
+Start: 42
+Finish: 46
+Subdiv index: 0
+
+Separator number 4:
+Type: Separator
+Length: 8
+Order: 6
+Sequence: ######..
+Start: 58
+Finish: 65
+Subdiv index: 6
+
+______________________________________
+
+Patterns: 
+Pattern number 1:
+Type: Pattern
+Length: 15
+Order: 1
+Start: 9
+Finish: 23
+Starting Sequence: ((((.......))))
+Subdiv index: 0
+Not yet aligned
+
+Pattern number 2:
+Type: Pattern
+Length: 17
+Order: 3
+Start: 25
+Finish: 41
+Starting Sequence: (((((.......)))))
+Subdiv index: 0
+Not yet aligned
+
+Pattern number 3:
+Type: Pattern
+Length: 11
+Order: 5
+Start: 47
+Finish: 57
+Starting Sequence: (((.....)))
+Subdiv index: 0
+Not yet aligned
+
+______________________________________
+Not yet aligned
+'''
 
 """
+
+
 class Structure():
     """
     Class representing an aligned or not dotbracket sequence.
@@ -456,9 +571,20 @@ class Structure():
                 non_ordered.append(separator)
             ordered = sorted(non_ordered, key=lambda pt : get_order(pt))
             
-            seq=""
+            seqint=""
             for patsep in ordered:
-                seq+=patsep.sequence
+                seqint+=patsep.sequence
+            
+            #assuming that subdiv will be updated after alignment.
+            seq_dic={}
+            for i,elt in enumerate(seqint):
+                seq_dic[i]=elt
+            for elt in self.subdiv.items():
+                seq_dic[elt[0]]=elt[1]
+            seq=''
+            for elt in seq_dic.values():
+                seq+=elt
+            
             return seq
         
         else:
