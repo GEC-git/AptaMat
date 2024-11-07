@@ -383,20 +383,22 @@ def slicer(sequence):
         dp_full_ranges.insert(0,("SEP",[j for j in range(full_ranges[0][1][0])]))
         insert+=1
     for i in range(1,len(full_ranges)):
-        if not(full_ranges[i-1][1][-1]+1==full_ranges[i][1][0]):
-            dp_full_ranges.insert(i+insert,("SEP",[j for j in range(full_ranges[i-1][1][-1]+1,full_ranges[i][1][0])]))
-            insert+=1
+        dp_full_ranges.insert(i+insert,("SEP",[j for j in range(full_ranges[i-1][1][-1]+1,full_ranges[i][1][0])]))
+        insert+=1
     if separator_end:
         dp_full_ranges.append(("SEP",[j for j in range(full_ranges[-1][1][-1]+1,len(sequence))]))
     
     order=0
     pat_num=0
-    for elt in dp_full_ranges:
+    for i,elt in enumerate(dp_full_ranges):
         if elt[0]=="SEP":
             new_seq=''
-            for nbs in elt[1]:
-                new_seq+=dict_seq[nbs]
-            sep.append(Separator(new_seq,(elt[1][0],elt[1][-1]),order))
+            if not(elt[1] == []):
+                for nbs in elt[1]:
+                    new_seq+=dict_seq[nbs]
+                sep.append(Separator(new_seq,(elt[1][0],elt[1][-1]),order))
+            else:
+                sep.append(Separator(new_seq,(-1,dp_full_ranges[i-1][1][-1]+1),order))
             order+=1
         if elt[0]=="PAT":
             new_seq=''
@@ -554,23 +556,32 @@ class Structure():
     def __eq__(self, other):
         if isinstance(other, Structure):
             return other.raw == self.raw
-
+        
+    def order_list(self):
+        
+        def get_order(motif):
+            return motif.nb
+        
+        non_ordered=[]
+        for pattern in self.patterns:
+                non_ordered.append(pattern)
+        for separator in self.separators:
+            non_ordered.append(separator)
+            
+        ordered = sorted(non_ordered, key=lambda pt : get_order(pt))
+        
+        return ordered
+    
     def reagglomerate(self):
         if self.isaligned:
             
-            def get_order(motif):
-                return motif.nb
             
-            non_ordered=[]
-            for pattern in self.patterns:
+            for pattern in self.patterns():
                 if not pattern.isaligned:
                     print("The patterns are not yet aligned, returning raw sequence")
                     return self.raw
-                else:
-                    non_ordered.append(pattern)
-            for separator in self.separators:
-                non_ordered.append(separator)
-            ordered = sorted(non_ordered, key=lambda pt : get_order(pt))
+            
+            ordered=self.order_list()
             
             seqint=""
             for patsep in ordered:
@@ -605,7 +616,10 @@ class Separator():
         self.nb=order
         self.start=raw_range[0]
         self.finish=raw_range[1]
-        self.length=raw_range[1]-raw_range[0]+1
+        if raw_range[0] == -1 :
+            self.length = 0
+        else:
+            self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
         
         subdiv=0
@@ -614,7 +628,9 @@ class Separator():
                 subdiv+=1
         
         self.subdiv_index=subdiv
-
+        self.isaligned=False
+        self.alignedsequence=raw
+        
     def __eq__(self,other):
         if isinstance(other,Separator):
             return self.length==other.length
@@ -670,6 +686,8 @@ class Pattern():
     def aligned(self,acc_pat,new_seq):
         self.alignedwith=acc_pat
         self.alignedsequence=new_seq
+        self.length=len(new_seq)
+        self.finish+=new_seq.count('-')
         self.isaligned=True
         
     def __str__(self):
@@ -687,21 +705,66 @@ class Pattern():
             tbp+="Not yet aligned\n"
         return tbp
 
-def pattern_alignment(pat1, pat2):
+def add_gaps(current_order,added_gaps,order_list):
     
+    for elt in order_list:
+        if elt.nb > current_order:
+            elt.start+=added_gaps
+            elt.finish+=added_gaps
+
+def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
+    """
+    Used to align two patterns with dynamic alignment.
+    """
+
     if len(pat1.sequence)==len(pat2.sequence):
-        max_size=len(pat1.raw)
+        ms=len(pat1.raw)+1
     else:
-        max_size=0
+        ms=0
         
-    seq1,seq2,new_dist=dynamic_alignment(pat1.sequence, pat2.sequence,max_size)
+    seq1,seq2,new_dist=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
     
     pat1.aligned(pat2,seq1)
     pat2.aligned(pat1,seq2)
     
+    added_gaps1=pat1.sequence.count("-")
+    added_gaps2=pat2.sequence.count("-")
+    
+    if added_gaps1:
+        add_gaps(pat1.nb, added_gaps1, order1)
+        struct1.length+=added_gaps1
+    if added_gaps2:
+        add_gaps(pat2.nb, added_gaps2, order2)
+        struct2.length+=added_gaps2
+        
     print("Aligned:",pat1,pat2)
 
-def oop_alignment(struct1, struct2):
+def matching_finder(struct1, struct2):
+    """
+    Used to pair up patterns when the number of patterns is not equal.
+    """
+    
+def separator_compensating(struct1, struct2, matching):
+    """
+    Used after pattern aligning to add gaps in separators to match the final length and returning the aligned structures.
+    
+    """
+    ordered1=struct1.order_list()
+    ordered2=struct2.order_list()
+    
+    if struct1.length==struct2.length:
+        
+        for elt in matching.items():
+            
+            if not elt[0].start == elt[1].start:
+                None
+    
+        
+        
+    #It is better to add as fewer gaps as possible.
+    #We need to align patterns with each other in term of position in the structure.
+
+def full_alignment(struct1, struct2):
     """
     
     Main function to calculate a pattern based alignment.
@@ -741,7 +804,42 @@ def oop_alignment(struct1, struct2):
     pat_num1=len(struct1.patterns)
     pat_num2=len(struct2.patterns)
     
-    sep_num1=len(struct1.separators)
-    sep_num2=len(struct2.separators)
+    # sep_num1=len(struct1.separators)
+    # sep_num2=len(struct2.separators)
     
-    #WIP
+    matching={}
+    
+    if struct1.raw == struct2.raw:
+        for i,pat in enumerate(struct1.patterns):
+            pat.aligned(struct2.patterns[i],pat.sequence)
+            struct2.patterns[i].aligned(pat,struct2.patterns[i].sequence)
+        
+        struct1.alignedwith=struct2
+        struct2.alignedwith=struct1
+        
+        struct1.aligned()
+        struct2.aligned()
+        
+        struct1.alignedsequence = struct1.reagglomerate()
+        struct2.alignedsequence = struct2.reagglomerate()
+        
+        print("Same structures, returning the same sequence")
+        
+        return struct1, struct2, initial_dist, initial_dist
+        
+    if pat_num1==pat_num2:
+        print("Same number of patterns, aligning with the only match possible")
+        for i,pat in enumerate(struct1.patterns):
+            matching[pat]=struct2.patterns[i]
+        
+        for elt in matching.items():
+            order1=struct1.order_list()
+            order2=struct2.order_list()
+            pattern_alignment(struct1,struct2,elt[0], elt[1],order1,order2)
+            
+        print("Compensating for length matching")
+        separator_compensating(struct1, struct2)
+        
+        
+        
+        
