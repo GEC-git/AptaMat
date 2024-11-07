@@ -689,3 +689,7 @@ RF00162= SAM riboswitch aptamer (S box leader)
 ### TO DO LIST:
 
 - Making an alignment algorithm with a structural alphabet. (WIP)
+
+- Organising the AptAlign.py algorithm.
+    - Adding a main function to use the algorithm in the terminal.
+    - Adding a pairing function for alignement of a batch of structures in a file.
