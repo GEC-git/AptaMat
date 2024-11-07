@@ -678,12 +678,14 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 - Added new functions to run the alignment:
     - `pattern_alignment` to run an alignment between two patterns and translate all the other patterns higher in the hierarchy.
-    - `separator_compensating` to run the last alignment operation on the gaps. *(WIP)*
+    - `separator_compensating` to run the last alignment operation on the separators. *(WIP)*
     - `matching_finder` to evaluate the best pairing between patterns in the structures. *(WIP)*
-    - `added_gaps` to propagatethe effects of adding gaps in all of the next elements.
+    - `added_gaps` to propagate the effects of adding gaps in all of the next elements.
 
 - Added the possibility to have empty separators.
     - Each structure are now always formed by an alternating sequence of patterns and separators.
+    - An empty separator have a starting position of -1 and en ending position corresponding to the start of the next element.
+    
 
 
 ### TO DO LIST:
