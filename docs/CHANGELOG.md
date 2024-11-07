@@ -645,7 +645,7 @@ RF00162= SAM riboswitch aptamer (S box leader)
     - It has also shown that giving a little bit of wiggle room for same-size patterns in term of alignment can give better results. (1 of wiggle room is recomended).
     - With very different structures, it also showed that it gives exactly the same results as the bruteforce method (at least in terms of distance minimization).
     
-- With those new tests, I can confidently say that this new alignment method will be close to but not optimal.
+- With those new tests, I can confidently say that this new alignment method will be close to but not optimal in regards to the aptamat distance.
 
 - Created a precise method for alignment:
 
@@ -675,6 +675,16 @@ RF00162= SAM riboswitch aptamer (S box leader)
      - Mark the structures as aligned and input each other in the `self.alignedwith` variable.
  ____________________
 ```
+
+- Added new functions to run the alignment:
+    - `pattern_alignment` to run an alignment between two patterns and translate all the other patterns higher in the hierarchy.
+    - `separator_compensating` to run the last alignment operation on the gaps. *(WIP)*
+    - `matching_finder` to evaluate the best pairing between patterns in the structures. *(WIP)*
+    - `added_gaps` to propagatethe effects of adding gaps in all of the next elements.
+
+- Added the possibility to have empty separators.
+    - Each structure are now always formed by an alternating sequence of patterns and separators.
+
 
 ### TO DO LIST:
 
