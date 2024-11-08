@@ -686,6 +686,9 @@ RF00162= SAM riboswitch aptamer (S box leader)
     - Each structure are now always formed by an alternating sequence of patterns and separators.
     - An empty separator have a starting position of -1 and en ending position corresponding to the start of the next element.
     
+- Added new functions to run the last step of the alignment : separator gap insertion:
+    - `sep_gap_adder` to add a certain number of gaps and updates the next patterns and separators.
+    - `sep_gap_inserter` to run the actual last alignment operation.
 
 
 ### TO DO LIST:
