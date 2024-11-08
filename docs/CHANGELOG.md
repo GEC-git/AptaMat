@@ -678,7 +678,7 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 - Added new functions to run the alignment:
     - `pattern_alignment` to run an alignment between two patterns and translate all the other patterns higher in the hierarchy.
-    - `separator_compensating` to run the last alignment operation on the separators. *(WIP)*
+    - `separator_compensating` to run the last alignment operation on the separators.
     - `matching_finder` to evaluate the best pairing between patterns in the structures. *(WIP)*
     - `added_gaps` to propagate the effects of adding gaps in all of the next elements.
 
@@ -691,9 +691,16 @@ RF00162= SAM riboswitch aptamer (S box leader)
     - `sep_gap_inserter` to run the actual last alignment operation.
 
 
+
+
+
+
 ### TO DO LIST:
 
-- Making an alignment algorithm with a structural alphabet. (WIP)
+- Making an alignment algorithm with a structural alphabet.
+    - Making the matching pattern function.
+    - acounting for subdiv.
+    - Testing with pseudoknots.
 
 - Organising the AptAlign.py algorithm.
     - Adding a main function to use the algorithm in the terminal.

@@ -769,14 +769,23 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
 def matching_finder(struct1, struct2):
     """
     Used to pair up patterns when the number of patterns is not equal.
+    
+    MATCHING METHOD:
+        - From right to left or from left to right ?
+        - Test all the matching possibilities ?
+        - Evaluate the cost of a pattern gap : minimize that ?
+            - Is it best to isolate the smallest patterns and aligning the bigger ones ?
+        - Prioritizing length or AptaMat distance between two patterns ?
+            - Since length is directly impacting the AptaMat Distance, maybe prioritizing the distance.
+        
     """
+    
     
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, bigger):
     """
     Function used to insert gaps in separators where it is necessary in regards to:
         - the biggest structure
         - the pattern matching
-    
     """
     for elt in matching.items():
         #struct1 ~ elt[0] - struct2 ~ elt[1]
