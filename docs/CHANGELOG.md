@@ -692,8 +692,13 @@ RF00162= SAM riboswitch aptamer (S box leader)
 
 
 
+### WEEK 11 - 11/11/2024 -> 17/11/2024
 
+- First tests with a naive matching function.
+    - Debugging of `separator_compensating` in progress.
 
+- Added a naive matching function.
+    - Matching the same pattern in both structures when orders are equal.
 
 ### TO DO LIST:
 
