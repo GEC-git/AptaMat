@@ -704,14 +704,48 @@ RF00162= SAM riboswitch aptamer (S box leader)
 - First functionning alignment tool with naive matching.
     - Faster than dynamic alignment
     - Already better at minimizing the AptaMat distance.
+    
+**Example with the naive matching function compared to rnalign2d:**
 
-### TO DO LIST:
+Aligning 
+
+`((((((..........)))))).........((((((................)))))).....`
+
+with
+
+`((((((.................))))))........((((((......((((((....)))))).......))))))........(..)`
+
+results in with AptaLign:
+
+`--(-(((((..........-)))))-)--.........--(-((--(((................)))-----))-)--.....-------`
+
+`((((((.................))))))........-((((((......((((((....)))))).......))))))........(..)`
+
+With a 0.6s runtime and a 19.61 to 5.51 aptamat distance.
+
+and with rnalign2d:
+
+`----((((((....--......)))))).........(-----------(((((.....--...........)))))).....-------`
+
+`((((((.................))))))........((((((......((((((....)))))).......))))))........(..)`
+
+With a 0.11s runtime and a 19.61 to a 8.87 aptamat distance.
+
+Aptalign is around 6x times slower but gives a better result in term of aptamat distance.
+
+It is interesting to denote that our method gave one more gap than rnalign2d but still manages to improve the distance.
+
+
+### TO DO LIST: (in order of importance)
+
+- Making a better reagglomerate function with a new subdiv dictionnary. *WIP*
 
 - Making an alignment algorithm with a structural alphabet.
-    - Making the matching pattern function.
-    - acounting for subdiv.
-    - Testing with pseudoknots.
+    - Makingan intelligent pattern matching function. *WIP*
+    - acounting for subdiv. *WIP*
+    - Testing with pseudoknots. *WIP*
 
-- Organising the AptAlign.py algorithm.
+- Organising the AptAlign.py algorithm. *WIP*
     - Adding a main function to use the algorithm in the terminal.
     - Adding a pairing function for alignement of a batch of structures in a file.
+    
