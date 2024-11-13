@@ -6,7 +6,7 @@ root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
 sys.path.append(root_path)
 
 import AptaFast as AF
-#import time
+import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 #import numpy as np
@@ -231,7 +231,7 @@ def one_range_impact(struct_base, struct_test,aff_dash="min"):
     
 def dynamic_one_range(struct, struct2, fill):  
     if fill != 0:
-        print("Placing "+str(fill)+" gaps...")
+        #print("Placing "+str(fill)+" gaps...")
         temp_struct=struct
         for j in range(fill):
             temp_struct="-"+temp_struct
@@ -249,7 +249,7 @@ def dynamic_one_range(struct, struct2, fill):
         struct = temp_struct
         return struct
     else:
-        print("No gaps to place, continuing...")
+        #print("No gaps to place, continuing...")
         return struct
         
 def dynamic_alignment(struct1,struct2,max_size=0):
@@ -276,16 +276,16 @@ def dynamic_alignment(struct1,struct2,max_size=0):
     fill1=max_size-len(struct1)
     fill2=max_size-len(struct2)
 
-    print("\nGenerating Alignment")
-    print("\nFirst Structure")
+    #print("\nGenerating Alignment")
+    #print("\nFirst Structure")
     struct1_1=dynamic_one_range(struct1, struct2, fill1)
     
-    print("\nSecond Structure")
+    #print("\nSecond Structure")
     struct2_2=dynamic_one_range(struct2, struct1, fill2)
     
-    print("\nFinished\n")
+    print("Finished\n")
     
-    return struct1_1, struct2_2, AF.compute_distance_clustering(AF.SecondaryStructure(struct1_1),AF.SecondaryStructure(struct2_2), "cityblock", "slow")
+    return struct1_1, struct2_2
 
 
 
@@ -417,98 +417,6 @@ def slicer(sequence):
             order+=1
     
     return sep,pat
-            
-    
-    
-"""EXAMPLE:
-
-`print(Structure(".((((((..((((.......)))).(((((.......))))).....(((.....))))))))).."))`
-
-results in:
-    
-'''
-Type: Structure
-Length: 66
-Raw Sequence: .((((((..((((.......)))).(((((.......))))).....(((.....)))))))))..
-Subdiv sequence: .######..((((.......)))).(((((.......))))).....(((.....)))######..
-Subdiv: {6: '(', 58: ')', 5: '(', 59: ')', 4: '(', 60: ')', 3: '(', 61: ')', 2: '(', 62: ')', 1: '(', 63: ')'}
-
-Separators: 
-Separator number 1:
-Type: Separator
-Length: 9
-Order: 0
-Sequence: .######..
-Start: 0
-Finish: 8
-Subdiv index: 6
-
-Separator number 2:
-Type: Separator
-Length: 1
-Order: 2
-Sequence: .
-Start: 24
-Finish: 24
-Subdiv index: 0
-
-Separator number 3:
-Type: Separator
-Length: 5
-Order: 4
-Sequence: .....
-Start: 42
-Finish: 46
-Subdiv index: 0
-
-Separator number 4:
-Type: Separator
-Length: 8
-Order: 6
-Sequence: ######..
-Start: 58
-Finish: 65
-Subdiv index: 6
-
-______________________________________
-
-Patterns: 
-Pattern number 1:
-Type: Pattern
-Length: 15
-Order: 1
-Start: 9
-Finish: 23
-Starting Sequence: ((((.......))))
-Subdiv index: 0
-Not yet aligned
-
-Pattern number 2:
-Type: Pattern
-Length: 17
-Order: 3
-Start: 25
-Finish: 41
-Starting Sequence: (((((.......)))))
-Subdiv index: 0
-Not yet aligned
-
-Pattern number 3:
-Type: Pattern
-Length: 11
-Order: 5
-Start: 47
-Finish: 57
-Starting Sequence: (((.....)))
-Subdiv index: 0
-Not yet aligned
-
-______________________________________
-Not yet aligned
-'''
-
-"""
-
 
 class Structure():
     """
@@ -583,7 +491,6 @@ class Structure():
     def reagglomerate(self):
         if self.isaligned:
             
-            
             for pattern in self.patterns:
                 if not pattern.isaligned:
                     print("The patterns are not yet aligned, returning raw sequence")
@@ -598,7 +505,6 @@ class Structure():
                 else:
                     seqint+=patsep.alignedsequence
             
-            #assuming that subdiv will be updated after alignment.
             seq_dic={}
             for i,elt in enumerate(seqint):
                 seq_dic[i]=elt
@@ -717,7 +623,7 @@ class Pattern():
             tbp+="Not yet aligned\n"
         return tbp
 
-EmptyPattern=Pattern('',[-1,0],-1,-1)
+EmptyPattern=Pattern('',[-1,-1],-1,-1)
 
 def add_gaps(current_order,added_gaps,order_list):
     """
@@ -750,28 +656,27 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     """
     Used to align two patterns with dynamic alignment.
     """
-
+    print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
+    
     if len(pat1.sequence)==len(pat2.sequence):
         ms=len(pat1.raw)+1
     else:
         ms=0
         
-    seq1,seq2,new_dist=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
+    seq1,seq2=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
     
     pat1.aligned(pat2,seq1)
     pat2.aligned(pat1,seq2)
     
-    added_gaps1=pat1.sequence.count("-")
-    added_gaps2=pat2.sequence.count("-")
-    
-    if added_gaps1:
+    added_gaps1=pat1.alignedsequence.count("-")
+    added_gaps2=pat2.alignedsequence.count("-")
+    if added_gaps1!=0:
         add_gaps(pat1.nb, added_gaps1, order1)
         struct1.length+=added_gaps1
-    if added_gaps2:
+    if added_gaps2!=0:
         add_gaps(pat2.nb, added_gaps2, order2)
         struct2.length+=added_gaps2
         
-    print("Aligned:",pat1,pat2)
 
 def matching_finder(struct1, struct2):
     """
@@ -804,7 +709,7 @@ def matching_finder(struct1, struct2):
             for pat in struct1.patterns:
                 if elt.nb==pat.nb:
                     found=True
-                    matching.append([elt,pat])
+                    matching.append([pat,elt])
             if not found:
                 elt.aligned(None,elt.sequence)
     return matching
@@ -815,9 +720,10 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
         - the biggest structure
         - the pattern matching
     """
-    print("matching")
-    for elt in matching:
-        print(elt[0],elt[1])
+
+    # print("matching")
+    # for elt in matching:
+    #     print(elt[0],elt[1])
     for elt in matching:
         #struct1 ~ elt[0] - struct2 ~ elt[1]
         if not elt[0].start == elt[1].start:
@@ -826,9 +732,9 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                 #start pat1 < start pat2
                 #pat1 starts before pat2
                 #input diff gaps before pat1 and after pat2 if main_diff=0 or bigger=1 else only before pat1.
-                
                 #if the number of gaps to insert is bigger than main_diff.
                 if abs(diff)>main_diff and main_diff !=0:
+                    
                     delta_diff=abs(diff)-main_diff
                     if bigger == 2:
                         sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
@@ -838,6 +744,7 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                     
                     sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb+1],ordered2)
+                    
                     main_diff=0
                 
                 elif main_diff==0:
@@ -853,8 +760,7 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                 #start pat1 > start pat2
                 #pat2 starts before pat1
                 #input diff gaps after pat1 and before pat2 if main_diff=0 or bigger=2 else only before pat2
-                
-                #if the number of gaps to insert is bigger than main_diff. 
+                #if the number of gaps to insert is bigger than main_diff.
                 if abs(diff)>main_diff and main_diff !=0:
                     delta_diff=abs(diff)-main_diff
                     if bigger == 2:
@@ -876,7 +782,7 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                 elif bigger==1:
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
                     main_diff-=abs(diff)
-
+        
     #Adding the last gaps at the end of the structures if main_diff is still positive.
     if main_diff>0:
         if bigger == 1:
@@ -891,7 +797,8 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
             last_sep.sequence+=added_gaps1*'-'
             add_gaps(last_sep.nb, added_gaps1, ordered1)
             struct1.length+=added_gaps1
-            
+
+
 def separator_compensating(struct1, struct2, matching):
     """
     Used after pattern aligning to add gaps in separators to match the final length and returning the aligned structures.
@@ -937,7 +844,7 @@ def full_alignment(struct1, struct2):
             - A matched pattern in the bigger structure cannot have a smaller order than its match in the smaller structure.
             - If the number of pattern is the same in both structure, there is a single way to match each pattern.
             
-        ALIGNING((((((...]]]..............))))))[[[[..(((((.]]]].....((((((......((((((....)))))).......))))))..))))).
+        ALIGNING
         
         - Using dynamic alignment to align each pattern with its match.
             - mark them as aligned and input each other in the `self.alignedwith` variable.
@@ -950,6 +857,8 @@ def full_alignment(struct1, struct2):
     ____________________
     
     """
+    a=time.time()
+    
     initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
     
     pat_num1=len(struct1.patterns)
@@ -981,7 +890,7 @@ def full_alignment(struct1, struct2):
             matching.append([pat,struct2.patterns[i]])
             
     else :
-        print("Determining the optimal pattern match")
+        print("\nDetermining the optimal pattern match\n")
         matching = matching_finder(struct1, struct2)
     
     for elt in matching:
@@ -989,10 +898,10 @@ def full_alignment(struct1, struct2):
         order2=struct2.order_list()
         pattern_alignment(struct1,struct2,elt[0], elt[1],order1,order2)
     
-    print("Adding gaps in separators for length and pattern matching")
+    print("\nAdding gaps in separators for length and pattern matching")
     separator_compensating(struct1, struct2, matching)
     
-    print("Updating last parameters and finishing")
+    print("\nUpdating last parameters and finishing\n")
     struct1.alignedwith=struct2
     struct2.alignedwith=struct1
     
@@ -1003,10 +912,9 @@ def full_alignment(struct1, struct2):
     struct2.alignedsequence = struct2.reagglomerate()
     
     new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
-
-    return struct1, struct2, initial_dist, new_dist
-
-"""
---(-(((((..........-)))))-)--.........--------(-((--(((................)))-----))-)--((((((..)))))).....
-((((((.................))))))........((((((......((((((....)))))).......))))))...---
-"""
+    
+    improvement = round((initial_dist-new_dist)/initial_dist *100,2)
+    print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
+    b=time.time()
+    print("Time spent:",str(round(b-a,3))+"s")
+    return struct1, struct2
