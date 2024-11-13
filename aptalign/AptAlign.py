@@ -918,3 +918,4 @@ def full_alignment(struct1, struct2):
     b=time.time()
     print("Time spent:",str(round(b-a,3))+"s")
     return struct1, struct2
+
