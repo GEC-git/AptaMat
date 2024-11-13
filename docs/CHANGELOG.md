@@ -695,10 +695,15 @@ RF00162= SAM riboswitch aptamer (S box leader)
 ### WEEK 11 - 11/11/2024 -> 17/11/2024
 
 - First tests with a naive matching function.
-    - Debugging of `separator_compensating` in progress.
+    - Debugged `separator_compensating`. The problem was in the `added_gaps` function which updated the length of both structures when gaps are added.
+    - Everything is now working as intended.
 
 - Added a naive matching function.
     - Matching the same pattern in both structures when orders are equal.
+    
+- First functionning alignment tool with naive matching.
+    - Faster than dynamic alignment
+    - Already better at minimizing the AptaMat distance.
 
 ### TO DO LIST:
 
