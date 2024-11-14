@@ -440,7 +440,7 @@ class Structure():
     """
     def __init__(self, sequence):
         self.raw=sequence
-        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 1)
         sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
@@ -660,6 +660,7 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
     """
     Adds `nb_gaps` gaps at the end of `sep` and updates the other pat and sep with `ordered` and `struct`
     """
+    
     #updating positions for an empty separator or a normal separator.
     if sep.start==-1:
         sep.start=sep.finish
@@ -674,6 +675,7 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     """
     Used to align two patterns with dynamic alignment.
     """
+    
     print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
     
     if len(pat1.sequence)==len(pat2.sequence):
@@ -707,8 +709,8 @@ def matching_finder(struct1, struct2):
             - Is it best to isolate the smallest patterns and aligning the bigger ones ?
         - Prioritizing length or AptaMat distance between two patterns ?
             - Since length is directly impacting the AptaMat Distance, maybe prioritizing the distance.
-        
     """
+    
     matching=[]
     if len(struct1.patterns) > len(struct2.patterns):
 
@@ -900,7 +902,7 @@ def full_alignment(struct1, struct2):
         
         print("Same structures, returning the same sequence")
         
-        return struct1, struct2, initial_dist, initial_dist
+        return struct1, struct2
         
     elif pat_num1==pat_num2:
         print("Same number of patterns, aligning with the only match possible")
