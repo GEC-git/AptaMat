@@ -323,8 +323,22 @@ def subdiv_finder(sequence,subdiv_param):
     new_seq=''
     for elt in dict_seq.values():
         new_seq+=elt
+    
+    
+    order=[]
+    for elt in subdiv.items():
+        order.append(elt)
+    
+    def get_index(pair):
+        return pair[0]
+    
+    order=sorted(order, key=lambda pair : get_index(pair))
+    
+    subdiv_fin={}
+    for i,pairs in enumerate(order):
+        subdiv_fin[i]=pairs[1]
         
-    return subdiv,new_seq
+    return subdiv_fin,new_seq
 
 """EXAMPLE:
 
@@ -506,10 +520,14 @@ class Structure():
                     seqint+=patsep.alignedsequence
             
             seq_dic={}
+            cpt=0
             for i,elt in enumerate(seqint):
-                seq_dic[i]=elt
-            for elt in self.subdiv.items():
-                seq_dic[elt[0]]=elt[1]
+                if elt == "#":
+                    seq_dic[i]=self.subdiv[cpt]
+                    cpt+=1
+                else:
+                    seq_dic[i]=elt
+            
             seq=''
             for elt in seq_dic.values():
                 seq+=elt
