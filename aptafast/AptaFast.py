@@ -256,25 +256,28 @@ class Dotplot(Dotbracket):
             matrix[index_list[i],index_list[i+1]]=np.uint8(1)
             del(dict_par[index_list[i]])
             del(dict_par[index_list[i+1]])
-            
-        while dict_cro != {}:
-            index_list=list(dict_cro.keys())
-            i=0
-            while dict_cro[index_list[i]]==dict_cro[index_list[i+1]]:
-                i+=1
-            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
-            del(dict_cro[index_list[i]])
-            del(dict_cro[index_list[i+1]])
-            
-        while dict_acc != {}:
-            index_list=list(dict_acc.keys())
-            i=0
-            while dict_acc[index_list[i]]==dict_acc[index_list[i+1]]:
-                i+=1
-            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
-            del(dict_acc[index_list[i]])
-            del(dict_acc[index_list[i+1]])
-        
+        try:    
+            while dict_cro != {}:
+                index_list=list(dict_cro.keys())
+                i=0
+                while dict_cro[index_list[i]]==dict_cro[index_list[i+1]]:
+                    i+=1
+                matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+                del(dict_cro[index_list[i]])
+                del(dict_cro[index_list[i+1]])
+                
+            while dict_acc != {}:
+                index_list=list(dict_acc.keys())
+                i=0
+                while dict_acc[index_list[i]]==dict_acc[index_list[i+1]]:
+                    i+=1
+                matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+                del(dict_acc[index_list[i]])
+                del(dict_acc[index_list[i+1]])
+        except IndexError:
+            #In the case of a non closing pseudoknot.
+            dict_cro={}
+            dict_acc={}
         return matrix
 
     def get_coordinates(self):
