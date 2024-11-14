@@ -440,7 +440,7 @@ class Structure():
     """
     def __init__(self, sequence):
         self.raw=sequence
-        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 1)
+        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
@@ -679,7 +679,7 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
     
     if len(pat1.sequence)==len(pat2.sequence):
-        ms=len(pat1.raw)+1
+        ms=len(pat1.sequence)+1
     else:
         ms=0
         
@@ -939,3 +939,40 @@ def full_alignment(struct1, struct2):
     print("Time spent:",str(round(b-a,3))+"s")
     return struct1, struct2
 
+"""
+
+**SOME EXAMPLES WITH NAIVE MATCHING FUNCTION.**
+
+
+____ SAME FAMILY
+
+.((((((((....--(-(.(((-((...((..()..)--)....)))))..-))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..
+
+.((((((((.....(.(((((...((..(((....))..))....)))))..))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..
+
+9.58 -> 0.61
+
+0.436s
+
+____ SAME FAMILY
+
+.((((((((....-((.(((((.............((..((((((......))..))))..))....)))))..))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..
+
+.((((((((.....-(.--(((((...------------(...((((--)))).....)------))))..)--)-(((.((....(.((.....((....)).....)).).))..)))-))))))))..
+
+33.10 -> 1.27
+
+3s
+
+____ DIFFERENT FAMILY
+
+.........................................((((((.[[.....))).....(.((((.....]]............).)))..)...)))....-----------------------------------(---(.....--)----)--(((((((((....))))))))).....................
+
+-----------------------------------------((.(((((((.....))))))).-----------)-------------------)------.....................................(((.((((.....)))..))))...................-
+
+55.15 -> 19.03
+
+3.4s
+
+BUGGED
+"""
