@@ -837,7 +837,7 @@ This example would be interesting to retest when the matching function is finish
 ### TO DO LIST: (in order of importance)
 
 - Making an alignment algorithm with a structural alphabet.
-    - Makingan intelligent pattern matching function. *WIP*
+    - Making an intelligent pattern matching function. *WIP*
     - acounting for subdiv. *WIP*
     - Testing with pseudoknots. *WIP*
 
