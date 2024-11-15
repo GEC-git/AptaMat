@@ -764,15 +764,12 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                     
                     sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb+1],ordered2)
-                    
-                    main_diff=0
                 
                 elif main_diff==0:
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
                 elif bigger == 2:
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
-                    main_diff-=abs(diff)
                 elif bigger == 1:
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
@@ -791,7 +788,6 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                     
                     sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb-1],ordered2)
                     sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb+1],ordered1)
-                    main_diff=0
                 
                 elif main_diff==0:
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
@@ -801,8 +797,7 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
                 elif bigger==1:
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
-                    main_diff-=abs(diff)
-        
+            main_diff=abs(struct1.length-struct2.length)
     #Adding the last gaps at the end of the structures if main_diff is still positive.
     if main_diff>0:
         if bigger == 1:
@@ -966,13 +961,12 @@ ____ SAME FAMILY
 
 ____ DIFFERENT FAMILY
 
+-----------------------------------------((.(((((((.....))))))).-----------)-------------------)------.....................................(((.((((.....)))..))))...................------------------------                                                  
+
 .........................................((((((.[[.....))).....(.((((.....]]............).)))..)...)))....-----------------------------------(---(.....--)----)--(((((((((....))))))))).....................
 
------------------------------------------((.(((((((.....))))))).-----------)-------------------)------.....................................(((.((((.....)))..))))...................-
+55.15 -> 19.6
 
-55.15 -> 19.03
+2.7s
 
-3.4s
-
-BUGGED
 """
