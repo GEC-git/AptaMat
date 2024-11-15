@@ -810,7 +810,7 @@ ____ SAME FAMILY
 
 0.436s
 
-The gap near the end of both structures apppeared 
+The gap near the end of both structures apppeared because of how the subdiv is handled.
 
 ____ SAME FAMILY
 
