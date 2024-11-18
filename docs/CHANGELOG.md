@@ -707,7 +707,7 @@ RF00162= SAM riboswitch aptamer (S box leader)
     
     
 - Made a better subdiv dictionnary so that it doesn't need to be updated to be reagglomerated in the end.
-    
+
 **Example with the naive matching function compared to rnalign2d:**
 
 Aligning 
@@ -833,6 +833,13 @@ ____ DIFFERENT FAMILY
 2.7s
 
 This example would be interesting to retest when the matching function is finished.
+
+
+### WEEK 12 - 18/11/2024 -> 24/11/2024
+
+- Small bug fixes where the bigger structure would not be updated while inserting gaps in separators.
+
+- Preparing a presentation for the lab for december 2nd meeting.
 
 ### TO DO LIST: (in order of importance)
 
