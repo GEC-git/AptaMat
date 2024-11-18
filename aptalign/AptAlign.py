@@ -725,17 +725,19 @@ def matching_finder(struct1, struct2):
                 elt.aligned(None,elt.sequence)
     return matching
     
-def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, bigger):
+def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
     Function used to insert gaps in separators where it is necessary in regards to:
         - the biggest structure
         - the pattern matching
     """
-
-    # print("matching")
-    # for elt in matching:
-    #     print(elt[0],elt[1])
+    
     for elt in matching:
+        
+        if struct1.length-struct2.length > 0:
+            bigger = 1
+        else:
+            bigger = 2
         #struct1 ~ elt[0] - struct2 ~ elt[1]
         if not elt[0].start == elt[1].start:
             diff=elt[0].start-elt[1].start
@@ -790,7 +792,15 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff, 
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
                     
             main_diff=abs(struct1.length-struct2.length)
+            
+            
     #Adding the last gaps at the end of the structures if main_diff is still positive.
+    
+    if struct1.length-struct2.length > 0:
+        bigger = 1
+    else:
+        bigger = 2
+    
     if main_diff>0:
         if bigger == 1:
             last_sep=ordered2[-1]
@@ -818,15 +828,9 @@ def separator_compensating(struct1, struct2, matching):
         #the structures have the same size
         sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,0,0)
     
-    elif struct1.length<struct2.length:
-        #struct2 is bigger
+    else :
         main_diff=struct2.length-struct1.length
-        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,main_diff,2)
-        
-    elif struct1.length>struct2.length:
-        #struct1 is bigger
-        main_diff=struct1.length-struct2.length
-        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,main_diff,1)
+        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff)
 
 def full_alignment(struct1, struct2):
     """
@@ -924,4 +928,6 @@ def full_alignment(struct1, struct2):
     print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
     b=time.time()
     print("Time spent:",str(round(b-a,3))+"s")
+    
     return struct1, struct2
+
