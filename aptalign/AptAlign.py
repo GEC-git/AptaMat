@@ -826,10 +826,10 @@ def separator_compensating(struct1, struct2, matching):
     
     if struct1.length==struct2.length:
         #the structures have the same size
-        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,0,0)
+        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,0)
     
     else :
-        main_diff=struct2.length-struct1.length
+        main_diff=abs(struct2.length-struct1.length)
         sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff)
 
 def full_alignment(struct1, struct2):
