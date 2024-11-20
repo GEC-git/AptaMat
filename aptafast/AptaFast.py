@@ -125,7 +125,8 @@ class Parse:
 
             else:
                 continue
-            
+           
+        structures=pool.starmap(SecondaryStructure, [(non_parsed_struct[i][0], non_parsed_struct[i][1], non_parsed_struct[i][2], non_parsed_struct[i][3]) for i in range(len(non_parsed_struct))])
             
         def get_id(struct):
             num=""
