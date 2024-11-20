@@ -839,7 +839,9 @@ This example would be interesting to retest when the matching function is finish
 
 - Small bug fixes where the bigger structure would not be updated while inserting gaps in separators.
 
-- Preparing a presentation for the lab for december 2nd meeting.
+- Preparing a presentation for the lab for the december 2nd meeting.
+
+- Finishing presentation.
 
 ### TO DO LIST: (in order of importance)
 
