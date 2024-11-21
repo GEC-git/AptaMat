@@ -669,25 +669,38 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     
     print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
     
-    if len(pat1.sequence)==len(pat2.sequence):
-        ms=len(pat1.sequence)+1
+    if pat1.sequence==pat2.sequence:
+        print("Same pattern")
+        pat1.aligned(pat2,pat2.sequence)
+        pat2.aligned(pat1,pat1.sequence)
     else:
-        ms=0
+        if len(pat1.sequence)==len(pat2.sequence):
+            ms=len(pat1.sequence)+1
+        else:
+            ms=0
+            
+        seq1,seq2=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
         
-    seq1,seq2=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
-    
-    pat1.aligned(pat2,seq1)
-    pat2.aligned(pat1,seq2)
-    
-    added_gaps1=pat1.alignedsequence.count("-")
-    added_gaps2=pat2.alignedsequence.count("-")
-    if added_gaps1!=0:
-        add_gaps(pat1.nb, added_gaps1, order1)
-        struct1.length+=added_gaps1
-    if added_gaps2!=0:
-        add_gaps(pat2.nb, added_gaps2, order2)
-        struct2.length+=added_gaps2
+        pat1.aligned(pat2,seq1)
+        pat2.aligned(pat1,seq2)
         
+        added_gaps1=pat1.alignedsequence.count("-")
+        added_gaps2=pat2.alignedsequence.count("-")
+        if added_gaps1!=0:
+            add_gaps(pat1.nb, added_gaps1, order1)
+            struct1.length+=added_gaps1
+        if added_gaps2!=0:
+            add_gaps(pat2.nb, added_gaps2, order2)
+            struct2.length+=added_gaps2
+        
+
+def pair_pat_score(pat1,pat2):
+    #needs to be updated for a better scoring system!!!
+    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
+    pat1_sc = ((pat1.sequence.count("(")+pat1.sequence.count(")"))/(2*pat1.length))
+    pat2_sc = ((pat2.sequence.count("(")+pat2.sequence.count(")"))/(2*pat2.length))
+    
+    return abs(pat1_sc - pat2_sc) + apta_dist
 
 def matching_finder(struct1, struct2):
     """
@@ -703,27 +716,79 @@ def matching_finder(struct1, struct2):
     """
     
     matching=[]
-    if len(struct1.patterns) > len(struct2.patterns):
+    # if len(struct1.patterns) > len(struct2.patterns):
 
-        for elt in struct1.patterns:
-            found=False
-            for pat in struct2.patterns:
-                if elt.nb==pat.nb:
-                    found=True
-                    matching.append([elt,pat])
-            if not found:
-                elt.aligned(None,elt.sequence)
+    #     for elt in struct1.patterns:
+    #         found=False
+    #         for pat in struct2.patterns:
+    #             if elt.nb==pat.nb:
+    #                 found=True
+    #                 matching.append([elt,pat])
+    #         if not found:
+    #             elt.aligned(None,elt.sequence)
     
-    elif len(struct2.patterns) > len(struct1.patterns):
-        for elt in struct2.patterns:
-            found=False
-            for pat in struct1.patterns:
-                if elt.nb==pat.nb:
-                    found=True
-                    matching.append([pat,elt])
-            if not found:
-                elt.aligned(None,elt.sequence)
-    return matching
+    # elif len(struct2.patterns) > len(struct1.patterns):
+    #     for elt in struct2.patterns:
+    #         found=False
+    #         for pat in struct1.patterns:
+    #             if elt.nb==pat.nb:
+    #                 found=True
+    #                 matching.append([pat,elt])
+    #         if not found:
+    #             elt.aligned(None,elt.sequence)
+    
+    #calculating best match based on pair by pair score.
+    
+    if len(struct1.patterns) >= len(struct2.patterns):
+        not_taken=struct2.patterns[:]
+        for pat1 in struct1.patterns:
+            if not_taken==[]:
+                pat1.aligned(None,pat1.sequence)
+                print("Not paired")
+            else:
+                pair_score_temp=pair_pat_score(pat1,not_taken[0])
+                pairing_temp=[pat1,not_taken[0],0]
+                for i,pat2 in enumerate(not_taken):
+                    sc=pair_pat_score(pat1, pat2)
+                    if sc<pair_score_temp:
+                        pairing_temp=[pat1,pat2,i]
+                        pair_score_temp=sc
+                    print(pair_score_temp)
+                    print(pat1.sequence,pat2.sequence)
+                del(not_taken[pairing_temp[2]])
+                matching.append([pairing_temp[0],pairing_temp[1]])
+                
+    elif len(struct2.patterns) >= len(struct1.patterns):
+        not_taken=struct1.patterns[:]
+        for pat2 in struct2.patterns:
+            if not_taken==[]:
+                pat2.aligned(None,pat1.sequence)
+                print("Not paired")
+            else:
+                pair_score_temp=pair_pat_score(pat2,not_taken[0])
+                pairing_temp=[not_taken[0],pat2,0]
+                for i,pat1 in enumerate(not_taken):
+                    sc=pair_pat_score(pat2, pat1)
+                    if sc<pair_score_temp:
+                        pairing_temp=[pat1,pat2,i]
+                        pair_score_temp=sc
+                    print(pair_score_temp)
+                    print(pat1.sequence,pat2.sequence)
+                del(not_taken[pairing_temp[2]])
+                matching.append([pairing_temp[0],pairing_temp[1]])
+                
+    #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
+
+    pair_order=[matching[0][0].nb,matching[0][1].nb]
+    
+    for i in range(1,len(matching)):
+        if matching[i][0].nb<pair_order[0] or matching[i][1].nb < pair_order[1]:
+            return False, matching
+        else:
+            pair_order[0]=matching[i][0].nb
+            pair_order[1]=matching[i][1].nb
+            
+    return True,matching
     
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
@@ -872,9 +937,6 @@ def full_alignment(struct1, struct2):
     
     initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
     
-    pat_num1=len(struct1.patterns)
-    pat_num2=len(struct2.patterns)
-    
     matching=[]
     
     if struct1.raw == struct2.raw:
@@ -895,14 +957,15 @@ def full_alignment(struct1, struct2):
         
         return struct1, struct2
         
-    elif pat_num1==pat_num2:
-        print("Same number of patterns, aligning with the only match possible")
-        for i,pat in enumerate(struct1.patterns):
-            matching.append([pat,struct2.patterns[i]])
-            
-    else :
-        print("\nDetermining the optimal pattern match\n")
-        matching = matching_finder(struct1, struct2)
+    else:
+        print("\nDetermining the optimal pattern match if possible \n")
+        matching_test = matching_finder(struct1, struct2)
+        if matching_test[0]:
+            print("Valid macthing")
+            matching=matching_test[1]
+        else:
+            print("Invalid matching, returning matching for pattern recognition.")
+            return matching_test[1]
     
     for elt in matching:
         order1=struct1.order_list()
@@ -931,3 +994,8 @@ def full_alignment(struct1, struct2):
     
     return struct1, struct2
 
+"""
+.((((((((....((.(((((...((..((((((......))..))))..))....))))--------------)..--))-(((.((...(.((.....((....)).....)).).)).)))-.))))))))..
+
+.((((((((....((.(((((..((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))))))))))..-
+"""
