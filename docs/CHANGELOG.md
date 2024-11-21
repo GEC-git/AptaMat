@@ -843,6 +843,11 @@ This example would be interesting to retest when the matching function is finish
 
 - Finishing presentation.
 
+- Made a new matching and scoring function for pattern matching.
+    - matching can now be invalid. In that case, the matching function returns the pairing and does not align.
+
+- A BETTER SCORING METHOD NEEDS TO BE DEVELOPPED.
+
 ### TO DO LIST: (in order of importance)
 
 - Making an alignment algorithm with a structural alphabet.
