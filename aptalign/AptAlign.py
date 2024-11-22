@@ -291,6 +291,35 @@ def dynamic_alignment(struct1,struct2,max_size=0):
 
 ### NEW METHOD USING A STRUCTURAL ALPHABET AND OOP
 
+def inside_out_pat_alignment(pat1, pat2, struct1, struct2):
+    """
+    Aligns matched patterns with an inside out method:
+    
+    Start in the center of both patterns. (the first pairing going inside out)
+    
+    Try aligning going pair to pair and matching the position of each pairs and then matching the length.
+    
+    If the number of pairs is not the same, tests needs to be done to assert an order of alignment : align to the end of pairings or to the start.
+    """
+    par="()"
+    
+    dict_par1={}
+    dict_seq1={}
+    dict_par2={}
+    dict_seq2={}
+    
+    for i,elt in enumerate(pat1.sequence):
+        if elt in par:
+            dict_par1[i]=elt
+        dict_seq1[i]=elt
+    
+    for i,elt in enumerate(pat2.sequence):
+        if elt in par:
+            dict_par2[i]=elt
+        dict_seq2[i]=elt
+    
+    
+
 def subdiv_finder(sequence,subdiv_param):
     par="()"
     #void=".-"
@@ -695,10 +724,10 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
         
 
 def pair_pat_score(pat1,pat2):
-    #needs to be updated for a better scoring system!!!
+    
     apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
-    pat1_sc = ((pat1.sequence.count("(")+pat1.sequence.count(")"))/(2*pat1.length))
-    pat2_sc = ((pat2.sequence.count("(")+pat2.sequence.count(")"))/(2*pat2.length))
+    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))#/(2*pat1.length))
+    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))#/(2*pat2.length))
     
     return abs(pat1_sc - pat2_sc) + apta_dist
 
@@ -715,7 +744,7 @@ def matching_finder(struct1, struct2):
             - Since length is directly impacting the AptaMat Distance, maybe prioritizing the distance.
     """
     
-    matching=[]
+    # matching=[]
     # if len(struct1.patterns) > len(struct2.patterns):
 
     #     for elt in struct1.patterns:
@@ -737,8 +766,11 @@ def matching_finder(struct1, struct2):
     #         if not found:
     #             elt.aligned(None,elt.sequence)
     
+    #return matching
+    
     #calculating best match based on pair by pair score.
     
+    matching=[]
     if len(struct1.patterns) >= len(struct2.patterns):
         not_taken=struct2.patterns[:]
         for pat1 in struct1.patterns:
@@ -994,8 +1026,3 @@ def full_alignment(struct1, struct2):
     
     return struct1, struct2
 
-"""
-.((((((((....((.(((((...((..((((((......))..))))..))....))))--------------)..--))-(((.((...(.((.....((....)).....)).).)).)))-.))))))))..
-
-.((((((((....((.(((((..((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))))))))))..-
-"""
