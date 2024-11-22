@@ -846,7 +846,9 @@ This example would be interesting to retest when the matching function is finish
 - Made a new matching and scoring function for pattern matching.
     - matching can now be invalid. In that case, the matching function returns the pairing and does not align.
 
-- A BETTER SCORING METHOD NEEDS TO BE DEVELOPPED.
+- Abandoned the length in the scoring system and only the aptamat distance and the number of pairings remains which seems to give better matching results.
+
+- Started working on a new pattern alignment method which aligns from inside-out.
 
 ### TO DO LIST: (in order of importance)
 
