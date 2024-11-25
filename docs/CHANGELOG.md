@@ -850,12 +850,21 @@ This example would be interesting to retest when the matching function is finish
 
 - Started working on a new pattern alignment method which aligns from inside-out.
 
+
+### WEEK 13 - 25/11/2024 -> 01/12/2024
+
+- Continued working on inside-out aligning. *WIP*
+    - Added a function to translate a sequence dictionnary
+    - Added a function to insert a gap at a certain position in a sequence dictionnary.
+    
+    - Added a function to align and correctly translate the middle of two patterns from the dotbracket notation.
+    
+
 ### TO DO LIST: (in order of importance)
 
 - Making an alignment algorithm with a structural alphabet.
-    - Making an intelligent pattern matching function. *WIP*
+    - making a better scoring function for pattern matching.
     - acounting for subdiv. *WIP*
-    - Testing with pseudoknots. *WIP*
 
 - Organising the AptAlign.py algorithm. *WIP*
     - Adding a main function to use the algorithm in the terminal.
