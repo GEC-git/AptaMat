@@ -7,13 +7,15 @@ sys.path.append(root_path)
 
 import AptaFast as AF
 import time
-import multiprocessing as mp
-import matplotlib.pyplot as plt
-#import numpy as np
+# import multiprocessing as mp
+# import matplotlib.pyplot as plt
+# import numpy as np
 
 
-### NO OOP METHOD
+### BASE FUNCTIONS
 
+    # For string manipulations
+    
 def del_str(string,num):
     """Dedicated function to delete the character in position *num* in a string"""
     string=list(string)
@@ -41,257 +43,84 @@ def insert_str(string,num,char):
         res+=elt
     return res
 
+    # For sequence dictionnary manipulations
 
-def arrangement(struct,max_size):
-    """This function calculates all the possible gap placement of one structure.
-    
-    *struct* is the base structure.
-    *max_size* is the size of the alignment.
-    
-    """
-    fill=max_size-len(struct)
-    
-    struct_prealign=fill*"-"+struct
-    
-    #i=int(m.factorial(max_size)/m.factorial(fill))
-    
-    if find_dash(struct_prealign) == []:
-        return [struct_prealign]
-    
-    all_struct={struct_prealign:False}
-    print("PASS1")
-    temp_struct=struct_prealign
-    dashes=find_dash(temp_struct)
-    for i in range(fill):
-        print(round((i/fill)*100,3),"%")
-        for j,elt in enumerate(list(all_struct)):
-            if not all_struct[elt]:
-                dashes=find_dash(elt)
-                all_struct[elt] = True
-                res1=one_range(dashes,i,elt,all_struct)
-                for elt1 in res1:
-                    all_struct[elt1]=False
-    
-    struct_prealign=struct+fill*"-"
-    
-    if find_dash(struct_prealign) == []:
-        return [struct_prealign]
-    
-    all_struct[struct_prealign]=False
-    print("PASS2")
-    temp_struct=struct_prealign
-    dashes=find_dash(temp_struct)
-    for i in range(fill):
-        print(round((i/fill)*100,3),"%")
-        for j,elt in enumerate(list(all_struct)):
-            if not all_struct[elt]:
-                dashes=find_dash(elt)
-                all_struct[elt] = True
-                res1=one_range(dashes,i,elt,all_struct)
-                for elt1 in res1:
-                    all_struct[elt1]=False
-    
-    return all_struct
+def insert_gap_seq_dict(dict_seq,pos):
+    new_dict_seq={}
+    for in_pos, value in dict_seq.items():
+        if in_pos > pos:
+            new_dict_seq[in_pos+1]=value
+        elif in_pos < pos:
+            new_dict_seq[in_pos]=value
+        else:
+            new_dict_seq[in_pos]="-"
+    return new_dict_seq
 
-def one_range(dashes,num,curr_struct,all_struct):
-    """returns a 'swoop' of gapped structures with respect to an existing gap and a current structure
+def dict_seq_translation(dict_seq,trans_amount):
+    new_dict_seq={}
+    for elt in dict_seq.items():
+        new_dict_seq[trans_amount+elt[0]]=elt[1]
     
-        *dashes* is the list of positions of all gaps from curr_struct.
-        *num* is the gap number the swoop is made from
-        *curr_struct* is the structure from which the swoop is calculated
-        *all_struct* is the dictionnary of all already calculated structures.
+    return new_dict_seq
+
+### PATTERN ALIGNMENT
+
+def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2):
+    
+    trans_amnt=abs(mid_g1-mid_g2) 
+    
+    if diff1==diff2:
+        #only translation operation
+        if mid_g1<mid_g2:
+            #middle of 1 starts before middle of 2, so 1 is to be translated
+            dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
+            mid_g1+=trans_amnt
+            mid_d1+=trans_amnt
+        else:
+            #middle of 2 starts before middle of 1, so 2 is to be translated
+            dict_seq2=dict_seq_translation(dict_seq2, trans_amnt)
+            mid_g2+=trans_amnt
+            mid_d2+=trans_amnt
+
+    elif diff1>diff2:
+        #middle of pat1 > middle of pat2
+        for i in range(diff1-diff2):
+            dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2-i)
         
-        returns a list of new structures not already calculated
-    """
-    curr_dash=dashes[num]
-    res=[]
-    temp_struct=curr_struct
-    temp_struct=del_str(temp_struct,curr_dash)
-    temp_struct=insert_str(temp_struct,0,"-")
-    if temp_struct not in all_struct:
-        if temp_struct not in res:
-            res.append(temp_struct)
-    for i in range(1,len(curr_struct)):
-        temp_struct=del_str(temp_struct,i-1)
-        temp_struct=insert_str(temp_struct,i,"-")
-        if temp_struct not in all_struct:
-            if temp_struct not in res:
-                res.append(temp_struct)           
-    return res
-
-def calc_dist(elt1,l_struct2):
-    """Module used in the multiprocessing to calculate a batch of distances"""
-    res=[]
-    for elt2 in l_struct2:
-        res.append((AF.compute_distance_clustering(AF.SecondaryStructure(elt1),AF.SecondaryStructure(elt2), "cityblock", "slow"),elt1,elt2))
-    return res
-
-def brute_force_calc(struct1,struct2,max_size=0):
-    """Function used to align two structures using a brute force method
-    
-    This calculates all possible alignments and returns the one with the smallest AptaMat distance.
-    
-    max_size is the size the structure will be aligned to.
-        Is equal to the length of the biggest structure if under.
-    """
-    if len(struct1)>max_size: max_size=len(struct1)
-    if len(struct2)>max_size: max_size=len(struct2)
-    print("Generating arrangement")
-    l_struct1=arrangement(struct1,max_size)
-    l_struct2=arrangement(struct2,max_size)
-    print("S1: ",len(l_struct1),"| S2: ", len(l_struct2))
-    print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
-    nb=48#int(input("How much do you want to use? "))
-    print("Creating pool on",nb,"cores.\n")
-    print("Working...\n")
-    pooling=mp.Pool(nb)
-    
-    # for elt1 in l_struct1:
-    #     for elt2 in l_struct2:
-    #         dict_dist[AF.compute_distance_clustering(AF.SecondaryStructure(elt1),AF.SecondaryStructure(elt2), "cityblock", "slow")]=(elt1,elt2)
-    # keep=min(dict_dist.keys())
-    # return dict_dist[keep],keep
-    if len(l_struct2) >= len(l_struct1):
-        res = pooling.starmap(calc_dist, [(elt2,l_struct1) for elt2 in l_struct2])
-    else:
-        res = pooling.starmap(calc_dist, [(elt1,l_struct2) for elt1 in l_struct1])
-    
-    pooling.terminate()
-    
-    res_fin=[]
-    for elt in res:
-        for elt1 in elt:
-            res_fin.append(elt1)
-    
-    min=res_fin[0][0]
-    for i,elt in enumerate(res_fin):
-        if elt[0]<=min:
-            choose=elt
-            min=elt[0]
-    return choose
-
-def one_range_impact(struct_base, struct_test,aff_dash="min"):
-    """Function designed to evaluate the impact of a single gap with the AptaMat distance
-    
-    struct_base and struct_test need to have a difference of 1 in their length.
-    
-    Returns an histogram of distances in regards to the position of the gap.
-    
-    aff_dash indicates where the dash is supposed to be inserted when displaying results.
-    Can be: 'min'[default],'max','start','end'.
-    """
-
-    temp_struct="-"+struct_test
-    L_struct_test=[temp_struct]
-    for i in range(1,len(temp_struct)):
-        temp_struct=del_str(temp_struct,i-1)
-        temp_struct=insert_str(temp_struct,i,"-")
-        L_struct_test.append(temp_struct)
+        mid_d2=mid_d2+(diff1-diff2)
         
-    res=[]
-    for elt in L_struct_test:
-        res.append(AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct_base), "cityblock", "slow"))
-
-    aff_struct_test=[]
-    if aff_dash!='end' and aff_dash!='start':
-        i=0
-        already=False
-        while i != len(struct_test):
-            if aff_dash=='min':
-                if res[i] == min(res) and not already:
-                    aff_struct_test.append("-")
-                    already=True
-                else:
-                    aff_struct_test.append(struct_test[i])
-                    i+=1
-            elif aff_dash=='max':
-                if res[i] == max(res) and not already:
-                    aff_struct_test.append("-")
-                    already=True
-                else:
-                    aff_struct_test.append(struct_test[i])
-                    i+=1
-    elif aff_dash == 'end':
-        aff_struct_test=list(struct_test)
-        aff_struct_test.append("-")
-    elif aff_dash == 'start':
-        aff_struct_test.append("-")
-        for elt in struct_test:
-            aff_struct_test.append(elt)
-            
-    fig, ax = plt.subplots()
-    for i,elt in enumerate(list(struct_base)):
-        ax.bar(i,res[i], color='blue')
-        ax.text(i,-max(res)/20,elt)
-        ax.text(i,-1.5*max(res)/20,aff_struct_test[i])
-    ax.text(-len(struct_base)/10, -max(res)/20, "base")
-    ax.text(-len(struct_base)/10, -1.5*max(res)/20, "compared")
-    plt.show()
+        if mid_g1<mid_g2:
+            #middle of 1 starts before middle of 2, so 1 is to be translated
+            dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
+            mid_g1+=trans_amnt
+            mid_d1+=trans_amnt
+        else:
+            #middle of 2 starts before middle of 1, so 2 is to be translated
+            dict_seq2=dict_seq_translation(dict_seq2, trans_amnt)
+            mid_g2+=trans_amnt
+            mid_d2+=trans_amnt
     
-    
-def dynamic_one_range(struct, struct2, fill):  
-    if fill != 0:
-        #print("Placing "+str(fill)+" gaps...")
-        temp_struct=struct
-        for j in range(fill):
-            temp_struct="-"+temp_struct
-            L_struct_test=[temp_struct]
-            for i in range(1,len(temp_struct)):
-                temp_struct=del_str(temp_struct,i-1)
-                temp_struct=insert_str(temp_struct,i,"-")
-                L_struct_test.append(temp_struct)
-            res={}
-            for i,elt in enumerate(L_struct_test):
-                res[AF.compute_distance_clustering(AF.SecondaryStructure(elt),AF.SecondaryStructure(struct2), "cityblock", "slow")]=elt
-                print("\r"+str(round((j/fill)*100,2))+"% | "+str(round(i/len(temp_struct)*100,2))+"%",end="\r")
-            keep=min(res.keys())
-            temp_struct=res[keep]
-        struct = temp_struct
-        return struct
-    else:
-        #print("No gaps to place, continuing...")
-        return struct
+    elif diff1<diff2:
+        #middle of pat2 > middle of pat1
+        for i in range(diff2-diff1):
+            dict_seq1=insert_gap_seq_dict(dict_seq1, mid_d1-i)
         
-def dynamic_alignment(struct1,struct2,max_size=0):
-    """
-    Function to align two structures by adding gaps one by one in the optimal place.
+        mid_d1=mid_d1+(diff2-diff1)
+        
+        if mid_g1<mid_g2:
+            #middle of 1 starts before middle of 2, so 1 is to be translated
+            dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
+            mid_g1+=trans_amnt
+            mid_d1+=trans_amnt
+        else:
+            #middle of 2 starts before middle of 1, so 2 is to be translated
+            dict_seq2=dict_seq_translation(dict_seq2, trans_amnt)
+            mid_g2+=trans_amnt
+            mid_d2+=trans_amnt
+        
+    return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
-    Parameters
-    ----------
-    struct1 : dotbracket
-        First structure to align.
-    struct2 : dotbracket
-        Second structure to align.
-    max_size : int, optional
-        Size the structures take when aligned (controls the number of gaps). 
-        The default is 0 then it is converted to match the biggest of the two structures.
-
-    Returns
-    -------
-    The aligned structures with the resulting aptamat distance
-
-    """
-    if len(struct1)>max_size: max_size=len(struct1)
-    if len(struct2)>max_size: max_size=len(struct2)
-    fill1=max_size-len(struct1)
-    fill2=max_size-len(struct2)
-
-    #print("\nGenerating Alignment")
-    #print("\nFirst Structure")
-    struct1_1=dynamic_one_range(struct1, struct2, fill1)
-    
-    #print("\nSecond Structure")
-    struct2_2=dynamic_one_range(struct2, struct1, fill2)
-    
-    print("Finished\n")
-    
-    return struct1_1, struct2_2
-
-
-
-### NEW METHOD USING A STRUCTURAL ALPHABET AND OOP
-
-def inside_out_pat_alignment(pat1, pat2, struct1, struct2):
+def inside_out_pat_alignment(pat1, pat2):
     """
     Aligns matched patterns with an inside out method:
     
@@ -317,8 +146,71 @@ def inside_out_pat_alignment(pat1, pat2, struct1, struct2):
         if elt in par:
             dict_par2[i]=elt
         dict_seq2[i]=elt
+        
+    L1 = list(dict_par1.items())
+    L2 = list(dict_par2.items())
+    i=0
+    while L1[i+1][1]!=")":
+        i+=1
     
+    mid_g1 = L1[i][0]
+    mid_d1 = L1[i+1][0]
     
+    i=0
+
+    while L2[i+1][1]!=")":
+        i+=1
+    
+    mid_g2 = L2[i][0]
+    mid_d2 = L2[i+1][0]
+    
+    #aligning on the middle
+    diff1=mid_d1-mid_g1
+    diff2=mid_d2-mid_g2
+    
+    dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2 = middle_aligning(dict_seq1, dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2)
+    
+    #dict_tba1_L
+    #tba_left=[dict_tba1_L,dict_tba2_L]
+    
+
+def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
+    """
+    Used to align two patterns with dynamic alignment.
+    """
+    
+    print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
+    
+    if pat1.sequence==pat2.sequence:
+        print("Same pattern")
+        pat1.aligned(pat2,pat2.sequence)
+        pat2.aligned(pat1,pat1.sequence)
+    else:
+            
+        seq1,seq2=inside_out_pat_alignment(pat1, pat2)
+        
+        pat1.aligned(pat2,seq1)
+        pat2.aligned(pat1,seq2)
+        
+        added_gaps1=pat1.alignedsequence.count("-")
+        added_gaps2=pat2.alignedsequence.count("-")
+        if added_gaps1!=0:
+            add_gaps(pat1.nb, added_gaps1, order1)
+            struct1.length+=added_gaps1
+        if added_gaps2!=0:
+            add_gaps(pat2.nb, added_gaps2, order2)
+            struct2.length+=added_gaps2
+        
+
+def pair_pat_score(pat1,pat2):
+    
+    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
+    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))#/(2*pat1.length))
+    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))#/(2*pat2.length))
+    
+    return abs(pat1_sc - pat2_sc) + apta_dist
+
+### STRUCTURE INITIALIZING
 
 def subdiv_finder(sequence,subdiv_param):
     par="()"
@@ -452,6 +344,8 @@ def slicer(sequence):
     
     return sep,pat
 
+### CLASSES
+
 class Structure():
     """
     Class representing an aligned or not dotbracket sequence.
@@ -557,8 +451,7 @@ class Structure():
         else:
             print("The structure is not yet aligned, returning raw sequence")
             return self.raw
-        
-    
+
 class Separator():
     """
     Class used to define a structure.
@@ -663,6 +556,8 @@ class Pattern():
 
 EmptyPattern=Pattern('',[-1,-1],-1,-1)
 
+### BASE SEPARATOR GAPS FUNCTIONS
+
 def add_gaps(current_order,added_gaps,order_list):
     """
     Updates the start and finish positions of further separators and patterns.
@@ -691,45 +586,116 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
     add_gaps(sep.nb, nb_gaps, ordered)
     struct.length+=nb_gaps
 
-def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
-    """
-    Used to align two patterns with dynamic alignment.
-    """
-    
-    print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
-    
-    if pat1.sequence==pat2.sequence:
-        print("Same pattern")
-        pat1.aligned(pat2,pat2.sequence)
-        pat2.aligned(pat1,pat1.sequence)
-    else:
-        if len(pat1.sequence)==len(pat2.sequence):
-            ms=len(pat1.sequence)+1
-        else:
-            ms=0
-            
-        seq1,seq2=dynamic_alignment(pat1.sequence, pat2.sequence,max_size=ms)
-        
-        pat1.aligned(pat2,seq1)
-        pat2.aligned(pat1,seq2)
-        
-        added_gaps1=pat1.alignedsequence.count("-")
-        added_gaps2=pat2.alignedsequence.count("-")
-        if added_gaps1!=0:
-            add_gaps(pat1.nb, added_gaps1, order1)
-            struct1.length+=added_gaps1
-        if added_gaps2!=0:
-            add_gaps(pat2.nb, added_gaps2, order2)
-            struct2.length+=added_gaps2
-        
+### SEPARATOR ALIGNMENT FUNCTIONs
 
-def pair_pat_score(pat1,pat2):
+def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
+    """
+    Function used to insert gaps in separators where it is necessary in regards to:
+        - the biggest structure
+        - the pattern matching
+    """
     
-    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
-    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))#/(2*pat1.length))
-    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))#/(2*pat2.length))
+    for elt in matching:
+        
+        if struct1.length-struct2.length > 0:
+            bigger = 1
+        else:
+            bigger = 2
+        #struct1 ~ elt[0] - struct2 ~ elt[1]
+        if not elt[0].start == elt[1].start:
+            diff=elt[0].start-elt[1].start
+            if diff < 0:
+                #start pat1 < start pat2
+                #pat1 starts before pat2
+                #input diff gaps before pat1 and after pat2 if main_diff=0 or bigger=1 else only before pat1.
+                #if the number of gaps to insert is bigger than main_diff.
+                if abs(diff)>main_diff and main_diff !=0:
+                    
+                    delta_diff=abs(diff)-main_diff
+                    if bigger == 2:
+                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
+                    elif bigger == 1:
+                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
+                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb+1],ordered2)
+                    
+                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb-1],ordered1)
+                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb+1],ordered2)
+                
+                elif main_diff==0:
+                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
+                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
+                elif bigger == 2:
+                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
+                elif bigger == 1:
+                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
+                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
+            else:
+                #start pat1 > start pat2
+                #pat2 starts before pat1
+                #input diff gaps after pat1 and before pat2 if main_diff=0 or bigger=2 else only before pat2
+                #if the number of gaps to insert is bigger than main_diff.
+                if abs(diff)>main_diff and main_diff !=0:
+                    delta_diff=abs(diff)-main_diff
+                    if bigger == 2:
+                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
+                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb+1],ordered1)
+                    elif bigger == 1:
+                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
+                    
+                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb-1],ordered2)
+                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb+1],ordered1)
+                
+                elif main_diff==0:
+                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
+                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
+                elif bigger==2:
+                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
+                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
+                elif bigger==1:
+                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
+                    
+            main_diff=abs(struct1.length-struct2.length)
+            
+            
+    #Adding the last gaps at the end of the structures if main_diff is still positive.
     
-    return abs(pat1_sc - pat2_sc) + apta_dist
+    if struct1.length-struct2.length > 0:
+        bigger = 1
+    else:
+        bigger = 2
+    
+    if main_diff>0:
+        if bigger == 1:
+            last_sep=ordered2[-1]
+            added_gaps2=main_diff
+            last_sep.sequence+=added_gaps2*'-'
+            add_gaps(last_sep.nb, added_gaps2, ordered2)
+            struct2.length+=added_gaps2
+        elif bigger==2:
+            last_sep=ordered1[-1]
+            added_gaps1=main_diff
+            last_sep.sequence+=added_gaps1*'-'
+            add_gaps(last_sep.nb, added_gaps1, ordered1)
+            struct1.length+=added_gaps1
+
+def separator_compensating(struct1, struct2, matching):
+    """
+    Used after pattern aligning to add gaps in separators to match the final length and returning the aligned structures.
+    
+    """
+    ordered1=struct1.order_list()
+    ordered2=struct2.order_list()
+    
+    if struct1.length==struct2.length:
+        #the structures have the same size
+        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,0)
+    
+    else :
+        main_diff=abs(struct2.length-struct1.length)
+        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff)
+
+
+### MATCHING FUNCTION
 
 def matching_finder(struct1, struct2):
     """
@@ -821,113 +787,8 @@ def matching_finder(struct1, struct2):
             pair_order[1]=matching[i][1].nb
             
     return True,matching
-    
-def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
-    """
-    Function used to insert gaps in separators where it is necessary in regards to:
-        - the biggest structure
-        - the pattern matching
-    """
-    
-    for elt in matching:
-        
-        if struct1.length-struct2.length > 0:
-            bigger = 1
-        else:
-            bigger = 2
-        #struct1 ~ elt[0] - struct2 ~ elt[1]
-        if not elt[0].start == elt[1].start:
-            diff=elt[0].start-elt[1].start
-            if diff < 0:
-                #start pat1 < start pat2
-                #pat1 starts before pat2
-                #input diff gaps before pat1 and after pat2 if main_diff=0 or bigger=1 else only before pat1.
-                #if the number of gaps to insert is bigger than main_diff.
-                if abs(diff)>main_diff and main_diff !=0:
-                    
-                    delta_diff=abs(diff)-main_diff
-                    if bigger == 2:
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
-                    elif bigger == 1:
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb+1],ordered2)
-                    
-                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb-1],ordered1)
-                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb+1],ordered2)
-                
-                elif main_diff==0:
-                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
-                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
-                elif bigger == 2:
-                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
-                elif bigger == 1:
-                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
-                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
-            else:
-                #start pat1 > start pat2
-                #pat2 starts before pat1
-                #input diff gaps after pat1 and before pat2 if main_diff=0 or bigger=2 else only before pat2
-                #if the number of gaps to insert is bigger than main_diff.
-                if abs(diff)>main_diff and main_diff !=0:
-                    delta_diff=abs(diff)-main_diff
-                    if bigger == 2:
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb+1],ordered1)
-                    elif bigger == 1:
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
-                    
-                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb-1],ordered2)
-                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb+1],ordered1)
-                
-                elif main_diff==0:
-                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
-                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
-                elif bigger==2:
-                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
-                    sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
-                elif bigger==1:
-                    sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
-                    
-            main_diff=abs(struct1.length-struct2.length)
-            
-            
-    #Adding the last gaps at the end of the structures if main_diff is still positive.
-    
-    if struct1.length-struct2.length > 0:
-        bigger = 1
-    else:
-        bigger = 2
-    
-    if main_diff>0:
-        if bigger == 1:
-            last_sep=ordered2[-1]
-            added_gaps2=main_diff
-            last_sep.sequence+=added_gaps2*'-'
-            add_gaps(last_sep.nb, added_gaps2, ordered2)
-            struct2.length+=added_gaps2
-        elif bigger==2:
-            last_sep=ordered1[-1]
-            added_gaps1=main_diff
-            last_sep.sequence+=added_gaps1*'-'
-            add_gaps(last_sep.nb, added_gaps1, ordered1)
-            struct1.length+=added_gaps1
 
-
-def separator_compensating(struct1, struct2, matching):
-    """
-    Used after pattern aligning to add gaps in separators to match the final length and returning the aligned structures.
-    
-    """
-    ordered1=struct1.order_list()
-    ordered2=struct2.order_list()
-    
-    if struct1.length==struct2.length:
-        #the structures have the same size
-        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2,0)
-    
-    else :
-        main_diff=abs(struct2.length-struct1.length)
-        sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff)
+### MAIN ALIGNMENT FUNCTION
 
 def full_alignment(struct1, struct2):
     """
@@ -993,7 +854,7 @@ def full_alignment(struct1, struct2):
         print("\nDetermining the optimal pattern match if possible \n")
         matching_test = matching_finder(struct1, struct2)
         if matching_test[0]:
-            print("Valid macthing")
+            print("Valid matching")
             matching=matching_test[1]
         else:
             print("Invalid matching, returning matching for pattern recognition.")
