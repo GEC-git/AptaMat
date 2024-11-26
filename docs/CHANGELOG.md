@@ -856,9 +856,21 @@ This example would be interesting to retest when the matching function is finish
 - Continued working on inside-out aligning. *WIP*
     - Added a function to translate a sequence dictionnary
     - Added a function to insert a gap at a certain position in a sequence dictionnary.
-    
+        - - Fixed the function to insert a gap in the sequence dictionnary.
+        
     - Added a function to align and correctly translate the middle of two patterns from the dotbracket notation.
     
+    - Added a function to align two pattern slices from left to right.
+    
+    - For now, the method only works with slices with the same number of pairings.
+        - First tests with this method are promising:
+        
+        
+        Example of a single right slice alignment:
+
+        `{27: ')', 28: ')', 29: '.', 30: '.', 31: ')', 32: ')', 33: ')', 34: ')', 35: '.', 36: '.', 37: ')', 38: ')', 39: '.', 40: '.', 41: '.', 42: '.', 43: '-', 44: '-', 45: '-', 46: '-', 47: '-', 48: '-', 49: '-', 50: '-', 51: '-', 52: '-', 53: '-', 54: '-', 55: '-', 56: '-', 57: '-', 58: '-', 59: '-', 60: ')', 61: ')', 62: ')', 63: ')', 64: ')', 65: '.', 66: '.', 67: ')', 68: ')'}`
+        `{27: ')', 28: ')', 29: '.', 30: '.', 31: ')', 32: ')', 33: ')', 34: ')', 35: '.', 36: '.', 37: ')', 38: ')', 39: '.', 40: '.', 41: '.', 42: '.', 43: '.', 44: '.', 45: '.', 46: '.', 47: '.', 48: '.', 49: '.', 50: '.', 51: '.', 52: '.', 53: '.', 54: '.', 55: '.', 56: '.', 57: '.', 58: '.', 59: '.', 60: ')', 61: ')', 62: ')', 63: ')', 64: ')', 65: '.', 66: '.', 67: ')', 68: ')'}`
+
 
 ### TO DO LIST: (in order of importance)
 
