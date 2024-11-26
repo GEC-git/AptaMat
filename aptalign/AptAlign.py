@@ -47,13 +47,16 @@ def insert_str(string,num,char):
 
 def insert_gap_seq_dict(dict_seq,pos):
     new_dict_seq={}
+    first=True
     for in_pos, value in dict_seq.items():
-        if in_pos > pos:
+        if in_pos >= pos:
+            if first:
+                new_dict_seq[pos]="-"
+                first=False
             new_dict_seq[in_pos+1]=value
         elif in_pos < pos:
             new_dict_seq[in_pos]=value
-        else:
-            new_dict_seq[in_pos]="-"
+
     return new_dict_seq
 
 def dict_seq_translation(dict_seq,trans_amount):
@@ -62,6 +65,12 @@ def dict_seq_translation(dict_seq,trans_amount):
         new_dict_seq[trans_amount+elt[0]]=elt[1]
     
     return new_dict_seq
+
+def dict_seq_reagglomerate(dict_seq):
+    seq=""
+    for elt in dict_seq.values():
+        seq+=elt
+    return seq
 
 ### PATTERN ALIGNMENT
 
@@ -120,16 +129,68 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         
     return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
+def propagating_alignment(dict_tba1, dict_tba2):
+    """
+    Input two slices of of a structure sequence dictionnary.
+    
+    Perfectly aligns those slices without any sense of gap minimization for now.
+    Only works with same number of pairings for now.
+    
+    WORK IN PROGRESS.
+    """
+
+    if len(dict_tba1)>=len(dict_tba2):
+        #section of pat1 is bigger
+        for elt in dict_tba1.items():
+            if elt[1]!=dict_tba2[elt[0]] and elt[1]!="-" and dict_tba2[elt[0]] != "-":
+                i=elt[0]
+                if elt[1]=="(" or elt[1] == ")":
+                    while elt[1] != dict_tba2[i]:
+                        i+=1
+                    insert_R=[j for j in range(elt[0],i)]
+                    for elt in insert_R:
+                        dict_tba1=insert_gap_seq_dict(dict_tba1,elt)
+                else:
+                    while dict_tba2[elt[0]] != dict_tba1[i]:
+                        i+=1
+                    insert_R=[j for j in range(elt[0],i)]
+                    for elt in insert_R:
+                        dict_tba2=insert_gap_seq_dict(dict_tba2,elt)
+    else:
+        #section of pat2 is bigger
+        for elt in dict_tba2.items():
+            if elt[1]!=dict_tba1[elt[0]] and elt[1]!="-" and dict_tba1[elt[0]] != "-":
+                i=elt[0]
+                if elt[1]=="(" or elt[1] == ")":
+                    while elt[1] != dict_tba1[i]:
+                        i+=1
+                    insert_R=[j for j in range(elt[0],i)]
+                    for elt in insert_R:
+                        dict_tba2=insert_gap_seq_dict(dict_tba2,elt)
+                else:
+                    while dict_tba1[elt[0]] != dict_tba2[i]:
+                        i+=1
+                    insert_R=[j for j in range(elt[0],i)]
+                    for elt in insert_R:
+                        dict_tba1=insert_gap_seq_dict(dict_tba1,elt)
+                        
+    return dict_tba1, dict_tba2
+
 def inside_out_pat_alignment(pat1, pat2):
     """
     Aligns matched patterns with an inside out method:
     
     Start in the center of both patterns. (the first pairing going inside out)
     
+    
+    
     Try aligning going pair to pair and matching the position of each pairs and then matching the length.
     
     If the number of pairs is not the same, tests needs to be done to assert an order of alignment : align to the end of pairings or to the start.
     """
+
+    #creating base dictionnary to manipulate.
+
     par="()"
     
     dict_par1={}
@@ -146,33 +207,74 @@ def inside_out_pat_alignment(pat1, pat2):
         if elt in par:
             dict_par2[i]=elt
         dict_seq2[i]=elt
-        
+    
+    # determining the middle of both patterns.
+    
     L1 = list(dict_par1.items())
     L2 = list(dict_par2.items())
+    
     i=0
     while L1[i+1][1]!=")":
         i+=1
-    
     mid_g1 = L1[i][0]
     mid_d1 = L1[i+1][0]
     
     i=0
-
     while L2[i+1][1]!=")":
         i+=1
-    
     mid_g2 = L2[i][0]
     mid_d2 = L2[i+1][0]
     
-    #aligning on the middle
+    #aligning the middle
     diff1=mid_d1-mid_g1
     diff2=mid_d2-mid_g2
     
     dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2 = middle_aligning(dict_seq1, dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2)
     
-    #dict_tba1_L
-    #tba_left=[dict_tba1_L,dict_tba2_L]
+    #cutting the patterns in 3 parts: Left, Middle, Right
     
+    dict_tba1_L = {}
+    dict_tba1_R = {}
+    dict_mid1={}
+    for elt in dict_seq1.items():
+        if elt[0]<=mid_g1:
+            dict_tba1_L[elt[0]]=elt[1]
+        elif elt[0]>=mid_d1:
+            dict_tba1_R[elt[0]]=elt[1]
+        else:
+            dict_mid1[elt[0]]=elt[1]
+    
+    dict_tba2_L = {}
+    dict_tba2_R = {}
+    dict_mid2 = {}
+    for elt in dict_seq2.items():
+        if elt[0]<=mid_g2:
+            dict_tba2_L[elt[0]]=elt[1]
+        elif elt[0]>=mid_d2:
+            dict_tba2_R[elt[0]]=elt[1]
+        else:
+            dict_mid2[elt[0]]=elt[1]
+    
+    
+    #aligning to the left of the pattern:
+        # Reversing the left dictionaries.
+        
+        
+        # Aligning the left dictionnaries.
+        
+        
+        # Now, translate the middle and right dictionnaries and align the right dictionaries.
+    
+    
+    #aligning to the right of the pattern:
+        
+    dict1_R, dict2_R = propagating_alignment(dict_tba1_R, dict_tba2_R)
+    
+    #reagglomerating.
+    
+    
+
+
 
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     """
@@ -201,7 +303,6 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
             add_gaps(pat2.nb, added_gaps2, order2)
             struct2.length+=added_gaps2
         
-
 def pair_pat_score(pat1,pat2):
     
     apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
