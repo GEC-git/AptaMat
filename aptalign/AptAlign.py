@@ -129,7 +129,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         
     return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
-def propagating_alignment(dict_tba1, dict_tba2):
+def propagation_alignment(dict_tba1, dict_tba2):
     """
     Input two slices of of a structure sequence dictionnary.
     
@@ -182,12 +182,7 @@ def inside_out_pat_alignment(pat1, pat2):
     
     Start in the center of both patterns. (the first pairing going inside out)
     
-    
-    
-    Try aligning going pair to pair and matching the position of each pairs and then matching the length.
-    
-    If the number of pairs is not the same, tests needs to be done to assert an order of alignment : align to the end of pairings or to the start.
-    """
+     """
 
     #creating base dictionnary to manipulate.
 
@@ -228,10 +223,10 @@ def inside_out_pat_alignment(pat1, pat2):
     #aligning the middle
     diff1=mid_d1-mid_g1
     diff2=mid_d2-mid_g2
-    
+
     dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2 = middle_aligning(dict_seq1, dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2)
-    
-    #cutting the patterns in 3 parts: Left, Middle, Right
+
+    #slicing the patterns in 3 parts: Left, Middle, Right
     
     dict_tba1_L = {}
     dict_tba1_R = {}
@@ -256,24 +251,50 @@ def inside_out_pat_alignment(pat1, pat2):
             dict_mid2[elt[0]]=elt[1]
     
     
-    #aligning to the left of the pattern:
-        # Reversing the left dictionaries.
+    #Restarting the left dictionnaries at 0 (temproary fix for no left alignment).
+    
+    dict_tba1_L_translated={}
+    start1=list(dict_tba1_L)[0]
+    for elt in dict_tba1_L.items():
+        dict_tba1_L_translated[elt[0]-start1]=elt[1]
         
-        
-        # Aligning the left dictionnaries.
-        
-        
-        # Now, translate the middle and right dictionnaries and align the right dictionaries.
+    dict_tba2_L_translated={}
+    start2=list(dict_tba2_L)[0]
+    for elt in dict_tba2_L.items():
+        dict_tba2_L_translated[elt[0]-start2]=elt[1]
+    #_____________________________________________________________________________
     
     
-    #aligning to the right of the pattern:
-        
-    dict1_R, dict2_R = propagating_alignment(dict_tba1_R, dict_tba2_R)
+    #aligning the left dictionnaries
+    dict1_L, dict2_L = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
+    
+    # Now, translate the middle and right dictionnaries
+    trans1 = list(dict1_L.values()).count("-") - start1
+    trans2 = list(dict2_L.values()).count("-") - start2
+    
+    dict_tba1_R = dict_seq_translation(dict_tba1_R,trans1)
+    dict_tba2_R = dict_seq_translation(dict_tba2_R,trans2)
+    
+    dict1_M = dict_seq_translation(dict_mid1, trans1)
+    dict2_M = dict_seq_translation(dict_mid2, trans2)
+    
+    #aligning the right dictionnaries
+    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R)
     
     #reagglomerating.
+    seq1_L=dict_seq_reagglomerate(dict1_L)
+    seq1_M=dict_seq_reagglomerate(dict1_M)
+    seq1_R=dict_seq_reagglomerate(dict1_R)
     
+    seq1=seq1_L+seq1_M+seq1_R
     
-
+    seq2_L=dict_seq_reagglomerate(dict2_L)
+    seq2_M=dict_seq_reagglomerate(dict2_M)
+    seq2_R=dict_seq_reagglomerate(dict2_R)
+    
+    seq2=seq2_L+seq2_M+seq2_R
+    
+    return seq1, seq2
 
 
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
@@ -988,3 +1009,7 @@ def full_alignment(struct1, struct2):
     
     return struct1, struct2
 
+"""
+.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))))))))))..-
+.((((((((....((.(((((...((..((((((......))..))))..))....-----------------)))))..))(((.((...-(.((.....((....)).....)).).-)).))).))))))))..
+"""
