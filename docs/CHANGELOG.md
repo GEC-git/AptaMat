@@ -877,7 +877,7 @@ This example would be interesting to retest when the matching function is finish
     
     - First tests with full alignment :
     
-    Without any kind of subdiv alignment for now.
+    Without any kind of overdivison alignment for now.
     
     `.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))))))))))..-`
     
@@ -888,6 +888,17 @@ This example would be interesting to retest when the matching function is finish
     Time spent: 0.033s
     
     We went from a 3s runtime to 0.033s with the new method and a better alignment (still not optimal)
+    
+    
+    With overdivison alignment:
+    
+    `.((((((((....((.(((((...((..((((((......))..))))..))....-----------------)))))..))(((.((...-(.((.....((....)).....)).).-)).))).))))))))..`
+    
+    `.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..`
+    
+    Improvement: 17.651515151515152 -> 0.3181818181818182 | in %: 98.2%
+    
+    Time spent: 0.031s
     
 ### TO DO LIST: (in order of importance)
 
