@@ -251,7 +251,7 @@ def inside_out_pat_alignment(pat1, pat2):
             dict_mid2[elt[0]]=elt[1]
     
     
-    #Restarting the left dictionnaries at 0 (temproary fix for no left alignment).
+    #Restarting the left dictionnaries at 0 (temporary fix for no left alignment).
     
     dict_tba1_L_translated={}
     start1=list(dict_tba1_L)[0]
@@ -296,7 +296,6 @@ def inside_out_pat_alignment(pat1, pat2):
     
     return seq1, seq2
 
-
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     """
     Used to align two patterns with dynamic alignment.
@@ -323,7 +322,7 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
         if added_gaps2!=0:
             add_gaps(pat2.nb, added_gaps2, order2)
             struct2.length+=added_gaps2
-        
+
 def pair_pat_score(pat1,pat2):
     
     apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
@@ -590,15 +589,14 @@ class Separator():
             self.length = 0
         else:
             self.length=raw_range[1]-raw_range[0]+1
+            
         self.sequence=raw
         
-        subdiv=0
-        for elt in raw:
-            if elt == "#":
-                subdiv+=1
+        self.subdiv_index=raw.count('#')
         
-        self.subdiv_index=subdiv
-        
+        if self.subdiv_index!=0:
+            self.subdiv_accounted=False
+            
     def __eq__(self,other):
         if isinstance(other,Separator):
             return self.length==other.length
@@ -632,11 +630,7 @@ class Pattern():
         self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
         
-        subdiv=0
-        for elt in raw:
-            if elt == "#":
-                subdiv+=1
-        self.subdiv_index=subdiv
+        self.subdiv_index=raw.count("#")
         
         self.isaligned=False
         self.alignedwith=None
@@ -709,6 +703,83 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
     struct.length+=nb_gaps
 
 ### SEPARATOR ALIGNMENT FUNCTIONs
+
+def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
+    """
+    Accounting for overdivision and aligning separators where hashtags are present.
+    
+    We are only looking at separators present right before or after matched patterns.
+    
+    if there are hashtags in both separators compared, we align them with eachother.
+    """
+    
+    #creating necessary separator matching 
+    sep_matching=[]
+    
+    for pairs in matching:
+        if ordered1[pairs[0].nb-1].subdiv_index != 0 and ordered2[pairs[1].nb-1].subdiv_index !=0:
+            if not(ordered1[pairs[0].nb-1].subdiv_accounted) and not(ordered2[pairs[1].nb-1].subdiv_accounted):
+                ordered1[pairs[0].nb-1].subdiv_accounted = True
+                ordered2[pairs[1].nb-1].subdiv_accounted = True
+                sep_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
+            
+        if ordered1[pairs[0].nb+1].subdiv_index != 0 and ordered2[pairs[1].nb+1].subdiv_index !=0:
+            if not(ordered1[pairs[0].nb+1].subdiv_accounted) and not(ordered2[pairs[1].nb+1].subdiv_accounted):
+                ordered1[pairs[0].nb+1].subdiv_accounted = True
+                ordered2[pairs[1].nb+1].subdiv_accounted = True
+                sep_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
+
+    for sep_pairs in sep_matching:
+        #making sequence dictionnaries
+        dict_seq1={}
+        for i,elt in enumerate(sep_pairs[0].sequence):
+            dict_seq1[i]=elt
+        
+        dict_seq2={}
+        for i,elt in enumerate(sep_pairs[1].sequence):
+            dict_seq2[i]=elt
+        
+        #determining the start of both subdiv
+        start1=0
+        while dict_seq1[start1]!="#":
+            start1+=1
+            
+        start2=0
+        while dict_seq2[start2]!="#":
+            start2+=1
+        
+        
+        #aligning if subdiv starts at different places in the separator
+        if start1!=start2:
+            
+            diff=start1-start2
+            
+            if diff > 0:
+                #start1>start2, # starts after in sep1; placing gaps in sep2.
+                for i in range(abs(diff)):
+                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
+            elif diff <0:
+                #start2>start1, # starts after in sep2; placing gaps in sep1.
+                for i in range(abs(diff)):
+                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
+            
+            sep_pairs[0].sequence=dict_seq_reagglomerate(dict_seq1)
+            sep_pairs[1].sequence=dict_seq_reagglomerate(dict_seq2)
+            
+            nb_gaps1=sep_pairs[0].sequence.count('-')
+            nb_gaps2=sep_pairs[1].sequence.count('-')
+            
+            sep_pairs[0].length+=nb_gaps1
+            sep_pairs[1].length+=nb_gaps2
+            
+            sep_pairs[0].finish+=nb_gaps1
+            sep_pairs[1].finish+=nb_gaps2
+
+            add_gaps(sep_pairs[0].nb,nb_gaps1,ordered1)
+            add_gaps(sep_pairs[1].nb,nb_gaps2,ordered2)
+
+            struct1.length+=nb_gaps1
+            struct2.length+=nb_gaps2
 
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
@@ -816,7 +887,6 @@ def separator_compensating(struct1, struct2, matching):
         main_diff=abs(struct2.length-struct1.length)
         sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff)
 
-
 ### MATCHING FUNCTION
 
 def matching_finder(struct1, struct2):
@@ -832,39 +902,14 @@ def matching_finder(struct1, struct2):
             - Since length is directly impacting the AptaMat Distance, maybe prioritizing the distance.
     """
     
-    # matching=[]
-    # if len(struct1.patterns) > len(struct2.patterns):
-
-    #     for elt in struct1.patterns:
-    #         found=False
-    #         for pat in struct2.patterns:
-    #             if elt.nb==pat.nb:
-    #                 found=True
-    #                 matching.append([elt,pat])
-    #         if not found:
-    #             elt.aligned(None,elt.sequence)
-    
-    # elif len(struct2.patterns) > len(struct1.patterns):
-    #     for elt in struct2.patterns:
-    #         found=False
-    #         for pat in struct1.patterns:
-    #             if elt.nb==pat.nb:
-    #                 found=True
-    #                 matching.append([pat,elt])
-    #         if not found:
-    #             elt.aligned(None,elt.sequence)
-    
-    #return matching
-    
     #calculating best match based on pair by pair score.
-    
     matching=[]
     if len(struct1.patterns) >= len(struct2.patterns):
         not_taken=struct2.patterns[:]
         for pat1 in struct1.patterns:
             if not_taken==[]:
                 pat1.aligned(None,pat1.sequence)
-                print("Not paired")
+
             else:
                 pair_score_temp=pair_pat_score(pat1,not_taken[0])
                 pairing_temp=[pat1,not_taken[0],0]
@@ -873,8 +918,7 @@ def matching_finder(struct1, struct2):
                     if sc<pair_score_temp:
                         pairing_temp=[pat1,pat2,i]
                         pair_score_temp=sc
-                    print(pair_score_temp)
-                    print(pat1.sequence,pat2.sequence)
+
                 del(not_taken[pairing_temp[2]])
                 matching.append([pairing_temp[0],pairing_temp[1]])
                 
@@ -883,7 +927,7 @@ def matching_finder(struct1, struct2):
         for pat2 in struct2.patterns:
             if not_taken==[]:
                 pat2.aligned(None,pat1.sequence)
-                print("Not paired")
+
             else:
                 pair_score_temp=pair_pat_score(pat2,not_taken[0])
                 pairing_temp=[not_taken[0],pat2,0]
@@ -892,13 +936,11 @@ def matching_finder(struct1, struct2):
                     if sc<pair_score_temp:
                         pairing_temp=[pat1,pat2,i]
                         pair_score_temp=sc
-                    print(pair_score_temp)
-                    print(pat1.sequence,pat2.sequence)
+
                 del(not_taken[pairing_temp[2]])
                 matching.append([pairing_temp[0],pairing_temp[1]])
                 
     #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
-
     pair_order=[matching[0][0].nb,matching[0][1].nb]
     
     for i in range(1,len(matching)):
@@ -987,6 +1029,13 @@ def full_alignment(struct1, struct2):
         order2=struct2.order_list()
         pattern_alignment(struct1,struct2,elt[0], elt[1],order1,order2)
     
+    print("\nAccounting for overdivison")
+    
+    order1=struct1.order_list()
+    order2=struct2.order_list()
+    
+    overdivision_compensating(struct1, struct2, order1, order2, matching)
+    
     print("\nAdding gaps in separators for length and pattern matching")
     separator_compensating(struct1, struct2, matching)
     
@@ -996,7 +1045,7 @@ def full_alignment(struct1, struct2):
     
     struct1.aligned()
     struct2.aligned()
-    
+  
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
     
@@ -1009,7 +1058,3 @@ def full_alignment(struct1, struct2):
     
     return struct1, struct2
 
-"""
-.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))))))))))..-
-.((((((((....((.(((((...((..((((((......))..))))..))....-----------------)))))..))(((.((...-(.((.....((....)).....)).).-)).))).))))))))..
-"""
