@@ -853,7 +853,7 @@ This example would be interesting to retest when the matching function is finish
 
 ### WEEK 13 - 25/11/2024 -> 01/12/2024
 
-- Continued working on inside-out aligning. *WIP*
+- Continued working on inside-out aligning.
     - Added a function to translate a sequence dictionnary
     - Added a function to insert a gap at a certain position in a sequence dictionnary.
         - Fixed the function to insert a gap in the sequence dictionnary.
@@ -892,9 +892,9 @@ This example would be interesting to retest when the matching function is finish
     
     With overdivison alignment:
     
-    `.((((((((....((.(((((...((..((((((......))..))))..))....-----------------)))))..))(((.((...-(.((.....((....)).....)).).-)).))).))))))))..`
-    
     `.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..`
+    
+    `.((((((((....((.(((((...((..((((((......))..))))..))....-----------------)))))..))(((.((...-(.((.....((....)).....)).).-)).))).))))))))..`
     
     Improvement: 17.651515151515152 -> 0.3181818181818182 | in %: 98.2%
     
@@ -907,9 +907,10 @@ This example would be interesting to retest when the matching function is finish
     
 ### TO DO LIST: (in order of importance)
 
-- Making an alignment algorithm with a structural alphabet.
-    - making a better scoring function for pattern matching.
-    - acounting for subdiv. *WIP*
+- Updating inside-out aligning for structures with not the same number of pairings.
+
+- Updating the scoring function for pattern matching:
+    - maybe test all possibilities by putting them in a matrix.
 
 - Organising the AptAlign.py algorithm. *WIP*
     - Adding a main function to use the algorithm in the terminal.
