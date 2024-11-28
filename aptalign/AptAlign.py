@@ -138,11 +138,12 @@ def propagation_alignment(dict_tba1, dict_tba2):
     
     WORK IN PROGRESS.
     """
-
+    void = "-[]{}<>"
+    print(dict_tba1, dict_tba2)
     if len(dict_tba1)>=len(dict_tba2):
         #section of pat1 is bigger
         for elt in dict_tba1.items():
-            if elt[1]!=dict_tba2[elt[0]] and elt[1]!="-" and dict_tba2[elt[0]] != "-":
+            if elt[1]!=dict_tba2[elt[0]] and elt[1] not in void and dict_tba2[elt[0]] not in void:
                 i=elt[0]
                 if elt[1]=="(" or elt[1] == ")":
                     while elt[1] != dict_tba2[i]:
@@ -159,7 +160,7 @@ def propagation_alignment(dict_tba1, dict_tba2):
     else:
         #section of pat2 is bigger
         for elt in dict_tba2.items():
-            if elt[1]!=dict_tba1[elt[0]] and elt[1]!="-" and dict_tba1[elt[0]] != "-":
+            if elt[1]!=dict_tba1[elt[0]] and elt[1] not in void and dict_tba1[elt[0]] not in void:
                 i=elt[0]
                 if elt[1]=="(" or elt[1] == ")":
                     while elt[1] != dict_tba1[i]:
@@ -939,6 +940,8 @@ def matching_finder(struct1, struct2):
 
                 del(not_taken[pairing_temp[2]])
                 matching.append([pairing_temp[0],pairing_temp[1]])
+
+
                 
     #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
     pair_order=[matching[0][0].nb,matching[0][1].nb]
