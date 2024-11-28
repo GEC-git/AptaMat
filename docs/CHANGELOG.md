@@ -900,6 +900,11 @@ This example would be interesting to retest when the matching function is finish
     
     Time spent: 0.031s
     
+    
+- FIRST WORKING VERSION OF INSIDE_OUT ALIGNING.
+    - ONLY WORKS WITH STRUCTURES WITH THE SAME NUMBER OF PAIRINGS.
+    
+    
 ### TO DO LIST: (in order of importance)
 
 - Making an alignment algorithm with a structural alphabet.
