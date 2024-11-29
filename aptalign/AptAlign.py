@@ -46,6 +46,9 @@ def insert_str(string,num,char):
     # For sequence dictionnary manipulations
 
 def insert_gap_seq_dict(dict_seq,pos):
+    """
+    Dedicated function to add a gap in a sequence dictionnary at the position *pos*.
+    """
     new_dict_seq={}
     first=True
     for in_pos, value in dict_seq.items():
@@ -60,6 +63,9 @@ def insert_gap_seq_dict(dict_seq,pos):
     return new_dict_seq
 
 def dict_seq_translation(dict_seq,trans_amount):
+    """
+    Dedicated function to translate a sequence dictionnary by *trans_amount* positions.
+    """
     new_dict_seq={}
     for elt in dict_seq.items():
         new_dict_seq[trans_amount+elt[0]]=elt[1]
@@ -67,6 +73,9 @@ def dict_seq_translation(dict_seq,trans_amount):
     return new_dict_seq
 
 def dict_seq_reagglomerate(dict_seq):
+    """
+    Dedicated function to retransform a sequence dictionnary into an actual sequence string.
+    """
     seq=""
     for elt in dict_seq.values():
         seq+=elt
@@ -75,7 +84,11 @@ def dict_seq_reagglomerate(dict_seq):
 ### PATTERN ALIGNMENT
 
 def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2):
+    """
+    Function used to align the middle of patterns.
     
+    Used in inside-out aligning.
+    """
     trans_amnt=abs(mid_g1-mid_g2) 
     
     if diff1==diff2:
@@ -181,9 +194,12 @@ def inside_out_pat_alignment(pat1, pat2):
     """
     Aligns matched patterns with an inside out method:
     
-    Start in the center of both patterns. (the first pairing going inside out)
+    First find and aligns the middle of both patterns.
     
-     """
+    Then aligns the left of both patterns.
+    
+    In the end, aligns the right of both patterns.
+    """
 
     #creating base dictionnary to manipulate.
 
@@ -299,7 +315,7 @@ def inside_out_pat_alignment(pat1, pat2):
 
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
     """
-    Used to align two patterns with dynamic alignment.
+    Used to align two patterns with inside-out alignment and update the states of Structure and Pattern objects.
     """
     
     print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
@@ -325,7 +341,9 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
             struct2.length+=added_gaps2
 
 def pair_pat_score(pat1,pat2):
-    
+    """
+    Gives a pairing score based on the aptamat distance and the number of pairings.
+    """
     apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
     pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))#/(2*pat1.length))
     pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))#/(2*pat2.length))
@@ -335,6 +353,9 @@ def pair_pat_score(pat1,pat2):
 ### STRUCTURE INITIALIZING
 
 def subdiv_finder(sequence,subdiv_param):
+    """
+    Finds and marks with hashtags the pairings that compose overdivisions.
+    """
     par="()"
     #void=".-"
     dict_par={}
@@ -384,6 +405,11 @@ def subdiv_finder(sequence,subdiv_param):
     return subdiv_fin,new_seq
 
 def slicer(sequence):
+    """
+    Slices Structure objects into Patterns and Separators.
+    
+    Used in the Structure class constructor.
+    """
     pat=[]
     sep=[]
     par="()"
@@ -582,6 +608,7 @@ class Separator():
     Example: 
         In the structure `(((...)))...(.(((...))))` the three dots in the middle forms the separator.
     """
+    
     def __init__(self,raw,raw_range,order):
         self.nb=order
         self.start=raw_range[0]
@@ -711,7 +738,7 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     
     We are only looking at separators present right before or after matched patterns.
     
-    if there are hashtags in both separators compared, we align them with eachother.
+    If there are hashtags in both separators compared, we align them with eachother.
     """
     
     #creating necessary separator matching 
@@ -895,12 +922,7 @@ def matching_finder(struct1, struct2):
     Used to pair up patterns when the number of patterns is not equal.
     
     MATCHING METHOD:
-        - From right to left or from left to right ?
-        - Test all the matching possibilities ?
-        - Evaluate the cost of a pattern gap : minimize that ?
-            - Is it best to isolate the smallest patterns and aligning the bigger ones ?
-        - Prioritizing length or AptaMat distance between two patterns ?
-            - Since length is directly impacting the AptaMat Distance, maybe prioritizing the distance.
+        - Finds the best pairings based on a pairing score calculated in another function.
     """
     
     #calculating best match based on pair by pair score.
@@ -970,20 +992,16 @@ def full_alignment(struct1, struct2):
         
         MATCHING
         
-        - comparing number of patterns
-        - comparing number of separators
+        - Testing for compatibility using a pairing score.
         
-        - comparing one by one the length and distance of the patterns and separators.
-            - taking into account subdivisions with the subdiv_index.
+        - If the best match is not compatible with an alignment, returns the matching instead.
         
-        - Having a one by one match with all the patterns of the smallest structure.
-            - A matched pattern in the bigger structure cannot have a smaller order than its match in the smaller structure.
-            - If the number of pattern is the same in both structure, there is a single way to match each pattern.
-            
         ALIGNING
         
-        - Using dynamic alignment to align each pattern with its match.
+        - Using inside-out alignment to align each pattern with its match.
             - mark them as aligned and input each other in the `self.alignedwith` variable.
+        
+        - Test for overdivisions alignment possibilities and aligns the separators compatible.
         
         - When done, match the length of the two structures with gaps placed in the separators where it minimizes the distance.
         
