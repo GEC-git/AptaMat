@@ -904,7 +904,11 @@ This example would be interesting to retest when the matching function is finish
 - FIRST WORKING VERSION OF INSIDE_OUT ALIGNING.
     - ONLY WORKS WITH STRUCTURES WITH THE SAME NUMBER OF PAIRINGS.
     
-    
+
+- Added comments where needed.
+
+- Finished presentation for december 2nd.
+
 ### TO DO LIST: (in order of importance)
 
 - Updating inside-out aligning for structures with not the same number of pairings.
