@@ -909,14 +909,17 @@ This example would be interesting to retest when the matching function is finish
 
 - Finished presentation for december 2nd.
 
+
+### WEEK 14 - 02/12/2024 -> 08/12/2024
+
+- added a new function to align parts of patterns which have a non equal number of pairings.
+    - Still debugging.
+    
+- completely refactoredthe pairing function to work with the matrix of score and not actually taking the first local minimum.
+
 ### TO DO LIST: (in order of importance)
-
-- Updating inside-out aligning for structures with not the same number of pairings.
-
-- Updating the scoring function for pattern matching:
-    - maybe test all possibilities by putting them in a matrix.
 
 - Organising the AptAlign.py algorithm. *WIP*
     - Adding a main function to use the algorithm in the terminal.
-    - Adding a pairing function for alignement of a batch of structures in a file.
+    - Adding a pairing function for alignment of a batch of structures in a file.
     
