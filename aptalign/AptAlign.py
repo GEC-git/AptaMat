@@ -9,7 +9,7 @@ import AptaFast as AF
 import time
 # import multiprocessing as mp
 # import matplotlib.pyplot as plt
-# import numpy as np
+import numpy as np
 
 
 ### BASE FUNCTIONS
@@ -59,7 +59,7 @@ def insert_gap_seq_dict(dict_seq,pos):
             new_dict_seq[in_pos+1]=value
         elif in_pos < pos:
             new_dict_seq[in_pos]=value
-
+            
     return new_dict_seq
 
 def dict_seq_translation(dict_seq,trans_amount):
@@ -80,6 +80,25 @@ def dict_seq_reagglomerate(dict_seq):
     for elt in dict_seq.values():
         seq+=elt
     return seq
+
+def dict_seq_cluster_finder(dict_seq,direction="Both"):
+    """
+    Function used to find clusters of parentheses in a sequence_dictionnary.
+    """
+    if direction=="Right":
+        par=")"
+    elif direction=="Left":
+        par="("
+    else:
+        par="()"
+        
+    cluster_list_conca=[]
+    for elt in dict_seq.items():
+        if elt[1] in par:
+            cluster_list_conca.append(elt[0])
+
+    
+    return cluster_list_conca
 
 ### PATTERN ALIGNMENT
 
@@ -142,17 +161,15 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         
     return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
-def propagation_alignment(dict_tba1, dict_tba2):
+def equal_propagation_alignment(dict_tba1, dict_tba2):
     """
-    Input two slices of of a structure sequence dictionnary.
+    Input two slices of a structure sequence dictionnary.
     
-    Perfectly aligns those slices without any sense of gap minimization for now.
-    Only works with same number of pairings for now.
-    
-    WORK IN PROGRESS.
+    Perfectly aligns those slices.
+    Only works with same number of pairings.
     """
     void = "-[]{}<>"
-    print(dict_tba1, dict_tba2)
+    
     if len(dict_tba1)>=len(dict_tba2):
         #section of pat1 is bigger
         for elt in dict_tba1.items():
@@ -189,6 +206,148 @@ def propagation_alignment(dict_tba1, dict_tba2):
                         dict_tba1=insert_gap_seq_dict(dict_tba1,elt)
                         
     return dict_tba1, dict_tba2
+
+def propagation_alignment(dict_tba1, dict_tba2, direction):
+    """
+    Aligns almost optimally two sequence_dictionnary slices from left to right or right to left.
+    
+    *WIP*
+    """
+    cluster_1 = dict_seq_cluster_finder(dict_tba1, direction)
+    cluster_2 = dict_seq_cluster_finder(dict_tba2, direction)
+
+    Pdiff = len(cluster_1)-len(cluster_2)
+    
+    if direction=="Right":
+        #aligning the right dictionnaries.
+        if Pdiff>0:
+            #more pairings in 1.
+            for i, elt2 in enumerate(cluster_2):
+                if elt2 != cluster_1[i]:
+                    local_diff = elt2-cluster_1[i]
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos cluster_1[i].
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i])
+                            
+                        #update cluster_1
+                        for j in range(i, len(cluster_1)):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos elt2.
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, elt2)
+                            
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+                        
+        else:
+            #more pairings in 2.
+            for i, elt1 in enumerate(cluster_1):
+                if elt1 != cluster_2[i]:
+                    local_diff=cluster_2[i]-elt1
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos elt1.
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, elt1)
+                            
+                        #update cluster_1
+                        for j in range(i, len(cluster_1)):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i])
+                            
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+                        
+    elif direction=="Left":
+        #aligning the left dictionnaries by starting from the right.
+        if Pdiff>0:
+            #more pairings in 1.
+            for i in range(len(cluster_2)-1,-1,-1):
+                if cluster_2[i] != cluster_1[i+Pdiff]:
+                    local_diff = cluster_2[i]-cluster_1[i+Pdiff]
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos cluster_1[i]-k.
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i+Pdiff]+1)
+                            
+                        #update cluster_1
+                        for j in range(len(cluster_1)-1,i-1,-1):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i]+1)
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+                            
+        else:
+            #more pairings in 2.
+            for i in range(len(cluster_1)-1,-1,-1):
+                if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
+                    local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos cluster_1[i]-k.
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i]+1)
+                            
+                        #update cluster_1
+                        for j in range(len(cluster_1)-1,i-1,-1):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i+abs(Pdiff)]+1)
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+            
+    #account for the rest of pairings by placing gaps.
+    main_diff = len(dict_tba1)-len(dict_tba2)
+
+    finish1=list(dict_tba1.keys())[-1]
+    finish2=list(dict_tba2.keys())[-1]
+    start1=list(dict_tba1.keys())[0]
+    start2=list(dict_tba2.keys())[0]
+
+    if main_diff==0:
+        return dict_tba1, dict_tba2
+    elif direction == "Right":
+        if main_diff > 0:
+            #gaps to be placed in 2
+            for i in range(main_diff):
+                dict_tba2[finish2+i+1]="-"
+    
+        elif main_diff < 0:
+            #gaps to be placed in 1
+            for i in range(abs(main_diff)):
+                dict_tba1[finish1+i+1]="-"
+    elif direction=="Left":
+        if main_diff > 0:
+            #gaps to be placed in 2
+            for i in range(main_diff):
+                dict_tba2=insert_gap_seq_dict(dict_tba2,start2)
+    
+        elif main_diff < 0:
+            #gaps to be placed in 1
+            for i in range(abs(main_diff)):
+                dict_tba1=insert_gap_seq_dict(dict_tba1,start1)
+    
+    return dict_tba1, dict_tba2
+
+"""
+--(((((((((....-)))--))))))
+(-(-(-.((((.....)))..))))--
+
+(((((-((((....-)))--))))))
+--(((.((((.....)))..))))--
+"""
 
 def inside_out_pat_alignment(pat1, pat2):
     """
@@ -244,7 +403,6 @@ def inside_out_pat_alignment(pat1, pat2):
     dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2 = middle_aligning(dict_seq1, dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, mid_d2)
 
     #slicing the patterns in 3 parts: Left, Middle, Right
-    
     dict_tba1_L = {}
     dict_tba1_R = {}
     dict_mid1={}
@@ -267,24 +425,28 @@ def inside_out_pat_alignment(pat1, pat2):
         else:
             dict_mid2[elt[0]]=elt[1]
     
-    
-    #Restarting the left dictionnaries at 0 (temporary fix for no left alignment).
-    
-    dict_tba1_L_translated={}
-    start1=list(dict_tba1_L)[0]
-    for elt in dict_tba1_L.items():
-        dict_tba1_L_translated[elt[0]-start1]=elt[1]
-        
-    dict_tba2_L_translated={}
-    start2=list(dict_tba2_L)[0]
-    for elt in dict_tba2_L.items():
-        dict_tba2_L_translated[elt[0]-start2]=elt[1]
-    #_____________________________________________________________________________
-    
-    
     #aligning the left dictionnaries
-    dict1_L, dict2_L = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
     
+    Pdiff_L = ( (dict_seq_reagglomerate(dict_tba1_L).count("(")+dict_seq_reagglomerate(dict_tba1_L).count(")")) 
+               - (dict_seq_reagglomerate(dict_tba2_L).count("(")+dict_seq_reagglomerate(dict_tba2_L).count(")")) )
+    
+    
+    if Pdiff_L == 0:
+        start1=list(dict_tba1_L)[0]
+        dict_tba1_L_translated=dict_seq_translation(dict_tba1_L,-start1)
+        start2=list(dict_tba2_L)[0]
+        dict_tba2_L_translated=dict_seq_translation(dict_tba2_L,-start2)
+            
+        dict1_L, dict2_L = equal_propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
+    else:
+        dict1_L, dict2_L = propagation_alignment(dict_tba1_L, dict_tba2_L, "Left")
+
+        start1=list(dict1_L.keys())[0]
+        start2=list(dict2_L.keys())[0]
+        
+        dict1_L=dict_seq_translation(dict1_L,-start1)
+        dict2_L=dict_seq_translation(dict2_L,-start2)
+        
     # Now, translate the middle and right dictionnaries
     trans1 = list(dict1_L.values()).count("-") - start1
     trans2 = list(dict2_L.values()).count("-") - start2
@@ -296,7 +458,13 @@ def inside_out_pat_alignment(pat1, pat2):
     dict2_M = dict_seq_translation(dict_mid2, trans2)
     
     #aligning the right dictionnaries
-    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R)
+    Pdiff_R = ( (dict_seq_reagglomerate(dict_tba1_R).count("(")+dict_seq_reagglomerate(dict_tba1_R).count(")")) 
+               - (dict_seq_reagglomerate(dict_tba2_R).count("(")+dict_seq_reagglomerate(dict_tba2_R).count(")")) )
+
+    if Pdiff_R == 0:
+        dict1_R, dict2_R = equal_propagation_alignment(dict_tba1_R, dict_tba2_R)
+    else:
+        dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
     
     #reagglomerating.
     seq1_L=dict_seq_reagglomerate(dict1_L)
@@ -340,15 +508,6 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
             add_gaps(pat2.nb, added_gaps2, order2)
             struct2.length+=added_gaps2
 
-def pair_pat_score(pat1,pat2):
-    """
-    Gives a pairing score based on the aptamat distance and the number of pairings.
-    """
-    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
-    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))#/(2*pat1.length))
-    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))#/(2*pat2.length))
-    
-    return abs(pat1_sc - pat2_sc) + apta_dist
 
 ### STRUCTURE INITIALIZING
 
@@ -917,6 +1076,17 @@ def separator_compensating(struct1, struct2, matching):
 
 ### MATCHING FUNCTION
 
+def pair_pat_score(pat1,pat2):
+    """
+    Gives a pairing score based on the aptamat distance and the number of pairings.
+    """
+    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
+    
+    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))
+    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))
+
+    return abs(pat1_sc - pat2_sc) + apta_dist + abs(pat1.length - pat2.length)
+
 def matching_finder(struct1, struct2):
     """
     Used to pair up patterns when the number of patterns is not equal.
@@ -924,47 +1094,52 @@ def matching_finder(struct1, struct2):
     MATCHING METHOD:
         - Finds the best pairings based on a pairing score calculated in another function.
     """
-    
+
     #calculating best match based on pair by pair score.
     matching=[]
-    if len(struct1.patterns) >= len(struct2.patterns):
-        not_taken=struct2.patterns[:]
-        for pat1 in struct1.patterns:
-            if not_taken==[]:
-                pat1.aligned(None,pat1.sequence)
+    pairing_matrix=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
 
-            else:
-                pair_score_temp=pair_pat_score(pat1,not_taken[0])
-                pairing_temp=[pat1,not_taken[0],0]
-                for i,pat2 in enumerate(not_taken):
-                    sc=pair_pat_score(pat1, pat2)
-                    if sc<pair_score_temp:
-                        pairing_temp=[pat1,pat2,i]
-                        pair_score_temp=sc
+    # determining the matrix of paired scores:
+        
+    for i,pat1 in enumerate(struct1.patterns):
+        for j,pat2 in enumerate(struct2.patterns):
+            pairing_matrix[i,j]=(pair_pat_score(pat1, pat2),pat1,pat2)
+            
+    max_pairings = min(len(struct1.patterns),len(struct2.patterns))
 
-                del(not_taken[pairing_temp[2]])
-                matching.append([pairing_temp[0],pairing_temp[1]])
-                
-    elif len(struct2.patterns) >= len(struct1.patterns):
-        not_taken=struct1.patterns[:]
-        for pat2 in struct2.patterns:
-            if not_taken==[]:
-                pat2.aligned(None,pat1.sequence)
-
-            else:
-                pair_score_temp=pair_pat_score(pat2,not_taken[0])
-                pairing_temp=[not_taken[0],pat2,0]
-                for i,pat1 in enumerate(not_taken):
-                    sc=pair_pat_score(pat2, pat1)
-                    if sc<pair_score_temp:
-                        pairing_temp=[pat1,pat2,i]
-                        pair_score_temp=sc
-
-                del(not_taken[pairing_temp[2]])
-                matching.append([pairing_temp[0],pairing_temp[1]])
-
-
-                
+    for i in range(max_pairings):
+        argkeep=np.unravel_index(np.argmin(pairing_matrix),pairing_matrix.shape)
+        keep=np.min(pairing_matrix)
+        
+        matching.append([keep[1],keep[2]])
+        
+        #we delete all the row and column corresponding.
+        pairing_matrix=np.delete(pairing_matrix,obj=argkeep[0],axis=0)
+        pairing_matrix=np.delete(pairing_matrix,obj=argkeep[1],axis=1)
+    
+    #reordering matching:
+    
+    def get_id_pat1(pat):
+        return pat[0].nb
+    
+    matching=sorted(matching, key=lambda pt : get_id_pat1(pt))
+    
+    #aligning with empty pattern non paired patterns.
+    
+    full_paired=[]
+    for elt in matching:
+        full_paired.append(elt[0])
+        full_paired.append(elt[1])
+    
+    for pat1 in struct1.patterns:
+        if pat1 not in full_paired:
+            pat1.aligned(None,pat1.sequence)
+    
+    for pat2 in struct2.patterns:
+        if pat2 not in full_paired:
+            pat2.aligned(None,pat2.sequence)
+    
+    
     #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
     pair_order=[matching[0][0].nb,matching[0][1].nb]
     
@@ -1016,7 +1191,7 @@ def full_alignment(struct1, struct2):
     initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
     
     matching=[]
-    
+
     if struct1.raw == struct2.raw:
         for i,pat in enumerate(struct1.patterns):
             pat.aligned(struct2.patterns[i],pat.sequence)
@@ -1037,9 +1212,10 @@ def full_alignment(struct1, struct2):
         
     else:
         print("\nDetermining the optimal pattern match if possible \n")
+        
         matching_test = matching_finder(struct1, struct2)
         if matching_test[0]:
-            print("Valid matching")
+            print("\nValid matching\n")
             matching=matching_test[1]
         else:
             print("Invalid matching, returning matching for pattern recognition.")
@@ -1054,7 +1230,6 @@ def full_alignment(struct1, struct2):
     
     order1=struct1.order_list()
     order2=struct2.order_list()
-    
     overdivision_compensating(struct1, struct2, order1, order2, matching)
     
     print("\nAdding gaps in separators for length and pattern matching")
@@ -1079,3 +1254,7 @@ def full_alignment(struct1, struct2):
     
     return struct1, struct2
 
+"""
+----------------------------------------------------------------------------------------------------------((.(((((((.....))))))).)).....................................----------------------------------(-(-(-.((((.....)))..))))--...................--
+.........................................((((((.[[.....))).....(.((((.....]]............).)))..)...)))....--------((.....))---------------------------------------------------------------------------------(((((((((....-)))--)))))).....................
+"""
