@@ -928,6 +928,12 @@ This example would be interesting to retest when the matching function is finish
 - completely remade the pairing function to work with the matrix of score and not actually taking the first local minimum.
     - The scoring function now takes into account the length of patterns.
     
+    - The matching function now actually makes three passes of scoring:
+        - First pass with score = difference in number of pairings + aptamat distance + difference in length.
+        - Second pass with score = difference in number of pairings + aptamat distance
+        - Third pass with naive first come first served matching.
+        
+    
 - finished debugging.
     - the separator_compensating (sep_gap_inserter) was adding gaps where they did not belong.
 
@@ -952,7 +958,10 @@ results in
 
 `.((((((((....((.(((((..-((..((((((......))..))))..)).....................)))))..))(((.((....(.((.....((....)).....)).)..)).)))-))))))))..`
 
+PASS1 matching.
+
 Improvement: 17.651515151515152 -> 0.3181818181818182 | in %: 98.2%
+
 Time spent: 0.029s
 ______________________
 Aligning 
@@ -961,9 +970,9 @@ Aligning
 
 `((((((..........)))))).........((((((................)))))).....`
 
-results in an invalid matching.
+PASS3 matching.
 
-Tried matching `(..)` with `((((((..........))))))` and `((((((................))))))` with `((((((.................))))))`
+BUG IN ALIGNING.
 _____________________
 
 Aligning 
@@ -972,10 +981,9 @@ Aligning
 
 `(((((((............(((((((..(((..(((((.((((((((([[[[[.....(((((((..]]]]]........)))))))................................((((((..(((((((((....))))).)))).))))))(((((.(((((......[[[[[[[.....))))).))))).........((((..(((((....))))))))).]]]]]]](((((((((((...[[[[[..))))))))))).......]]]]]....(.((.(((..((..[[[[.[[[))..)))..)).).........]]].]]]]....)))))...)))).)))))..))).)))))))...(((((.......))))))))))))....`
 
-results in an invalid matching.
-Time spent: 0.375s
+PASS3 matching.
 
-Tried matching: 1 with 9 | 3 with 13 | 5 with 1 | 7 with 7 | 9 with 11 | 11 with 5 | 13 with 3.
+BUG IN ALIGNING.
 _____________________
 
 Aligning 
