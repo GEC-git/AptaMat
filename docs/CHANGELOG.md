@@ -909,17 +909,23 @@ This example would be interesting to retest when the matching function is finish
 
 - Finished presentation for december 2nd.
 
-
 ### WEEK 14 - 02/12/2024 -> 08/12/2024
 
 - added a new function to align parts of patterns which have a non equal number of pairings.
     - Still debugging.
+    - finished debugging.
     
-- completely refactoredthe pairing function to work with the matrix of score and not actually taking the first local minimum.
+    - The behavior of this function still needs to be investigated.
+    
+- completely remade the pairing function to work with the matrix of score and not actually taking the first local minimum.
+
+- finished debugging.
+    - the separator_compensating (sep_gap_inserter) was adding gaps where they did not belong.
+    
+- finished inside_out aligning.
 
 ### TO DO LIST: (in order of importance)
 
 - Organising the AptAlign.py algorithm. *WIP*
     - Adding a main function to use the algorithm in the terminal.
     - Adding a pairing function for alignment of a batch of structures in a file.
-    
