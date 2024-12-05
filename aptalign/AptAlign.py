@@ -268,9 +268,10 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
         #aligning the left dictionnaries by starting from the right.
         if Pdiff>0:
             #more pairings in 1.
+            local_diff=0
             for i in range(len(cluster_2)-1,-1,-1):
-                if cluster_2[i] != cluster_1[i+Pdiff]:
-                    local_diff = cluster_2[i]-cluster_1[i+Pdiff]
+                if cluster_2[i] != cluster_1[i+Pdiff-abs(local_diff)]:
+                    local_diff = cluster_2[i]-cluster_1[i+Pdiff-abs(local_diff)]
                     if local_diff > 0:
                         #place local_diff gaps in 1 at pos cluster_1[i]-k.
                         for k in range(local_diff):
@@ -289,11 +290,15 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                             
         else:
             #more pairings in 2.
+            
+            local_diff=0
             for i in range(len(cluster_1)-1,-1,-1):
-                if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
-                    local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
+            
+                if cluster_2[i+abs(Pdiff)-abs(local_diff)] != cluster_1[i]:
+                    
+                    local_diff = cluster_2[i+abs(Pdiff)-abs(local_diff)]-cluster_1[i]
                     if local_diff > 0:
-                        #place local_diff gaps in 1 at pos cluster_1[i]-k.
+                        #place local_diff gaps in 1 at pos cluster_1[i]+1.
                         for k in range(local_diff):
                             dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i]+1)
                             
@@ -340,14 +345,6 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                 dict_tba1=insert_gap_seq_dict(dict_tba1,start1)
     
     return dict_tba1, dict_tba2
-
-"""
---(((((((((....-)))--))))))
-(-(-(-.((((.....)))..))))--
-
-(((((-((((....-)))--))))))
---(((.((((.....)))..))))--
-"""
 
 def inside_out_pat_alignment(pat1, pat2):
     """
@@ -493,7 +490,6 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
         pat1.aligned(pat2,pat2.sequence)
         pat2.aligned(pat1,pat1.sequence)
     else:
-            
         seq1,seq2=inside_out_pat_alignment(pat1, pat2)
         
         pat1.aligned(pat2,seq1)
@@ -501,13 +497,12 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
         
         added_gaps1=pat1.alignedsequence.count("-")
         added_gaps2=pat2.alignedsequence.count("-")
-        if added_gaps1!=0:
-            add_gaps(pat1.nb, added_gaps1, order1)
-            struct1.length+=added_gaps1
-        if added_gaps2!=0:
-            add_gaps(pat2.nb, added_gaps2, order2)
-            struct2.length+=added_gaps2
 
+        add_gaps(pat1.nb, added_gaps1, order1)
+        struct1.length+=added_gaps1
+        
+        add_gaps(pat2.nb, added_gaps2, order2)
+        struct2.length+=added_gaps2
 
 ### STRUCTURE INITIALIZING
 
@@ -988,20 +983,8 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
                 #start pat1 < start pat2
                 #pat1 starts before pat2
                 #input diff gaps before pat1 and after pat2 if main_diff=0 or bigger=1 else only before pat1.
-                #if the number of gaps to insert is bigger than main_diff.
-                if abs(diff)>main_diff and main_diff !=0:
-                    
-                    delta_diff=abs(diff)-main_diff
-                    if bigger == 2:
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
-                    elif bigger == 1:
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb-1],ordered1)
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb+1],ordered2)
-                    
-                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb-1],ordered1)
-                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb+1],ordered2)
-                
-                elif main_diff==0:
+
+                if main_diff==0:
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
                 elif bigger == 2:
@@ -1010,22 +993,12 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
             else:
+                print("start pat1 > start pat2")
                 #start pat1 > start pat2
                 #pat2 starts before pat1
                 #input diff gaps after pat1 and before pat2 if main_diff=0 or bigger=2 else only before pat2
-                #if the number of gaps to insert is bigger than main_diff.
-                if abs(diff)>main_diff and main_diff !=0:
-                    delta_diff=abs(diff)-main_diff
-                    if bigger == 2:
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
-                        sep_gap_adder(struct1, delta_diff, ordered1[elt[0].nb+1],ordered1)
-                    elif bigger == 1:
-                        sep_gap_adder(struct2, delta_diff, ordered2[elt[1].nb-1],ordered2)
-                    
-                    sep_gap_adder(struct2, main_diff, ordered2[elt[1].nb-1],ordered2)
-                    sep_gap_adder(struct1, main_diff, ordered1[elt[0].nb+1],ordered1)
-                
-                elif main_diff==0:
+
+                if main_diff==0:
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb+1],ordered1)
                 elif bigger==2:
@@ -1034,11 +1007,10 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
                 elif bigger==1:
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
                     
-            main_diff=abs(struct1.length-struct2.length)
-            
-            
+        main_diff=abs(struct1.length-struct2.length)
+              
     #Adding the last gaps at the end of the structures if main_diff is still positive.
-    
+
     if struct1.length-struct2.length > 0:
         bigger = 1
     else:
@@ -1139,7 +1111,6 @@ def matching_finder(struct1, struct2):
         if pat2 not in full_paired:
             pat2.aligned(None,pat2.sequence)
     
-    
     #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
     pair_order=[matching[0][0].nb,matching[0][1].nb]
     
@@ -1220,19 +1191,27 @@ def full_alignment(struct1, struct2):
         else:
             print("Invalid matching, returning matching for pattern recognition.")
             return matching_test[1]
+        
     
+    
+
     for elt in matching:
+
         order1=struct1.order_list()
         order2=struct2.order_list()
-        pattern_alignment(struct1,struct2,elt[0], elt[1],order1,order2)
-    
+        pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2)
+
+        
     print("\nAccounting for overdivison")
-    
+
+        
     order1=struct1.order_list()
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
     
+    
     print("\nAdding gaps in separators for length and pattern matching")
+
     separator_compensating(struct1, struct2, matching)
     
     print("\nUpdating last parameters and finishing\n")
@@ -1253,8 +1232,3 @@ def full_alignment(struct1, struct2):
     print("Time spent:",str(round(b-a,3))+"s")
     
     return struct1, struct2
-
-"""
-----------------------------------------------------------------------------------------------------------((.(((((((.....))))))).)).....................................----------------------------------(-(-(-.((((.....)))..))))--...................--
-.........................................((((((.[[.....))).....(.((((.....]]............).)))..)...)))....--------((.....))---------------------------------------------------------------------------------(((((((((....-)))--)))))).....................
-"""
