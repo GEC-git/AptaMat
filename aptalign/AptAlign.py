@@ -1191,7 +1191,9 @@ def full_alignment(struct1, struct2):
             print("\nValid matching\n")
             matching=matching_test[1]
         else:
-            print("Invalid matching, returning matching for pattern recognition.")
+            print("Invalid matching, returning matching for pattern recognition.\n")
+            b=time.time()
+            print("Time spent:",str(round(b-a,3))+"s")
             return matching_test[1]
         
     
