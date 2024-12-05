@@ -11,7 +11,6 @@ import time
 # import matplotlib.pyplot as plt
 import numpy as np
 
-
 ### BASE FUNCTIONS
 
     # For string manipulations
@@ -1070,25 +1069,28 @@ def matching_finder(struct1, struct2):
     #calculating best match based on pair by pair score.
     matching=[]
     pairing_matrix=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
-
+    pairing_matrix_score=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=float)
     # determining the matrix of paired scores:
         
     for i,pat1 in enumerate(struct1.patterns):
         for j,pat2 in enumerate(struct2.patterns):
             pairing_matrix[i,j]=(pair_pat_score(pat1, pat2),pat1,pat2)
+            pairing_matrix_score[i,j]=pair_pat_score(pat1, pat2)
             
     max_pairings = min(len(struct1.patterns),len(struct2.patterns))
-
+    
+    
     for i in range(max_pairings):
-        argkeep=np.unravel_index(np.argmin(pairing_matrix),pairing_matrix.shape)
-        keep=np.min(pairing_matrix)
-        
+        argkeep=np.unravel_index(np.argmin(pairing_matrix_score),pairing_matrix.shape)
+        keep=pairing_matrix[argkeep[0],argkeep[1]]
         matching.append([keep[1],keep[2]])
         
         #we delete all the row and column corresponding.
         pairing_matrix=np.delete(pairing_matrix,obj=argkeep[0],axis=0)
         pairing_matrix=np.delete(pairing_matrix,obj=argkeep[1],axis=1)
-    
+        
+        pairing_matrix_score=np.delete(pairing_matrix_score,obj=argkeep[0],axis=0)
+        pairing_matrix_score=np.delete(pairing_matrix_score,obj=argkeep[1],axis=1)
     #reordering matching:
     
     def get_id_pat1(pat):
