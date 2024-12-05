@@ -1047,9 +1047,9 @@ def separator_compensating(struct1, struct2, matching):
 
 ### MATCHING FUNCTION
 
-def pair_pat_score(pat1,pat2):
+def pair_pat_score_pass1(pat1,pat2):
     """
-    Gives a pairing score based on the aptamat distance and the number of pairings.
+    Gives a pairing score for first pass pattern recognition based on the aptamat distance, the number of pairings and the length difference.
     """
     apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
     
@@ -1058,72 +1058,175 @@ def pair_pat_score(pat1,pat2):
 
     return abs(pat1_sc - pat2_sc) + apta_dist + abs(pat1.length - pat2.length)
 
-def matching_finder(struct1, struct2):
+def pair_pat_score_pass2(pat1,pat2):
     """
-    Used to pair up patterns when the number of patterns is not equal.
+    Gives a pairing score for second pass pattern recognition based on the aptamat distance and the number of pairings.
+    """
+    apta_dist=AF.compute_distance_clustering(AF.SecondaryStructure(pat1.sequence),AF.SecondaryStructure(pat2.sequence), "cityblock", "slow")
     
-    MATCHING METHOD:
-        - Finds the best pairings based on a pairing score calculated in another function.
-    """
+    pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))
+    pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))
 
-    #calculating best match based on pair by pair score.
-    matching=[]
-    pairing_matrix=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
-    pairing_matrix_score=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=float)
-    # determining the matrix of paired scores:
-        
-    for i,pat1 in enumerate(struct1.patterns):
-        for j,pat2 in enumerate(struct2.patterns):
-            pairing_matrix[i,j]=(pair_pat_score(pat1, pat2),pat1,pat2)
-            pairing_matrix_score[i,j]=pair_pat_score(pat1, pat2)
-            
-    max_pairings = min(len(struct1.patterns),len(struct2.patterns))
-    
-    
-    for i in range(max_pairings):
-        argkeep=np.unravel_index(np.argmin(pairing_matrix_score),pairing_matrix.shape)
-        keep=pairing_matrix[argkeep[0],argkeep[1]]
-        matching.append([keep[1],keep[2]])
-        
-        #we delete all the row and column corresponding.
-        pairing_matrix=np.delete(pairing_matrix,obj=argkeep[0],axis=0)
-        pairing_matrix=np.delete(pairing_matrix,obj=argkeep[1],axis=1)
-        
-        pairing_matrix_score=np.delete(pairing_matrix_score,obj=argkeep[0],axis=0)
-        pairing_matrix_score=np.delete(pairing_matrix_score,obj=argkeep[1],axis=1)
-    #reordering matching:
-    
-    def get_id_pat1(pat):
-        return pat[0].nb
-    
-    matching=sorted(matching, key=lambda pt : get_id_pat1(pt))
-    
-    #aligning with empty pattern non paired patterns.
-    
-    full_paired=[]
-    for elt in matching:
-        full_paired.append(elt[0])
-        full_paired.append(elt[1])
-    
-    for pat1 in struct1.patterns:
-        if pat1 not in full_paired:
-            pat1.aligned(None,pat1.sequence)
-    
-    for pat2 in struct2.patterns:
-        if pat2 not in full_paired:
-            pat2.aligned(None,pat2.sequence)
-    
-    #Determining if this is a valid pairing, if not, just return matching patterns for pattern recognition.
+    return abs(pat1_sc - pat2_sc) + apta_dist
+
+def matching_test(matching):
     pair_order=[matching[0][0].nb,matching[0][1].nb]
     
     for i in range(1,len(matching)):
         if matching[i][0].nb<pair_order[0] or matching[i][1].nb < pair_order[1]:
-            return False, matching
+            return False
         else:
             pair_order[0]=matching[i][0].nb
             pair_order[1]=matching[i][1].nb
             
-    return True,matching
+    return True
+
+def naive_matching(order1, order2):
+    patterns1=[]
+    patterns2=[]
+    for elt in order1:
+        if isinstance(elt, Pattern):
+            patterns1.append(elt)
+            
+    for elt in order2:
+        if isinstance(elt, Pattern):
+            patterns2.append(elt)
+    
+    matching=[]
+    if len(patterns1)<=len(patterns2):
+        for i,elt in enumerate(patterns1):
+            matching.append([elt,patterns2[i]])
+    elif len(patterns2) < len(patterns1):
+        for i, elt in enumerate(patterns2):
+            matching.append([patterns1[i],elt])
+    
+    return matching
+
+def matching_finder(struct1, struct2):
+    """
+    Used to pair up patterns.
+    
+    MATCHING METHOD:
+        - Finds the best pairings based on a pairing score calculated in another function.
+        
+    - Does three passes
+        - 1 - with score with length difference.
+        - 2 - with score without length difference.
+        - 3 - In order.
+        
+    - Keeps the best matching.
+    """
+    order1=struct1.order_list()
+    order2=struct2.order_list()
+    #calculating best match based on pair by pair score.
+    matching_pass1=[]
+    matching_pass2=[]
+    matching_pass3=[]
+    
+    pairing_matrix_pass1=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
+    pairing_matrix_score_pass1=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=float)
+    
+    pairing_matrix_pass2=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
+    pairing_matrix_score_pass2=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=float)
+    # determining the matrix of paired scores:
+    print("Calculating the three passes.")
+    for i,pat1 in enumerate(struct1.patterns):
+        for j,pat2 in enumerate(struct2.patterns):
+            pairing_matrix_pass1[i,j]=(pair_pat_score_pass1(pat1, pat2),pat1,pat2)
+            pairing_matrix_score_pass1[i,j]=pair_pat_score_pass1(pat1, pat2)
+            
+            pairing_matrix_pass2[i,j]=(pair_pat_score_pass2(pat1, pat2),pat1,pat2)
+            pairing_matrix_score_pass2[i,j]=pair_pat_score_pass2(pat1, pat2)
+            
+    max_pairings = min(len(struct1.patterns),len(struct2.patterns))
+    
+    for i in range(max_pairings):
+        #PASS1
+        argkeep1=np.unravel_index(np.argmin(pairing_matrix_score_pass1),pairing_matrix_score_pass1.shape)
+        keep1=pairing_matrix_pass1[argkeep1[0],argkeep1[1]]
+        matching_pass1.append([keep1[1],keep1[2]])
+        
+        pairing_matrix_pass1=np.delete(pairing_matrix_pass1,obj=argkeep1[0],axis=0)
+        pairing_matrix_pass1=np.delete(pairing_matrix_pass1,obj=argkeep1[1],axis=1)
+        
+        pairing_matrix_score_pass1=np.delete(pairing_matrix_score_pass1,obj=argkeep1[0],axis=0)
+        pairing_matrix_score_pass1=np.delete(pairing_matrix_score_pass1,obj=argkeep1[1],axis=1)
+        
+        #PASS2
+        argkeep2=np.unravel_index(np.argmin(pairing_matrix_score_pass2),pairing_matrix_score_pass2.shape)
+        keep2=pairing_matrix_pass2[argkeep2[0],argkeep2[1]]
+        matching_pass2.append([keep2[1],keep2[2]])
+        
+        pairing_matrix_pass2=np.delete(pairing_matrix_pass2,obj=argkeep2[0],axis=0)
+        pairing_matrix_pass2=np.delete(pairing_matrix_pass2,obj=argkeep2[1],axis=1)
+        
+        pairing_matrix_score_pass2=np.delete(pairing_matrix_score_pass2,obj=argkeep2[0],axis=0)
+        pairing_matrix_score_pass2=np.delete(pairing_matrix_score_pass2,obj=argkeep2[1],axis=1)
+        
+        
+    #reordering matchings:
+    
+    def get_id_pat1(pat):
+        return pat[0].nb
+    
+    matching_pass1=sorted(matching_pass1, key=lambda pt : get_id_pat1(pt))
+    matching_pass2=sorted(matching_pass2, key=lambda pt : get_id_pat1(pt))
+    
+    #Determining if pass1 is a valid matching, if not, use pass2 or pass3 if pass2 is not valid.
+    if not matching_test(matching_pass1):
+        print("Pass1 not valid")
+        if not matching_test(matching_pass2):
+            print("Pass2 not valid, using naive ordering.")
+            
+            matching_pass3=naive_matching(order1, order2)
+            
+            full_paired=[]
+            for elt in matching_pass3:
+                full_paired.append(elt[0])
+                full_paired.append(elt[1])
+            
+            for pat1 in struct1.patterns:
+                if pat1 not in full_paired:
+                    pat1.aligned(None,pat1.sequence)
+            
+            for pat2 in struct2.patterns:
+                if pat2 not in full_paired:
+                    pat2.aligned(None,pat2.sequence)
+                    
+            return matching_pass3
+        else:
+            print("Pass2 valid, returning matching.")
+            full_paired=[]
+            for elt in matching_pass2:
+                full_paired.append(elt[0])
+                full_paired.append(elt[1])
+            
+            for pat1 in struct1.patterns:
+                if pat1 not in full_paired:
+                    pat1.aligned(None,pat1.sequence)
+            
+            for pat2 in struct2.patterns:
+                if pat2 not in full_paired:
+                    pat2.aligned(None,pat2.sequence)
+                    
+            return matching_pass2
+    else:
+        print("Pass1 valid, returning matching.")
+        full_paired=[]
+        for elt in matching_pass1:
+            full_paired.append(elt[0])
+            full_paired.append(elt[1])
+        
+        for pat1 in struct1.patterns:
+            if pat1 not in full_paired:
+                pat1.aligned(None,pat1.sequence)
+        
+        for pat2 in struct2.patterns:
+            if pat2 not in full_paired:
+                pat2.aligned(None,pat2.sequence)
+                
+        return matching_pass1
+    
 
 ### MAIN ALIGNMENT FUNCTION
 
@@ -1186,21 +1289,10 @@ def full_alignment(struct1, struct2):
     else:
         print("\nDetermining the optimal pattern match if possible \n")
         
-        matching_test = matching_finder(struct1, struct2)
-        if matching_test[0]:
-            print("\nValid matching\n")
-            matching=matching_test[1]
-        else:
-            print("Invalid matching, returning matching for pattern recognition.\n")
-            b=time.time()
-            print("Time spent:",str(round(b-a,3))+"s")
-            return matching_test[1]
-        
+        matching = matching_finder(struct1, struct2)
     
-    
-
+    print("Aligning patterns.\n")
     for elt in matching:
-
         order1=struct1.order_list()
         order2=struct2.order_list()
         pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2)
