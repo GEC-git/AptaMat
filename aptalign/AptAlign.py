@@ -269,8 +269,8 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
             #more pairings in 1.
             local_diff=0
             for i in range(len(cluster_2)-1,-1,-1):
-                if cluster_2[i] != cluster_1[i+Pdiff-abs(local_diff)]:
-                    local_diff = cluster_2[i]-cluster_1[i+Pdiff-abs(local_diff)]
+                if cluster_2[i] != cluster_1[i+Pdiff]:
+                    local_diff = cluster_2[i]-cluster_1[i+Pdiff]
                     if local_diff > 0:
                         #place local_diff gaps in 1 at pos cluster_1[i]-k.
                         for k in range(local_diff):
@@ -293,9 +293,9 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
             local_diff=0
             for i in range(len(cluster_1)-1,-1,-1):
             
-                if cluster_2[i+abs(Pdiff)-abs(local_diff)] != cluster_1[i]:
+                if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
                     
-                    local_diff = cluster_2[i+abs(Pdiff)-abs(local_diff)]-cluster_1[i]
+                    local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
                     if local_diff > 0:
                         #place local_diff gaps in 1 at pos cluster_1[i]+1.
                         for k in range(local_diff):
@@ -992,7 +992,6 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
                     sep_gap_adder(struct1, abs(diff), ordered1[elt[0].nb-1],ordered1)
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb+1],ordered2)
             else:
-                print("start pat1 > start pat2")
                 #start pat1 > start pat2
                 #pat2 starts before pat1
                 #input diff gaps after pat1 and before pat2 if main_diff=0 or bigger=2 else only before pat2
