@@ -918,10 +918,11 @@ This example would be interesting to retest when the matching function is finish
     - The behavior of this function still needs to be investigated.
     
 - completely remade the pairing function to work with the matrix of score and not actually taking the first local minimum.
-
+    - The scoring function now takes into account the length of patterns.
+    
 - finished debugging.
     - the separator_compensating (sep_gap_inserter) was adding gaps where they did not belong.
-    
+
 - finished inside_out aligning.
 
 ### TO DO LIST: (in order of importance)
