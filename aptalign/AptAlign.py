@@ -125,7 +125,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
     elif diff1>diff2:
         #middle of pat1 > middle of pat2
         for i in range(diff1-diff2):
-            dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2-i)
+            dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2)
         
         mid_d2=mid_d2+(diff1-diff2)
         
@@ -143,7 +143,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
     elif diff1<diff2:
         #middle of pat2 > middle of pat1
         for i in range(diff2-diff1):
-            dict_seq1=insert_gap_seq_dict(dict_seq1, mid_d1-i)
+            dict_seq1=insert_gap_seq_dict(dict_seq1, mid_d1)
         
         mid_d1=mid_d1+(diff2-diff1)
         
@@ -209,8 +209,6 @@ def equal_propagation_alignment(dict_tba1, dict_tba2):
 def propagation_alignment(dict_tba1, dict_tba2, direction):
     """
     Aligns almost optimally two sequence_dictionnary slices from left to right or right to left.
-    
-    *WIP*
     """
     cluster_1 = dict_seq_cluster_finder(dict_tba1, direction)
     cluster_2 = dict_seq_cluster_finder(dict_tba2, direction)
@@ -267,51 +265,45 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
         #aligning the left dictionnaries by starting from the right.
         if Pdiff>0:
             #more pairings in 1.
-            local_diff=0
             for i in range(len(cluster_2)-1,-1,-1):
                 if cluster_2[i] != cluster_1[i+Pdiff]:
                     local_diff = cluster_2[i]-cluster_1[i+Pdiff]
                     if local_diff > 0:
-                        #place local_diff gaps in 1 at pos cluster_1[i]-k.
+
                         for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i+Pdiff]+1)
-                            
-                        #update cluster_1
-                        for j in range(len(cluster_1)-1,i-1,-1):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
-                        for k in range(abs(local_diff)):
                             dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i]+1)
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
                             
+
+                        for j in range(i+1,-1,-1):
+                            cluster_2[j]+=local_diff
+                    else:
+
+                        for k in range(abs(local_diff)):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i+Pdiff]+1)
+
+                        for j in range(i+1,-1,-1):
+                            cluster_1[j]-=abs(local_diff)
+
         else:
             #more pairings in 2.
-            
-            local_diff=0
             for i in range(len(cluster_1)-1,-1,-1):
-            
                 if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
-                    
                     local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
                     if local_diff > 0:
-                        #place local_diff gaps in 1 at pos cluster_1[i]+1.
+
                         for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i]+1)
-                            
-                        #update cluster_1
-                        for j in range(len(cluster_1)-1,i-1,-1):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
-                        for k in range(abs(local_diff)):
                             dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i+abs(Pdiff)]+1)
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
-            
+                            
+                        for j in range(i+1,-1,-1):
+                            cluster_2[j]-=local_diff
+                    else:
+
+                        for k in range(abs(local_diff)):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i]+1)
+
+                        for j in range(i+1,-1,-1):
+                            cluster_1[j]-=abs(local_diff)
+
     #account for the rest of pairings by placing gaps.
     main_diff = len(dict_tba1)-len(dict_tba2)
 
