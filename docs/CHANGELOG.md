@@ -944,6 +944,8 @@ This example would be interesting to retest when the matching function is finish
 
 - finished inside_out aligning.
 
+- It seems that small bugs still persists in left-aligning where gaps are placed incorrectly. I still don't know where it comes from.
+
 
 **New Tests**
 
@@ -1010,7 +1012,7 @@ Improvement: 48.819327731092436 -> 87.69327731092437 | in %: -79.63%
 
 Time spent: 0.649s
 
-BUGS in left and middle of pattern aligning.
+Small BUGS in left of pattern aligning, not very important in terms of aptamat distance.
 _____________________
 
 Aligning 
