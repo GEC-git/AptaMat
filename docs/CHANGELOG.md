@@ -1033,11 +1033,20 @@ Time spent: 0.041s
 
 The actual aptamat distance is worse than before because of the matching. BUT, the matching makes way more sense.
 
-
 **FINISHED ALIGNMENT ALGORITHM**
 
-### TO DO LIST: (in order of importance)
+### WEEK 14 - 02/12/2024 -> 08/12/2024
+
+- Added a main function to execute the algorithm in the terminal.
+
+    - You can now align two structures in the terminal.
+    - There is a verbose mode.
+    
+- Started work on ensemble alignment.
+
+
+### TO DO LIST:
 
 - Organising the AptAlign.py algorithm. *WIP*
-    - Adding a main function to use the algorithm in the terminal.
     - Adding a pairing function for alignment of a batch of structures in a file.
+    - Adding a log writing mechanism.
