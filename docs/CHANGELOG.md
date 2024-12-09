@@ -18,7 +18,7 @@
 
     This method returns improper results when using big matrices. Small matrices are ok.
 
-    ![Example](example_spiraling_search.png "Example of a search with datapoints extracted from the algorithm")
+    ![Example](img/example_spiraling_search.png "Example of a search with datapoints extracted from the algorithm")
 
     Very effective in the cases of small matrices (~two to four time faster): very big matrices almost always take more time (~100 to 1000 times slower for 1000x1000)
     
@@ -66,7 +66,7 @@
     - We found out why the results given by bigger matrices are wrong.
     
         - With a simple visualisation tool, we highlighted the points where the distance calculated is wrong, i.e. where the search for the closest point is wrong:
-        ![Example](STRUCT1_+_STRUCT2_+_DIFF.png)
+        ![Example](img/STRUCT1_+_STRUCT2_+_DIFF.png)
         
         - In this screenshot, we can see:
             - In red and blue : the points respectively from the first structure and the one compared.
@@ -75,7 +75,7 @@
             - The arrows point to the nearest point calculated by our new method.
             
         - We now give a new screenshot which is centered around the point [413,457]
-            ![Example](X_-_Y_SEARCH_EXAMPLE_FOR_A_WRONG_POINT.png)
+            ![Example](img/X_-_Y_SEARCH_EXAMPLE_FOR_A_WRONG_POINT.png)
             - In green : the search list sorted by the X coordinates.
             - In yellow : the search list sorted by the Y coordinates.
             - The intersection is pointed to by the arrow from the originating point.
@@ -138,8 +138,8 @@
                 - We used a randomly generated set of 1000 dotbracket structures for each size. (density = 0.5; bias = 0.6)
         2. We plotted the result on a graph and chose a linear regression to have a depth for each size value.
             - Here is this plot with all the regression parameters:
-            !["Graph"](LINEAR_REGRESSION_GRAPH.png)
-            !["Parameters"](LINEAR_REGRESSION_PARAMETERS.png)
+            !["Graph"](img/LINEAR_REGRESSION_GRAPH.png)
+            !["Parameters"](img/LINEAR_REGRESSION_PARAMETERS.png)
             
             - The exact points plotted were:
             
@@ -243,14 +243,14 @@
 We tested 67 use cases with files of 10 000 structures of length ranging from 100 to 1000. All the times are in seconds.
 We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or naive method.
 
-!["With Line Correlation"](new_perf_test_line_corr.png)
+!["With Line Correlation"](img/new_perf_test_line_corr.png)
 
 - In this screenshot of the tests, we have colored the cells line per line, so colors from any line are completely independant from another.
     - We can see here how and when AptaFast becomes faster than AptaMat in each use cases. And also where using naive search in Aptafast is completely equivalent to the double list search.
     - We can also see when naive search becomes slower: at around 250 in length, this is where we switch methods in the program.
     
     
-!["With all correlations"](new_perf_test_all_corr.png)
+!["With all correlations"](img/new_perf_test_all_corr.png)
 
 - In this one, the colors in all cells are corelated. We can see how AptaFast is more homogeneous in its speed than AptaMat.
 
@@ -304,7 +304,7 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 
 - Here is the updated performance test with an accuracy test:
 
-!["Perf + acc test"](new_perf_acc_tests.png)
+!["Perf + acc test"](img/new_perf_acc_tests.png)
 
 - We tested 10 new sets of 100 to 1000 length structures. There were 1000 structures in each of them.
 
@@ -332,11 +332,11 @@ We also tested with 2, 4 and 6 cores, every time with the "SLOW", "QUICK" or nai
 - Finished GPU accelerated affinity matrix visualizator.
     - We can see the figures created by both histogram methods:
     
-!["CPU"](3D_histogram_CPU.png)
+!["CPU"](img/3D_histogram_CPU.png)
 
 - The histogram created with matplotlib, CPU accelerated.
     
-!["GPU"](3D_histogram_GPU.png)
+!["GPU"](img/3D_histogram_GPU.png)
 
 - The histogram created with vispy, GPU accelerated with an openGL implementation.
     
@@ -1043,7 +1043,6 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
     - There is a verbose mode.
     
 - Started work on ensemble alignment.
-
 
 ### TO DO LIST:
 
