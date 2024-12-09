@@ -3,10 +3,13 @@ import os
 
 current_dir = os.path.dirname(__file__)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
+root_path = os.path.abspath(os.path.join(current_dir, '..','clustering'))
 sys.path.append(root_path)
 
+import clustering_AptaMat as CLAM
 import AptaFast as AF
 import time
+import argparse
 # import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -469,15 +472,17 @@ def inside_out_pat_alignment(pat1, pat2):
     
     return seq1, seq2
 
-def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2):
+def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=False):
     """
     Used to align two patterns with inside-out alignment and update the states of Structure and Pattern objects.
     """
     
-    print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
+    if verbose:
+        print("Aligning:",pat1.pattern_nb,"with",pat2.pattern_nb)
     
     if pat1.sequence==pat2.sequence:
-        print("Same pattern")
+        if verbose:
+            print("Same pattern")
         pat1.aligned(pat2,pat2.sequence)
         pat2.aligned(pat1,pat1.sequence)
     else:
@@ -645,7 +650,7 @@ class Structure():
     
     It is formed of two lists : one with its patterns and one with its separators.
     """
-    def __init__(self, sequence):
+    def __init__(self, sequence, ident=None):
         self.raw=sequence
         self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
@@ -655,7 +660,7 @@ class Structure():
         self.pattern_nb=len(pat)
         self.separator_nb=len(sep)
         self.isaligned=False
-        
+        self.id=ident
         self.alignedsequence=""
         self.alignedwith=None
         
@@ -667,12 +672,11 @@ class Structure():
         tbp+="Subdiv: "+str(self.subdiv)+"\n"
         tbp+="\nSeparators: \n"
         for i,elt in enumerate(self.separators):
-            tbp+="Separator number "+str(i+1)+":\n"+str(elt)+"\n"
-        tbp+="______________________________________\n"
+            tbp+="\nSeparator number "+str(i+1)+":\n"+str(elt)+"\n"
         tbp+="\nPatterns: \n"
         for i,elt in enumerate(self.patterns):
-            tbp+="Pattern number "+str(i+1)+":\n"+str(elt)+"\n"
-        tbp+="______________________________________\n"
+            tbp+="\nPattern number "+str(i+1)+":\n"+str(elt)+"\n"
+
 
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
@@ -1093,7 +1097,7 @@ def naive_matching(order1, order2):
     
     return matching
 
-def matching_finder(struct1, struct2):
+def matching_finder(struct1, struct2, verbose=False):
     """
     Used to pair up patterns.
     
@@ -1120,7 +1124,8 @@ def matching_finder(struct1, struct2):
     pairing_matrix_pass2=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=tuple)
     pairing_matrix_score_pass2=np.empty((len(struct1.patterns),len(struct2.patterns)),dtype=float)
     # determining the matrix of paired scores:
-    print("Calculating the three passes.")
+    if verbose:
+        print("Calculating the three passes.")
     for i,pat1 in enumerate(struct1.patterns):
         for j,pat2 in enumerate(struct2.patterns):
             pairing_matrix_pass1[i,j]=(pair_pat_score_pass1(pat1, pat2),pat1,pat2)
@@ -1165,9 +1170,11 @@ def matching_finder(struct1, struct2):
     
     #Determining if pass1 is a valid matching, if not, use pass2 or pass3 if pass2 is not valid.
     if not matching_test(matching_pass1):
-        print("Pass1 not valid")
+        if verbose:
+            print("Pass1 not valid")
         if not matching_test(matching_pass2):
-            print("Pass2 not valid, using naive ordering.")
+            if verbose:
+                print("Pass2 not valid, using naive ordering.")
             
             matching_pass3=naive_matching(order1, order2)
             
@@ -1186,7 +1193,8 @@ def matching_finder(struct1, struct2):
                     
             return matching_pass3
         else:
-            print("Pass2 valid, returning matching.")
+            if verbose:
+                print("Pass2 valid, returning matching.")
             full_paired=[]
             for elt in matching_pass2:
                 full_paired.append(elt[0])
@@ -1202,7 +1210,8 @@ def matching_finder(struct1, struct2):
                     
             return matching_pass2
     else:
-        print("Pass1 valid, returning matching.")
+        if verbose:
+            print("Pass1 valid, returning matching.")
         full_paired=[]
         for elt in matching_pass1:
             full_paired.append(elt[0])
@@ -1221,7 +1230,7 @@ def matching_finder(struct1, struct2):
 
 ### MAIN ALIGNMENT FUNCTION
 
-def full_alignment(struct1, struct2):
+def full_alignment(struct1, struct2, verbose=False):
     """
     
     Main function to calculate a pattern based alignment.
@@ -1272,36 +1281,39 @@ def full_alignment(struct1, struct2):
         
         struct1.alignedsequence = struct1.reagglomerate()
         struct2.alignedsequence = struct2.reagglomerate()
-        
-        print("Same structures, returning the same sequence")
+        if verbose:
+            print("Same structures, returning the same sequence")
         
         return struct1, struct2
         
     else:
-        print("\nDetermining the optimal pattern match if possible \n")
+        if verbose:
+            print("\nDetermining the optimal pattern match if possible \n")
         
-        matching = matching_finder(struct1, struct2)
+        matching = matching_finder(struct1, struct2, verbose)
     
-    print("Aligning patterns.\n")
+    if verbose:
+        print("\nAligning patterns.")
     for elt in matching:
         order1=struct1.order_list()
         order2=struct2.order_list()
-        pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2)
+        pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
 
-        
-    print("\nAccounting for overdivison")
+    if verbose:
+        print("\nAccounting for overdivison")
 
         
     order1=struct1.order_list()
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
     
-    
-    print("\nAdding gaps in separators for length and pattern matching")
+    if verbose:
+        print("\nAdding gaps in separators for length and pattern matching")
 
     separator_compensating(struct1, struct2, matching)
     
-    print("\nUpdating last parameters and finishing\n")
+    if verbose:
+        print("\nUpdating last parameters and finishing\n")
     struct1.alignedwith=struct2
     struct2.alignedwith=struct1
     
@@ -1314,8 +1326,121 @@ def full_alignment(struct1, struct2):
     new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
     
     improvement = round((initial_dist-new_dist)/initial_dist *100,2)
-    print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
+    if verbose:
+        print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
     b=time.time()
-    print("Time spent:",str(round(b-a,3))+"s")
+    if verbose:
+        print("Time spent:",str(round(b-a,3))+"s")
+
+
+#_____________________________MAIN FUNCTIONS_____________________________
+
+def initialize_dataset(structure_file):
+    structure_list = []
+    family = {}
+    with open(structure_file, 'r') as file:
+        for line in file:
+            content = line.strip().split()
+
+            if content:
+                # print(line)
+                if line.startswith('FAMILY'):
+                    pass
+                else:
+                    try:
+                        family[content[0]] += 1
+                    except KeyError:
+                        family[content[0]] = 1
     
-    return struct1, struct2
+                if AF.Dotbracket.is_dotbracket(content[3]):
+                    
+                    structure_list.append((content[3],content[1].split('.')[0]))
+                    
+    return structure_list,family
+
+def main():
+    parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
+                                                 "Use -fp for a file input of an ensemble of structures.\n"
+                                                 "Use -s to input only two structures directly in the command line.\n"
+                                                 "Use -v to toggle verbose mode.\n"
+                                                 "Use -l to toggle the generation of a complete log file.\n"
+                                                 "Use -pr to only generate a pattern recognition.\n")
+
+    parser.add_argument('-v',
+                        '--verbose',
+                        help="Increase output verbosity.",
+                        default=False,
+                        action="store_true")
+
+    parser.add_argument('-s',
+                        '--structures',
+                        nargs='+',
+                        type=str,
+                        help='two 2D structures in dotbracket notation.')
+
+    parser.add_argument('-fp',
+                        '--filepath',
+                        action="store",
+                        nargs='+',
+                        help='Input filepath containing structures to be aligned in structures format.')
+    
+    parser.add_argument('-l',
+                        '--logs',
+                        help="Creates a log file when finished",
+                        action="store_true")
+    
+    parser.add_argument('-pr',
+                        '--pattern_recognition',
+                        help="Only generates pattern recognition",
+                        action="store_true")
+    
+    args = parser.parse_args()
+    
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    
+    if args.filepath is not None:
+        structure_file=""
+        for elt in args.filepath:
+            structure_file+=str(elt)
+        
+        if args.verbose:
+            print("Reading dataset")
+        
+        structure_list, families = initialize_dataset(structure_file)
+        
+        if args.verbose:
+            print("Slicing Structures")
+        
+        struct_obj_list=[]
+        for struct in structure_list:
+            struct_obj_list.append(Structure(struct[0],ident=str(struct[1])))
+        
+        if args.verbose:
+            print("Determining the best ensemble alignment via clustering.")
+
+        sys.exit(0)
+        
+    if args.structures is not None:
+        struct1=Structure(args.structures[0])
+        struct2=Structure(args.structures[1])
+        
+        full_alignment(struct1, struct2, args.verbose)
+        if not args.verbose:
+            print("Structure 1:")
+            print(struct1.alignedsequence)
+            print("Structure 2:")
+            print(struct2.alignedsequence)
+        else:
+            print("\nDetailed results:\n")
+            print("______________________________________\n")
+            print("\n","First Structure","\n")
+            print(struct1)
+            print("______________________________________\n")
+            print("\n","Second Structure","\n")
+            print(struct2)
+        sys.exit(0)
+
+if __name__ == '__main__':
+    main()
