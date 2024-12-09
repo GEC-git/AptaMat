@@ -909,7 +909,7 @@ This example would be interesting to retest when the matching function is finish
 
 - Finished presentation for december 2nd.
 
-### WEEK 14 - 02/12/2024 -> 08/12/2024
+### WEEK 14 - 02/12/2024 -> 07/12/2024
 
 - added a new function to align parts of patterns which have a non equal number of pairings.
     - Still debugging but works in the majority of cases.
@@ -1035,7 +1035,7 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 **FINISHED ALIGNMENT ALGORITHM**
 
-### WEEK 14 - 02/12/2024 -> 08/12/2024
+### WEEK 14 - 08/12/2024 -> 15/12/2024
 
 - Added a main function to execute the algorithm in the terminal.
 
