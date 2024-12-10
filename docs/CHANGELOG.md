@@ -1044,6 +1044,13 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
     
 - Started work on ensemble alignment.
 
+- Added a new function to align all structure from a single family.
+    - It starts with the smallest structure and aligns it to th next smallest.
+    - Then redo aligning with a new reference structure that is bigger.
+    - It is finished when all structures have the same size.
+
+- debugging left alignment again.
+    - found a "+" sign that should have been a "-" sign.
 ### TO DO LIST:
 
 - Organising the AptAlign.py algorithm. *WIP*
