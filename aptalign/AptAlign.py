@@ -171,7 +171,6 @@ def equal_propagation_alignment(dict_tba1, dict_tba2):
     Only works with same number of pairings.
     """
     void = "-[]{}<>"
-    
     if len(dict_tba1)>=len(dict_tba2):
         #section of pat1 is bigger
         for elt in dict_tba1.items():
@@ -278,7 +277,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                             
 
                         for j in range(i+1,-1,-1):
-                            cluster_2[j]+=local_diff
+                            cluster_2[j]-=local_diff
                     else:
 
                         for k in range(abs(local_diff)):
@@ -286,10 +285,11 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
 
                         for j in range(i+1,-1,-1):
                             cluster_1[j]-=abs(local_diff)
-
+                    
         else:
             #more pairings in 2.
             for i in range(len(cluster_1)-1,-1,-1):
+                
                 if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
                     local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
                     if local_diff > 0:
@@ -353,13 +353,11 @@ def inside_out_pat_alignment(pat1, pat2):
 
     #creating base dictionnary to manipulate.
 
-    par="()"
-    
+    par="()"   
     dict_par1={}
     dict_seq1={}
     dict_par2={}
     dict_seq2={}
-    
     for i,elt in enumerate(pat1.sequence):
         if elt in par:
             dict_par1[i]=elt
@@ -650,7 +648,7 @@ class Structure():
     
     It is formed of two lists : one with its patterns and one with its separators.
     """
-    def __init__(self, sequence, ident=None):
+    def __init__(self, sequence, ident=None, fam=None):
         self.raw=sequence
         self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
@@ -661,6 +659,7 @@ class Structure():
         self.separator_nb=len(sep)
         self.isaligned=False
         self.id=ident
+        self.family=fam
         self.alignedsequence=""
         self.alignedwith=None
         
@@ -849,7 +848,7 @@ class Pattern():
 
 EmptyPattern=Pattern('',[-1,-1],-1,-1)
 
-### BASE SEPARATOR GAPS FUNCTIONS
+### BASE SEPARATOR GAPS FUNCTIONS=
 
 def add_gaps(current_order,added_gaps,order_list):
     """
@@ -1294,6 +1293,8 @@ def full_alignment(struct1, struct2, verbose=False):
     
     if verbose:
         print("\nAligning patterns.")
+    
+
     for elt in matching:
         order1=struct1.order_list()
         order2=struct2.order_list()
@@ -1306,12 +1307,12 @@ def full_alignment(struct1, struct2, verbose=False):
     order1=struct1.order_list()
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
-    
+
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
 
     separator_compensating(struct1, struct2, matching)
-    
+
     if verbose:
         print("\nUpdating last parameters and finishing\n")
     struct1.alignedwith=struct2
@@ -1336,14 +1337,17 @@ def full_alignment(struct1, struct2, verbose=False):
 #_____________________________MAIN FUNCTIONS_____________________________
 
 def initialize_dataset(structure_file):
+    """
+    Function used to read from the structure file.
+    """
     structure_list = []
     family = {}
     with open(structure_file, 'r') as file:
         for line in file:
             content = line.strip().split()
-
+            
             if content:
-                # print(line)
+                
                 if line.startswith('FAMILY'):
                     pass
                 else:
@@ -1354,9 +1358,27 @@ def initialize_dataset(structure_file):
     
                 if AF.Dotbracket.is_dotbracket(content[3]):
                     
-                    structure_list.append((content[3],content[1].split('.')[0]))
+                    structure_list.append((content[3],content[1].split('.')[0],content[0]))
                     
     return structure_list,family
+
+def ens_fam_alignment(fam_dict):
+    
+    def get_length(struct):
+        return struct.length
+    
+    for list_fam in fam_dict.items():
+        fam_dict[list_fam[0]]=sorted(list_fam[1], key=lambda struct : get_length(struct))
+        
+    for struct_list in fam_dict.values():
+        for i in range(1, len(struct_list)):
+            j=0
+            while j < i:
+                full_alignment(struct_list[j],struct_list[i])
+                j+=1
+    
+    return fam_dict
+
 
 def main():
     parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
@@ -1415,11 +1437,25 @@ def main():
         
         struct_obj_list=[]
         for struct in structure_list:
-            struct_obj_list.append(Structure(struct[0],ident=str(struct[1])))
+            struct_obj_list.append(Structure(struct[0],ident=str(struct[1]),fam=struct[2]))
         
+        fam_dict={}
+        for family in families:
+            fam_dict[family]=[]
+            
+        for struct in struct_obj_list:
+            fam_dict[struct.family].append(struct)
+            
         if args.verbose:
-            print("Determining the best ensemble alignment via clustering.")
-
+            print("Determining the best ensemble alignment for clustering.")
+        
+        fam_dict=ens_fam_alignment(fam_dict)
+        
+        for items in fam_dict.items():
+            print(items[0])
+            for struct in items[1]:
+                print(struct.alignedsequence)
+        
         sys.exit(0)
         
     if args.structures is not None:
