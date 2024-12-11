@@ -1051,6 +1051,16 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 - debugging left alignment again.
     - found a "+" sign that should have been a "-" sign.
+    - Deleted `equal_propagation_alignment` since: 
+        - 1. it behaved abnormally
+        - 2. Its behavior is replicated from `propagation_alignment`.
+    - small bugs are still present when aligning the separators.
+    
+    
+- Added a new reset function to reset a Structure.
+
+- finished ensemble aligning per family.
+
 ### TO DO LIST:
 
 - Organising the AptAlign.py algorithm. *WIP*
