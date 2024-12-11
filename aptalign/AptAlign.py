@@ -3,14 +3,14 @@ import os
 
 current_dir = os.path.dirname(__file__)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
+sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..','clustering'))
 sys.path.append(root_path)
-
-import clustering_AptaMat as CLAM
+#import clustering_AptaMat as CLAM
 import AptaFast as AF
 import time
 import argparse
-# import multiprocessing as mp
+import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 
@@ -163,51 +163,6 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         
     return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
-def equal_propagation_alignment(dict_tba1, dict_tba2):
-    """
-    Input two slices of a structure sequence dictionnary.
-    
-    Perfectly aligns those slices.
-    Only works with same number of pairings.
-    """
-    void = "-[]{}<>"
-    if len(dict_tba1)>=len(dict_tba2):
-        #section of pat1 is bigger
-        for elt in dict_tba1.items():
-            if elt[1]!=dict_tba2[elt[0]] and elt[1] not in void and dict_tba2[elt[0]] not in void:
-                i=elt[0]
-                if elt[1]=="(" or elt[1] == ")":
-                    while elt[1] != dict_tba2[i]:
-                        i+=1
-                    insert_R=[j for j in range(elt[0],i)]
-                    for elt in insert_R:
-                        dict_tba1=insert_gap_seq_dict(dict_tba1,elt)
-                else:
-                    while dict_tba2[elt[0]] != dict_tba1[i]:
-                        i+=1
-                    insert_R=[j for j in range(elt[0],i)]
-                    for elt in insert_R:
-                        dict_tba2=insert_gap_seq_dict(dict_tba2,elt)
-    else:
-        #section of pat2 is bigger
-        for elt in dict_tba2.items():
-            if elt[1]!=dict_tba1[elt[0]] and elt[1] not in void and dict_tba1[elt[0]] not in void:
-                i=elt[0]
-                if elt[1]=="(" or elt[1] == ")":
-                    while elt[1] != dict_tba1[i]:
-                        i+=1
-                    insert_R=[j for j in range(elt[0],i)]
-                    for elt in insert_R:
-                        dict_tba2=insert_gap_seq_dict(dict_tba2,elt)
-                else:
-                    while dict_tba1[elt[0]] != dict_tba2[i]:
-                        i+=1
-                    insert_R=[j for j in range(elt[0],i)]
-                    for elt in insert_R:
-                        dict_tba1=insert_gap_seq_dict(dict_tba1,elt)
-                        
-    return dict_tba1, dict_tba2
-
 def propagation_alignment(dict_tba1, dict_tba2, direction):
     """
     Aligns almost optimally two sequence_dictionnary slices from left to right or right to left.
@@ -217,7 +172,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
 
     Pdiff = len(cluster_1)-len(cluster_2)
     
-    if direction=="Right":
+    if direction=="Right" or Pdiff==0:
         #aligning the right dictionnaries.
         if Pdiff>0:
             #more pairings in 1.
@@ -242,7 +197,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                             cluster_2[j]+=abs(local_diff)
                         
         else:
-            #more pairings in 2.
+            #more pairings in 2 or equal amount.
             for i, elt1 in enumerate(cluster_1):
                 if elt1 != cluster_2[i]:
                     local_diff=cluster_2[i]-elt1
@@ -263,8 +218,9 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                         for j in range(i, len(cluster_2)):
                             cluster_2[j]+=abs(local_diff)
                         
-    elif direction=="Left":
+    elif direction=="Left" and Pdiff!=0:
         #aligning the left dictionnaries by starting from the right.
+
         if Pdiff>0:
             #more pairings in 1.
             for i in range(len(cluster_2)-1,-1,-1):
@@ -285,13 +241,14 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
 
                         for j in range(i+1,-1,-1):
                             cluster_1[j]-=abs(local_diff)
-                    
         else:
-            #more pairings in 2.
+            #more pairings in 2 or equal amount.
             for i in range(len(cluster_1)-1,-1,-1):
-                
+
                 if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
+                    
                     local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
+
                     if local_diff > 0:
 
                         for k in range(local_diff):
@@ -307,7 +264,9 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                         for j in range(i+1,-1,-1):
                             cluster_1[j]-=abs(local_diff)
 
+
     #account for the rest of pairings by placing gaps.
+    
     main_diff = len(dict_tba1)-len(dict_tba2)
 
     finish1=list(dict_tba1.keys())[-1]
@@ -339,6 +298,8 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                 dict_tba1=insert_gap_seq_dict(dict_tba1,start1)
     
     return dict_tba1, dict_tba2
+
+
 
 def inside_out_pat_alignment(pat1, pat2):
     """
@@ -426,7 +387,8 @@ def inside_out_pat_alignment(pat1, pat2):
         start2=list(dict_tba2_L)[0]
         dict_tba2_L_translated=dict_seq_translation(dict_tba2_L,-start2)
             
-        dict1_L, dict2_L = equal_propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
+        #dict1_L, dict2_L = equal_propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
+        dict1_L, dict2_L = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated, "Left")
     else:
         dict1_L, dict2_L = propagation_alignment(dict_tba1_L, dict_tba2_L, "Left")
 
@@ -447,13 +409,8 @@ def inside_out_pat_alignment(pat1, pat2):
     dict2_M = dict_seq_translation(dict_mid2, trans2)
     
     #aligning the right dictionnaries
-    Pdiff_R = ( (dict_seq_reagglomerate(dict_tba1_R).count("(")+dict_seq_reagglomerate(dict_tba1_R).count(")")) 
-               - (dict_seq_reagglomerate(dict_tba2_R).count("(")+dict_seq_reagglomerate(dict_tba2_R).count(")")) )
 
-    if Pdiff_R == 0:
-        dict1_R, dict2_R = equal_propagation_alignment(dict_tba1_R, dict_tba2_R)
-    else:
-        dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
+    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
     
     #reagglomerating.
     seq1_L=dict_seq_reagglomerate(dict1_L)
@@ -467,7 +424,7 @@ def inside_out_pat_alignment(pat1, pat2):
     seq2_R=dict_seq_reagglomerate(dict2_R)
     
     seq2=seq2_L+seq2_M+seq2_R
-    
+
     return seq1, seq2
 
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=False):
@@ -662,7 +619,20 @@ class Structure():
         self.family=fam
         self.alignedsequence=""
         self.alignedwith=None
-        
+    
+    def reset(self, sequence):
+        self.raw=sequence
+        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        sep,pat=slicer(self.raw_nosubdiv)
+        self.separators=sep
+        self.patterns=pat
+        self.length=len(sequence)
+        self.pattern_nb=len(pat)
+        self.separator_nb=len(sep)
+        self.isaligned=False
+        self.alignedsequence=""
+        self.alignedwith=None
+    
     def __str__(self):
         tbp="Type: Structure\n"
         tbp+="Length: "+str(self.length)+"\n"
@@ -1225,7 +1195,6 @@ def matching_finder(struct1, struct2, verbose=False):
                 pat2.aligned(None,pat2.sequence)
                 
         return matching_pass1
-    
 
 ### MAIN ALIGNMENT FUNCTION
 
@@ -1261,9 +1230,9 @@ def full_alignment(struct1, struct2, verbose=False):
     ____________________
     
     """
-    a=time.time()
-    
-    initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
+    if verbose:
+        a=time.time()
+        initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
     
     matching=[]
 
@@ -1324,13 +1293,15 @@ def full_alignment(struct1, struct2, verbose=False):
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
     
-    new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
+    if verbose:
+        new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
     
-    improvement = round((initial_dist-new_dist)/initial_dist *100,2)
-    if verbose:
+        if initial_dist!=0:
+            improvement = round((initial_dist-new_dist)/initial_dist *100,2)
+        else:
+            improvement = 1
         print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
-    b=time.time()
-    if verbose:
+        b=time.time()
         print("Time spent:",str(round(b-a,3))+"s")
 
 
@@ -1362,25 +1333,31 @@ def initialize_dataset(structure_file):
                     
     return structure_list,family
 
-def ens_fam_alignment(fam_dict):
+def one_fam_calc(k,struct_list):
+    for i in range(1, len(struct_list)):
+        j=0
+        while j < i:
+            full_alignment(struct_list[j],struct_list[i])
+            struct_list[j].reset(struct_list[j].alignedsequence)
+            struct_list[i].reset(struct_list[i].raw)
+            j+=1
+    print("Finished family",k)
+    
+def ens_fam_alignment(fam_dict, pooling):
     
     def get_length(struct):
         return struct.length
     
     for list_fam in fam_dict.items():
         fam_dict[list_fam[0]]=sorted(list_fam[1], key=lambda struct : get_length(struct))
-        
-    for struct_list in fam_dict.values():
-        for i in range(1, len(struct_list)):
-            j=0
-            while j < i:
-                full_alignment(struct_list[j],struct_list[i])
-                j+=1
-    
+
+    pooling.starmap(one_fam_calc, [(i,struct_list) for i,struct_list in enumerate(fam_dict.values())])
+
     return fam_dict
 
 
 def main():
+    start=time.time()
     parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
                                                  "Use -fp for a file input of an ensemble of structures.\n"
                                                  "Use -s to input only two structures directly in the command line.\n"
@@ -1449,13 +1426,26 @@ def main():
         if args.verbose:
             print("Determining the best ensemble alignment for clustering.")
         
-        fam_dict=ens_fam_alignment(fam_dict)
+        print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
+        nb=int(input("How much do you want to use? "))
+
+        if nb > len(fam_dict):
+            nb=len(fam_dict)
+            print("There are",nb,"families. Only using",nb,"cores.\n")
+        print("Creating pool on",nb,"cores.\n")
+        print("Working...\n")
+        
+        pooling=mp.Pool(nb)
+        fam_dict=ens_fam_alignment(fam_dict, pooling)
+        pooling.terminate()
         
         for items in fam_dict.items():
             print(items[0])
             for struct in items[1]:
                 print(struct.alignedsequence)
-        
+        finish=time.time()
+        tot=round(finish-start,2)
+        print("Execution time: ",tot,"s")
         sys.exit(0)
         
     if args.structures is not None:
