@@ -1066,6 +1066,16 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 - When two patterns have the same length and starts at the same place, the propagation alignment will not work and return a false result with too much gaps.
 - Left alignment is still broken in some cases but the resulting alignment is not that bad.
     
+**NEW TEST WITH CLUSTERING**
+
+- Already tested aptalign with the old dataset from the original repository.
+    - Some families where greatly clustered meaning the alignment was successful (those where families with smaller structure (length of 200~))
+    - Bigger structures were not greatly aligned and the clustering was worse.
+
+- Aligned the 150x8 dataset with AptaLign in 155s.
+
+- Started clustering.
+
 
 
 ### TO DO LIST:
