@@ -1054,12 +1054,18 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
     - Deleted `equal_propagation_alignment` since: 
         - 1. it behaved abnormally
         - 2. Its behavior is replicated from `propagation_alignment`.
-    - small bugs are still present when aligning the separators.
-    
     
 - Added a new reset function to reset a Structure.
 
 - finished ensemble aligning per family.
+    - All the structures in a single family are aligned with the biggest structure in the family.
+
+**KNOWN BUGS**
+
+- When two patterns have the same length and starts at the same place, the propagation alignment will not work and return a false result with too much gaps.
+- Left alignment is still broken in some cases but the resulting alignment is not that bad.
+    
+
 
 ### TO DO LIST:
 
