@@ -364,7 +364,7 @@ def main():
     
     parser.add_argument('-cv',
                         '--cluster_visualization',
-                        help="Displaying error visualizator and heatmap at the end",
+                        help="Displaying heatmap at the end",
                         action="store_true")
     
     parser.add_argument('-d',

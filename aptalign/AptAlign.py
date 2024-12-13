@@ -10,7 +10,7 @@ sys.path.append(root_path)
 import AptaFast as AF
 import time
 import argparse
-import multiprocessing as mp
+#import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 
@@ -605,8 +605,9 @@ class Structure():
     
     It is formed of two lists : one with its patterns and one with its separators.
     """
-    def __init__(self, sequence, ident=None, fam=None):
+    def __init__(self, sequence, ident=None, fam=None, AGU=None):
         self.raw=sequence
+        self.sequence=AGU
         self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
@@ -1293,6 +1294,9 @@ def full_alignment(struct1, struct2, verbose=False):
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
     
+    # print(struct1.alignedsequence)
+    # print(struct2.alignedsequence)
+    
     if verbose:
         new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
     
@@ -1303,7 +1307,6 @@ def full_alignment(struct1, struct2, verbose=False):
         print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
         b=time.time()
         print("Time spent:",str(round(b-a,3))+"s")
-
 
 #_____________________________MAIN FUNCTIONS_____________________________
 
@@ -1329,21 +1332,20 @@ def initialize_dataset(structure_file):
     
                 if AF.Dotbracket.is_dotbracket(content[3]):
                     
-                    structure_list.append((content[3],content[1].split('.')[0],content[0]))
+                    structure_list.append((content[3],content[1].split('.')[0],content[0],content[2]))
                     
     return structure_list,family
 
 def one_fam_calc(k,struct_list):
-    for i in range(1, len(struct_list)):
-        j=0
-        while j < i:
-            full_alignment(struct_list[j],struct_list[i])
-            struct_list[j].reset(struct_list[j].alignedsequence)
-            struct_list[i].reset(struct_list[i].raw)
-            j+=1
-    print("Finished family",k)
+    for i in range(len(struct_list)-1):
+        full_alignment(struct_list[i], struct_list[-1])
+        struct_list[-1].reset(struct_list[-1].raw)
+    struct_list[-2].reset(struct_list[-2].raw)
+    full_alignment(struct_list[-1], struct_list[-2])
     
-def ens_fam_alignment(fam_dict, pooling):
+    print("Finished family",k+1)
+    
+def ens_fam_alignment(fam_dict):
     
     def get_length(struct):
         return struct.length
@@ -1351,8 +1353,9 @@ def ens_fam_alignment(fam_dict, pooling):
     for list_fam in fam_dict.items():
         fam_dict[list_fam[0]]=sorted(list_fam[1], key=lambda struct : get_length(struct))
 
-    pooling.starmap(one_fam_calc, [(i,struct_list) for i,struct_list in enumerate(fam_dict.values())])
-
+    for i,struct_list in enumerate(fam_dict.values()):
+        one_fam_calc(i, struct_list)
+    
     return fam_dict
 
 
@@ -1414,7 +1417,7 @@ def main():
         
         struct_obj_list=[]
         for struct in structure_list:
-            struct_obj_list.append(Structure(struct[0],ident=str(struct[1]),fam=struct[2]))
+            struct_obj_list.append(Structure(struct[0],ident=str(struct[1]),fam=struct[2], AGU=struct[3]))
         
         fam_dict={}
         for family in families:
@@ -1424,29 +1427,32 @@ def main():
             fam_dict[struct.family].append(struct)
             
         if args.verbose:
-            print("Determining the best ensemble alignment for clustering.")
-        
-        print("This is a multiprocessed program, you have",mp.cpu_count(),"cores in your CPU.")
-        nb=int(input("How much do you want to use? "))
+            print("Aligning to the biggest structure in each family.")
 
-        if nb > len(fam_dict):
-            nb=len(fam_dict)
-            print("There are",nb,"families. Only using",nb,"cores.\n")
-        print("Creating pool on",nb,"cores.\n")
-        print("Working...\n")
+        fam_dict=ens_fam_alignment(fam_dict)
         
-        pooling=mp.Pool(nb)
-        fam_dict=ens_fam_alignment(fam_dict, pooling)
-        pooling.terminate()
+        outputfilepath=structure_file.replace(".dat","")+"_aptaligned.dat"
+        
+        tbw="FAMILY    PDB_chain    SEQUENCE    DOTBRACKET\n"
         
         for items in fam_dict.items():
             print(items[0])
             for struct in items[1]:
                 print(struct.alignedsequence)
+                tbw+=struct.family+"    "+struct.id+"    "+struct.sequence+"    "+struct.alignedsequence+"\n"
+        
+        f_created=open(outputfilepath,'a')
+        f_created.write(tbw)
+        f_created.close()
+        
         finish=time.time()
         tot=round(finish-start,2)
         print("Execution time: ",tot,"s")
+        
+        
         sys.exit(0)
+        
+        
         
     if args.structures is not None:
         struct1=Structure(args.structures[0])
