@@ -1059,6 +1059,7 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 - finished ensemble aligning per family.
     - All the structures in a single family are aligned with the biggest structure in the family.
+    - When the alignment is finished a new file is created in the folder where the original file is found: the name is updated with "_aptaligned" at the end.
 
 **KNOWN BUGS**
 
