@@ -1076,7 +1076,16 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 - Started clustering.
 
+- Results after 2h of clustering:
 
+![150x8 HP APTALIGNED](img/clustering_after_aptalignment.png)
+
+
+- We can see that the clustering is worse than before but better than when we used RNAlign2D.
+
+### WEEK 15 - 16/12/2024 -> 22/12/2024
+
+- After the new tests, a better way of aligning a batch of structures might be needed.
 
 ### TO DO LIST:
 
