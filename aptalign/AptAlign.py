@@ -10,7 +10,7 @@ sys.path.append(root_path)
 import AptaFast as AF
 import time
 import argparse
-#import multiprocessing as mp
+import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 
@@ -440,6 +440,12 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=Fals
             print("Same pattern")
         pat1.aligned(pat2,pat2.sequence)
         pat2.aligned(pat1,pat1.sequence)
+        
+    elif pat1.start == pat2.start and pat1.length == pat2.length:
+        if verbose:
+            print("Already the same length.")
+        pat1.aligned(pat2,pat2.sequence)
+        pat2.aligned(pat1,pat1.sequence)
     else:
         seq1,seq2=inside_out_pat_alignment(pat1, pat2)
         
@@ -636,6 +642,7 @@ class Structure():
     
     def __str__(self):
         tbp="Type: Structure\n"
+        tbp+="ID: "+str(self.id)+"\n"
         tbp+="Length: "+str(self.length)+"\n"
         tbp+="Raw Sequence: "+self.raw+"\n"
         tbp+="Subdiv sequence: "+str(self.raw_nosubdiv)+"\n"
@@ -646,7 +653,6 @@ class Structure():
         tbp+="\nPatterns: \n"
         for i,elt in enumerate(self.patterns):
             tbp+="\nPattern number "+str(i+1)+":\n"+str(elt)+"\n"
-
 
         if self.isaligned:
             tbp+="Aligned sequence: "+self.alignedsequence+"\n"
@@ -792,7 +798,7 @@ class Pattern():
             return AF.compute_distance_clustering(AF.SecondaryStructure(self.sequence),AF.SecondaryStructure(other.sequence), "cityblock", "slow")
 
     def aligned(self,acc_pat,new_seq):
-        
+        self.isaligned=True
         if acc_pat==None:
             self.alignedwith=EmptyPattern
         else:
@@ -800,7 +806,6 @@ class Pattern():
         self.alignedsequence=new_seq
         self.length=len(new_seq)
         self.finish+=new_seq.count('-')
-        self.isaligned=True
         
     def __str__(self):
         tbp="Type: Pattern\n"
@@ -1252,7 +1257,6 @@ def full_alignment(struct1, struct2, verbose=False):
         struct2.alignedsequence = struct2.reagglomerate()
         if verbose:
             print("Same structures, returning the same sequence")
-        
         return struct1, struct2
         
     else:
@@ -1294,12 +1298,10 @@ def full_alignment(struct1, struct2, verbose=False):
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
     
-    # print(struct1.alignedsequence)
-    # print(struct2.alignedsequence)
-    
     if verbose:
         new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
-    
+        print(struct1.alignedsequence)
+        print(struct2.alignedsequence)
         if initial_dist!=0:
             improvement = round((initial_dist-new_dist)/initial_dist *100,2)
         else:
@@ -1309,6 +1311,46 @@ def full_alignment(struct1, struct2, verbose=False):
         print("Time spent:",str(round(b-a,3))+"s")
 
 #_____________________________MAIN FUNCTIONS_____________________________
+
+def row_builder(i,struct1, structure_list):
+    row=[]
+    for j,struct2 in enumerate(structure_list):
+        row.append((AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow"),struct1,struct2))
+    return row
+
+def build_aptamat_matrix(structure_list,verbose):
+    if verbose:
+        print("Building matrix (this might take a while)")
+
+    CORE=mp.cpu_count()
+    
+    pool = mp.Pool(CORE)
+    matrix=[]
+    matrix.append(pool.starmap(row_builder, [(i,struct1, structure_list) for i,struct1 in enumerate(structure_list)]))
+    pool.terminate()
+    
+    return np.array(matrix[0])
+
+
+def argmin(row,row_number):
+    mini=row[0][0]
+    argmini=0
+    for i,elt in enumerate(row):
+        if i!=row_number:
+            if elt[0]<=mini:
+                mini=elt[0]
+                argmini=i
+    return argmini, mini
+
+def ensemble_aligning(matrix):
+    aligned_structure_list=[]
+    for i,rows in enumerate(matrix):
+        argkeep,minval=argmin(rows,i)
+        full_alignment(matrix[i][argkeep][1], matrix[i][argkeep][2])
+        #matrix[i][argkeep][2].reset(matrix[i][argkeep][2].alignedsequence)
+        aligned_structure_list.append(matrix[i][argkeep][1])
+
+    return aligned_structure_list
 
 def initialize_dataset(structure_file):
     """
@@ -1335,28 +1377,6 @@ def initialize_dataset(structure_file):
                     structure_list.append((content[3],content[1].split('.')[0],content[0],content[2]))
                     
     return structure_list,family
-
-def one_fam_calc(k,struct_list):
-    for i in range(len(struct_list)-1):
-        full_alignment(struct_list[i], struct_list[-1])
-        struct_list[-1].reset(struct_list[-1].raw)
-    struct_list[-2].reset(struct_list[-2].raw)
-    full_alignment(struct_list[-1], struct_list[-2])
-    
-    print("Finished family",k+1)
-    
-def ens_fam_alignment(fam_dict):
-    
-    def get_length(struct):
-        return struct.length
-    
-    for list_fam in fam_dict.items():
-        fam_dict[list_fam[0]]=sorted(list_fam[1], key=lambda struct : get_length(struct))
-
-    for i,struct_list in enumerate(fam_dict.values()):
-        one_fam_calc(i, struct_list)
-    
-    return fam_dict
 
 
 def main():
@@ -1425,21 +1445,19 @@ def main():
             
         for struct in struct_obj_list:
             fam_dict[struct.family].append(struct)
-            
-        if args.verbose:
-            print("Aligning to the biggest structure in each family.")
-
-        fam_dict=ens_fam_alignment(fam_dict)
+        
+        matrix=build_aptamat_matrix(struct_obj_list,args.verbose)
+        
+        aligned_structure_list=ensemble_aligning(matrix)
         
         outputfilepath=structure_file.replace(".dat","")+"_aptaligned.dat"
         
         tbw="FAMILY    PDB_chain    SEQUENCE    DOTBRACKET\n"
         
-        for items in fam_dict.items():
-            print(items[0])
-            for struct in items[1]:
-                print(struct.alignedsequence)
-                tbw+=struct.family+"    "+struct.id+"    "+struct.sequence+"    "+struct.alignedsequence+"\n"
+        for struct in aligned_structure_list:
+            if args.verbose:
+                print(struct.id,struct.alignedsequence)
+            tbw+=struct.family+"    "+struct.id+"    "+struct.sequence+"    "+struct.alignedsequence+"\n"
         
         f_created=open(outputfilepath,'a')
         f_created.write(tbw)
