@@ -1083,11 +1083,41 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 - We can see that the clustering is worse than before but better than when we used RNAlign2D.
 
+- Yet, this clustering is not completely "blind" as it relies on a certain awareness of the families beforehand.
+
 ### WEEK 15 - 16/12/2024 -> 22/12/2024
 
 - After the new tests, a better way of aligning a batch of structures might be needed.
 
+- Added a pairing based ensemble alignment.
+    - We pair the structures with the aptamat distance and by buliding a matrix of all pairings and choosing the pairing which minimises the distance.
+    - We then align the structures paired.
+
+- cleaned the dataset off of aberrant structures
+
+- Created a new file aligned file with the cleaned dataset.
+
+**CLUSTERING TEST ON THIS DATASET**
+
+With the latest dataset:
+
+![150x8 HP APTALIGNED NON FAMILY BASED](img/clustering_after_aptalignment_notfamilybased.png)
+
+The clustering is not that bad, it is obviously better than the non aligned version but still, its quality could be improved.
+
+Now by removing the families that are dispersed:
+
+![150x6 HP APTALIGNED NON FAMILY BASED 2 FAMILY REMOVED](img/clustering_after_aptalignment_paired_2familyremoved.png)
+
+We can see that this tendency to disperse the results becomes apparent when we remove the families that are dispersing the most.
+
+I'm trying different clustering parameters to see if better resuts can be achieved.
+
 ### TO DO LIST:
+
+- AptaLign:
+    - ENSEMBLE ALIGNING BY ALIGNING TWO BY TWO.
+        - ONLY KEEP THE ALIGNMENT WITH THE ONE WHOSE APTAMAT DISTANCE IS MINIMAL.
 
 - Organising the AptAlign.py algorithm. *WIP*
     - Adding a pairing function for alignment of a batch of structures in a file.
