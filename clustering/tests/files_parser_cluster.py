@@ -23,8 +23,8 @@ def fam_compteur_fa(file_from):
 
 
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_RNALIGNED_150x8.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_RNALIGNED_150x8.fa"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_RNALIGNED_150x8_CLEANED.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_NONALIGNED_8x150_CLEANED.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
