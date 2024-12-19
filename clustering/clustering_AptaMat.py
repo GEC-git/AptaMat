@@ -195,7 +195,7 @@ def initialize_dataset(structure_file):
     
                 if AF.Dotbracket.is_dotbracket(content[3]):
                     structure = AF.SecondaryStructure(dotbracket=content[3], sequence=content[2],
-                                                           id=content[1].split('.')[0])
+                                                           id=content[1].split('.')[0],fam=str(content[0]))
                     # AptaMat._create_fasta(structure)
                     structure_list.append(structure)
     return structure_list,family
@@ -330,13 +330,13 @@ def heatmap(family, labels, dict_label):
             if round(family_p_t[i, j]) == 0:
                 pass
             elif round(family_p_t[i, j]) < 75:
-                text = ax.text(j, i, family_np_t[i, j],
+                text = ax.text(j, i, int(family_np_t[i, j]),
                                ha="center", va="center")
             else:
-                text = ax.text(j, i, family_np_t[i, j],
+                text = ax.text(j, i, int(family_np_t[i, j]),
                                ha="center", va="center", color="w")
     
-    plt.text(len(df)+1, 1, 'Occupancy (%)', fontsize=14)
+    plt.text(len(df)+1, 1, 'Occupancy (%)', fontsize=10)
     cax = plt.axes([0.98, 0.295, 0.02, 0.4])
     plt.colorbar(im, cax)
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
@@ -410,6 +410,13 @@ def main():
     print("Optimal Silhouette score =", silhouette_best)
     print('Optimal Sigma =', sigma_best)
     labels = aff_prop_clust_best.labels_
+    tbw="CLUSTER   FAMILY   ID   DOTBRACKET\n"
+    for i,struct in enumerate(structure_list):
+        tbw+=str(labels[i])+"   "+struct.family+"   "+struct.id+"   "+struct.dotbracket+"\n"
+    
+    f_created=open("DATASET_CLUSTERING_DISTRIBUTION.dat",'a')
+    f_created.write(tbw)
+    f_created.close()
     labels = renumber_by_rank(labels)
     dict_label = build_label_dict(list(labels),family)
     
