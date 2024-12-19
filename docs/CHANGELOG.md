@@ -1111,5 +1111,20 @@ Now by removing the families that are dispersed:
 
 We can see that this tendency to disperse the results becomes apparent when we remove the families that are dispersing the most.
 
-I'm trying different clustering parameters to see if better resuts can be achieved.
+**DISPLAYING THE LENGTH DISTRIBUTION IN EACH FAMILIES**
+
+- created length_distribution.py to display the length distribution of structures in each families.
+
+|RF00001|RF00004|RF00005|RF00010|
+|:-----:|:-----:|:-----:|:-----:|
+|!["RF00001"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00001.png)|!["RF00004"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00004.png)|!["RF00005""](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00005.png)|!["RF00010"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00010.png)|
+
+|RF00015|RF00020|RF00023|RF00162|
+|:-----:|:-----:|:-----:|:-----:|
+|!["RF00015"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00015.png)|!["RF00020"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00020.png)|!["RF00023"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00023.png)|!["RF00162"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00162.png)|
+
+
+All combined:
+
+!["ALL"](length_distribution_results_dataset150x8_cleaned/length_distribution_ALL.png)
 
