@@ -309,9 +309,10 @@ class SecondaryStructure(Dotplot):
     Secondary Structure object shares its instances with Dotbracket and Dotplot classes
     """
 
-    def __init__(self, dotbracket: str, sequence: str = None, id: str = None, file=None):
+    def __init__(self, dotbracket: str, sequence: str = None, id: str = None, file=None, fam=None):
         self.id = id
         self.sequence = sequence
+        self.family=fam
         Dotplot.__init__(self, dotbracket)
         self.weight = 0
         if file is not None:
