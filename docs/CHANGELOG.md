@@ -1097,7 +1097,11 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 
 - Created a new file aligned file with the cleaned dataset.
 
-**CLUSTERING TEST ON THIS DATASET**
+- created length_distribution.py to display the length distribution of structures in each families.
+
+- added an automatic logfile writing when clustering is finished.
+
+**CLUSTERING TEST ON CLEANED DATASET**
 
 With the latest dataset:
 
@@ -1113,8 +1117,6 @@ We can see that this tendency to disperse the results becomes apparent when we r
 
 **DISPLAYING THE LENGTH DISTRIBUTION IN EACH FAMILIES**
 
-- created length_distribution.py to display the length distribution of structures in each families.
-
 |RF00001|RF00004|RF00005|RF00010|
 |:-----:|:-----:|:-----:|:-----:|
 |!["RF00001"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00001.png)|!["RF00004"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00004.png)|!["RF00005""](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00005.png)|!["RF00010"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00010.png)|
@@ -1122,7 +1124,6 @@ We can see that this tendency to disperse the results becomes apparent when we r
 |RF00015|RF00020|RF00023|RF00162|
 |:-----:|:-----:|:-----:|:-----:|
 |!["RF00015"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00015.png)|!["RF00020"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00020.png)|!["RF00023"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00023.png)|!["RF00162"](length_distribution_results_dataset150x8_cleaned/length_distribution_RF00162.png)|
-
 
 All combined:
 
