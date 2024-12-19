@@ -1107,18 +1107,9 @@ The clustering is not that bad, it is obviously better than the non aligned vers
 
 Now by removing the families that are dispersed:
 
-![150x6 HP APTALIGNED NON FAMILY BASED 2 FAMILY REMOVED](img/clustering_after_aptalignment_paired_2familyremoved.png)
+![150x6 HP APTALIGNED NON FAMILY BASED 2 FAMILY REMOVED](img/clustering_after_aptalignment_paired_reduced.png)
 
 We can see that this tendency to disperse the results becomes apparent when we remove the families that are dispersing the most.
 
 I'm trying different clustering parameters to see if better resuts can be achieved.
 
-### TO DO LIST:
-
-- AptaLign:
-    - ENSEMBLE ALIGNING BY ALIGNING TWO BY TWO.
-        - ONLY KEEP THE ALIGNMENT WITH THE ONE WHOSE APTAMAT DISTANCE IS MINIMAL.
-
-- Organising the AptAlign.py algorithm. *WIP*
-    - Adding a pairing function for alignment of a batch of structures in a file.
-    - Adding a log writing mechanism.
