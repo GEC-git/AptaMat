@@ -1216,3 +1216,23 @@ _RF00010_   _RF00010_569   ....(([[[[[[[.---(((((((((...........))))).))))....((
 
 They are longer and their structures are not the same at all.
 ________________________
+
+**COMPARING THE RESULTS FROM THE ORIGINAL DATASET**
+
+original clustering result:
+
+!["OriginalResults"](https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/bioinformatics/39/1/10.1093_bioinformatics_btac752/1/m_btac752f6.jpeg)
+
+Results after an aptalignment (443s):
+
+!["NewResults"](img/ORIGINAL_DATASET_APTALIGNED_RESULTS.png)
+
+Optimal Calinski Harabasz index = 11072.785243502609
+
+Optimal Silhouette score = 0.7029741912107301
+
+Optimal Sigma = 16.600000000000016
+
+The results are worse than expected. We don't see any improvement. This can be linked to the fact that aptalign uses the distance matrix to actually do its alignment. So the errors are actually amplified.
+
+
