@@ -1219,10 +1219,6 @@ ________________________
 
 **COMPARING THE RESULTS FROM THE ORIGINAL DATASET**
 
-original clustering result:
-
-!["OriginalResults"](https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/bioinformatics/39/1/10.1093_bioinformatics_btac752/1/m_btac752f6.jpeg)
-
 Results after an aptalignment (443s):
 
 !["NewResults"](img/ORIGINAL_DATASET_APTALIGNED_RESULTS.png)
