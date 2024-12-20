@@ -1235,4 +1235,4 @@ Optimal Sigma = 16.600000000000016
 
 The results are worse than expected. We don't see any improvement. This can be linked to the fact that aptalign uses the distance matrix to actually do its alignment. So the errors are actually amplified.
 
-
+Please see clustering/original_dataset_results for raw results.
