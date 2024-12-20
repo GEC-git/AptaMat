@@ -1109,6 +1109,14 @@ With the latest dataset:
 
 The clustering is not that bad, it is obviously better than the non aligned version but still, its quality could be improved.
 
+Optimal Calinski Harabasz index = 9065.028865931989
+Optimal Silhouette score = 0.5361017258268107
+Optimal Sigma = 96.60000000000008
+
+clustered in 1:18:55.
+
+Aligned in 35min.
+
 Now by removing the families that are dispersed:
 
 ![150x6 HP APTALIGNED NON FAMILY BASED 2 FAMILY REMOVED](img/clustering_after_aptalignment_paired_reduced.png)

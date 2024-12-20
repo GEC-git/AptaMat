@@ -8,7 +8,7 @@ sys.path.append(root_path)
 import matplotlib.pyplot as plt
 import AptAlign as AL
 
-structure_file="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_150x8_CLEANED_paired_aptaligned.dat"
+structure_file="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_150x8_CLEANED.dat"
 structure_list, families = AL.initialize_dataset(structure_file)
 
 fam_dict={}
