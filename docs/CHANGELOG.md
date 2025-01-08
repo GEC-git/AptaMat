@@ -1233,13 +1233,20 @@ The results are worse than expected. We don't see any improvement. This can be l
 
 Please see clustering/original_dataset_results for raw results.
 
+### WEEK 16 - 06/01/2025 -> 12/01/2025
+
+- started writing the internship report.
+
 **COMPARING WITH EXISTING ALIGNMENT ALGORITHMS**
 
 *RNAForester*
 
-WIP
+Not compatible with pseudoknots.
 
 *Beagle*
 
 Not compatible with pseudoknots.
 
+*mlocarna*
+
+Compatible with pseudoknots. Not compatible with certain letters in sequences such as R,N,W or Y. Made a cleaner version of the dataset without these letters.
