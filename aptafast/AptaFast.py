@@ -23,8 +23,7 @@ from matplotlib import colors as mcolors
 import matplotlib.image as mpimg
 from matplotlib.gridspec import GridSpec
 import varnaapi as varna
-from varnaapi import BasicDraw
-import os
+#from varnaapi import BasicDraw
 
 np.set_printoptions(threshold=sys.maxsize)
 
