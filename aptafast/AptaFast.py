@@ -15,6 +15,16 @@ import time as tm
 import multiprocessing as mp
 import numpy as np
 from scipy.spatial.distance import cityblock, euclidean
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.cm import ScalarMappable
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib import colors as mcolors
+import matplotlib.image as mpimg
+from matplotlib.gridspec import GridSpec
+import varnaapi as varna
+from varnaapi import BasicDraw
+import os
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -281,6 +291,7 @@ class Dotplot(Dotbracket):
                     coordinates.append(dot)
         coordinates = np.asarray(coordinates)
         return coordinates
+
 
 
 class SecondaryStructure(Dotplot):
@@ -566,6 +577,7 @@ def calculation_core(point1, struct2, method, search_depth, verbose):
         if verbose:
             print("Found nearest point",point1," - ",point1,"| Value:",0)
         return 0
+    
 
     else:
         search_num=0
@@ -716,6 +728,255 @@ def pairwise_distance_optimised(struct_1: object, struct_2: object, method, pool
     distance = sum(nearest_dist)
     return distance
 
+def build_distance_matrix(struct_1: object, struct_2: object, method, plot, speed:str):
+    """
+    Proceed to the point distance parsing between input struct_1 and struct_2 put 
+    the distances into a matrix usingManhattan distance.
+
+    The function returns a lower triangular matrix of the nearest distance found for each point.
+
+    Parameters
+    ----------
+    struct_1 : SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    method: str
+        Method for distance calculation.
+
+    plot: str
+        Input 'manhattan','aptamat' or 'contribution'
+        Values in the matrix of the nearest distance
+
+    Returns
+    -------
+        matrix : numpy
+            manhattan distance if plot == 'manhattan'
+            aptamat distance of each point if plot == 'aptamat' or 'contribution'
+    """   
+    matrix = np.zeros((len(struct_1.dotbracket), len(struct_1.dotbracket)))
+
+    #structure with gaps
+    pos=0
+    for char in struct_1.dotbracket:
+        if char=='-':
+            for i in range(pos): 
+                matrix[i,pos]=-2
+        pos+=1
+                
+    
+    list_dist=[0]*len(struct_1.dotbracket)
+    
+    struct2=[list(elt) for elt in struct_2.coordinates]
+    struct1=[list(elt) for elt in struct_1.coordinates]
+    if len(struct_2) >=250:
+        if speed=="quick":
+            search_depth=int(0.009125*len(struct_2)+4.207)+2
+        elif speed=="slow":
+            search_depth=(int(0.009125*len(struct_2)+4.207)+2)*2
+        else:
+            return ValueError("The speed value is incorrect")
+            
+        for elt in struct1 : 
+            distance_manha=calculation_core(elt, struct2, method, search_depth, verbose=False)
+            if plot=='manhattan': 
+                matrix[elt[0]-1,elt[1]-1]=distance_manha
+                list_dist[elt[0]-1]=distance_manha
+                list_dist[elt[1]-1]=distance_manha
+
+            else : 
+                matrix[elt[0]-1,elt[1]-1]=(distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))
+                matrix=np.round(matrix, 2)
+                list_dist[elt[0]-1]=round(((distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))), 2)
+                list_dist[elt[1]-1]=round(((distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))), 2)
+
+            
+    else:
+        for elt in struct1 : 
+            distance_manha=calculation_core_naive(elt, struct2, method, verbose=False)
+            if plot=='manhattan': 
+                matrix[elt[0]-1,elt[1]-1]=distance_manha
+                list_dist[elt[0]-1]=distance_manha
+                list_dist[elt[1]-1]=distance_manha
+            else : 
+                matrix[elt[0]-1,elt[1]-1]=(distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))
+                matrix=np.round(matrix, 2)
+                list_dist[elt[0]-1]=round(((distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))), 2)
+                list_dist[elt[1]-1]=round(((distance_manha+(struct_1.gap+struct_2.gap))/(len(struct1)+len(struct2))), 2)
+
+    #structures of different sizes 
+    max_len_struct=max(len(struct_1), len(struct_2))
+    if matrix.shape[1] < max_len_struct :
+        modif=max_len_struct-matrix.shape[1]
+        matrix = np.pad(matrix, ((0, modif), (0, modif)), mode='constant', constant_values=0)
+        for j in range (modif):
+            max_len_struct-=1
+            for i in range(max_len_struct):
+                matrix[i,matrix.shape[1]-1-j]=-1
+    return matrix,list_dist
+    
+    
+
+def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, file_pdf, plot_type):
+    """
+    Save a pdf of the concatenate matrix of the nearest distance for each point of 2 structures 
+
+    The distance can be manhattan, aptamat or contribution of each point in the aptamat distance depending
+    on the plot argument
+
+    Parameters
+    ----------
+    struct_1 : SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    struct_2: SecondaryStructure_or_Dotplot_or_Dotbracket
+        Input SecondaryStructure, Dotplot or Dotbracket object.
+    method: str
+        Method for distance calculation.
+
+    plot: str
+        Input 'manhattan','aptamat' or 'contribution'
+        Values in the matrix of the nearest distance
+        
+    file_pdf: PdfPages
+    
+    plot_type: str
+        Input 'matrix', 'varna' or 'matrix_varna'
+        Type of representation of the distance (marix of distance or nucleotid chain)
+
+    Returns
+    -------
+        save the concatenate matrix in a page of the file_pdf
+    """   
+    m_struct_1,l_struct_1=build_distance_matrix(struct_1, struct_2, method, plot, speed)
+    m_struct_2,l_struct_2=build_distance_matrix(struct_2, struct_1, method, plot, speed)
+    max_len=max(m_struct_1.shape[1], m_struct_2.shape[1])
+  
+    matrix=m_struct_1.copy().T
+    matrix[m_struct_2!=0]=m_struct_2[m_struct_2!=0]
+    
+    if plot=='contribution':
+        mask = (matrix != -2) & (matrix != -1)
+        total = np.sum(matrix[mask])        
+        matrix[mask] = matrix[mask] * 100 / total
+        matrix = np.round(matrix, 2)
+
+        l_struct_1 = [(x * 100 / total) for x in l_struct_1]
+        l_struct_1=np.round(l_struct_1, 2)
+        l_struct_2 = [(x * 100 / total) for x in l_struct_2]
+        l_struct_2=np.round(l_struct_2, 2)
+
+
+    fig = plt.figure(figsize=(10, 6))
+
+    cmap=cm.Blues
+    max_value=np.max(matrix)
+    sm=ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=max_value))
+    
+    if plot_type !="matrix":
+        if plot_type=='matrix_varna': 
+             gs = GridSpec(3, 2, figure=fig, height_ratios=[3,0.01,1])
+
+        if plot_type=='varna':
+             gs = GridSpec(3, 2, figure=fig, height_ratios=[0.2,0.01,1])
+        
+        ax1 = fig.add_subplot(gs[0, :]) 
+        ax2 = fig.add_subplot(gs[2, 0])  
+        ax3 = fig.add_subplot(gs[2, 1])     
+        ax4 = fig.add_subplot(gs[1, 0]) 
+        ax5 = fig.add_subplot(gs[1, 1]) 
+        ax2.axis('off')
+        ax3.axis('off')
+        ax4.axis('off')
+        ax5.axis('off')
+         
+        dotbracket_1= struct_1.dotbracket.replace("-", "")    
+        dotbracket_2= struct_2.dotbracket.replace("-", "")
+        l_struct_1_filtered = [l_struct_1[i] for i in range(len(struct_1.dotbracket)) if struct_1.dotbracket[i] != "-"]
+        l_struct_2_filtered = [l_struct_2[i] for i in range(len(struct_2.dotbracket)) if struct_2.dotbracket[i] != "-"]
+
+        v1 = varna.Structure(structure=dotbracket_1)
+        varna.BasicDraw.update(v1,bp="red", bpStyle="simple")
+        for i in range(len(l_struct_1_filtered)): 
+            if l_struct_1_filtered[i]!=0:
+                color = cmap(l_struct_1_filtered[i]/max_value)
+                color_hex = mcolors.rgb2hex(color[:3])
+                v1.add_bases_style(varna.param.BasesStyle(fill=color_hex), [i+1])
+                
+        v2 = varna.Structure(structure=dotbracket_2)
+        varna.BasicDraw.update(v2,bp="red", bpStyle="simple")
+        for i in range(len(l_struct_2_filtered)): 
+            color = cmap(l_struct_2_filtered[i]/max_value)
+            color_hex = mcolors.rgb2hex(color[:3])
+            if l_struct_2_filtered[i]!=0:
+                v2.add_bases_style(varna.param.BasesStyle(fill=color_hex), [i+1])
+    
+        v1.savefig('struct_1.png')
+        img1 = mpimg.imread('struct_1.png')
+        ax2.imshow(img1)
+        ax4.text(0.5, -2,f'{struct_1.id} :',fontweight='bold',fontsize=6)
+        
+        v2.savefig('struct_2.png')
+        img2 = mpimg.imread('struct_2.png')
+        ax3.imshow(img2)
+        ax5.text(0.5, -2,f'{struct_2.id} :',fontweight='bold',fontsize=6)
+        
+        if plot_type=='varna': 
+            cb=plt.colorbar(sm, ax=ax1,location='bottom', shrink=5)
+            cb.set_label(label='Distance de Manhattan' if plot=='manhattan' else 'Distance Aptamat' if plot=='aptamat' else 'Contribution (%)',size=6, weight='bold')
+            cb.ax.tick_params(labelsize=6)
+            ax1.axis('off')
+   
+    if plot_type !="varna":
+        if plot_type=='matrix':
+            gs = GridSpec(1, 1, figure=fig)
+            ax1 = fig.add_subplot(gs[0, 0]) 
+        
+        masked_matrix=np.where((matrix == -1) | (matrix == -2),0, matrix)
+        ax1.matshow(masked_matrix, cmap=cmap)
+        
+        cb=plt.colorbar(sm, ax=ax1,location='bottom', shrink=0.2)
+        cb.set_label(label='Distance de Manhattan' if plot=='manhattan' else 'Distance Aptamat' if plot=='aptamat' else 'Contribution (%)',size=6, weight='bold')
+        cb.ax.tick_params(labelsize=6)
+        
+        min_len=min(len(struct_1.dotbracket),len(struct_2.dotbracket))
+        
+        for (i,j), val in np.ndenumerate(matrix):
+            if val==-1:
+                ax1.add_patch(plt.Rectangle((j-0.5, i-0.5), 1, 1, color="#c0c0c0"))
+            elif val ==-2: 
+                ax1.add_patch(plt.Rectangle((j-0.5, i-0.5), 1, 1, color="#f17a7a"))
+            elif val!=0 and (min_len<=25) :
+                ax1.text(j,i,f'{val}', ha='center', va='center', color='black', fontsize=3)
+            if i==j: 
+                ax1.add_patch(plt.Rectangle((j-0.5, i-0.5), 1, 1, color="black"))
+        
+        if min_len>100: 
+            nb_ticks=10
+        elif min_len>25:
+            nb_ticks=5
+        else : 
+            nb_ticks=1
+        ax1.set_xticks(np.arange(nb_ticks-1,max_len,nb_ticks))
+        ax1.set_xticklabels(np.arange(nb_ticks,max_len+1,nb_ticks))
+        ax1.set_yticks(np.arange(nb_ticks-1,max_len,nb_ticks))
+        ax1.set_yticklabels(np.arange(nb_ticks,max_len+1,nb_ticks))
+        
+        plt.setp(ax1.get_xticklabels(), fontsize=6)
+        plt.setp(ax1.get_yticklabels(), fontsize=6)
+        
+        ax1.set_xticks(np.arange(-0.5,max_len,1), minor=True)
+        ax1.set_yticks(np.arange(-0.5,max_len,1), minor=True)
+        ax1.grid(which='minor',linewidth=0.1, color='#c0c0c0')
+        ax1.tick_params(which='minor', size=0)
+        
+        ax1.text(0.5, -0.1, f'{struct_1.id}-{struct_2.id}', horizontalalignment='center', backgroundcolor='bisque', fontweight='bold', fontsize=6, transform=ax1.transAxes)
+        ax1.text(1.05, 0.4, f'{struct_2.id}-{struct_1.id}', horizontalalignment="left", rotation=90, backgroundcolor='palegreen', fontweight='bold',fontsize=6,transform=ax1.transAxes)
+    
+    plt.tight_layout()
+    file_pdf.savefig()
+    plt.close()
+
+
 def adjust_weight(structures, weight):
     """
     Function to adjust weight values in a set of structures.
@@ -798,6 +1059,14 @@ def main():
                         default='cityblock',
                         nargs='?',
                         choices=['cityblock', 'euclidean'])
+    parser.add_argument('-plot',
+                        default=False,
+                        help="Save matrices in pdf",
+                        choices=['manhattan', 'aptamat', 'contribution'])
+    parser.add_argument('-plot_type',
+                        default='matrix',
+                        help="Type of plot of matrices in pdf",
+                        choices=['matrix', 'varna', 'matrix_varna'])
     
     
     args = parser.parse_args()
@@ -821,9 +1090,10 @@ def main():
     weights = []
     file_time_start=tm.time()
     
-    ##################################
-    #  Input structures preparation  #
-    ##################################
+      ##################################
+      #  Input structures preparation  #
+      ##################################  
+      
     struct_sizes=[]
     if args.structures is not None:
         if len(args.structures) < 2:
@@ -872,6 +1142,10 @@ def main():
     start=tm.time()
     pooling=mp.Pool(nb)
     res=[]
+    
+    if args.plot!=False:  
+        file_matrix=PdfPages('test.pdf')
+    
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
 
@@ -889,7 +1163,17 @@ def main():
             if not args.ensemble:
                 _result_print(template_struct, compared_struct)
                 print(compared_struct.distance, end='\n\n')
+                if args.plot!=False: 
+                    plot_matrix(struct_1=template_struct,
+                                struct_2=compared_struct,
+                                method=args.method,
+                                plot = args.plot,
+                                speed=args.speed,
+                                file_pdf=file_matrix,
+                                plot_type=args.plot_type)
                 res.append(compared_struct.distance)
+    if args.plot!=False:  
+        file_matrix.close()
     finish=tm.time()
     pooling.terminate()
     if args.verbose:
@@ -897,6 +1181,7 @@ def main():
         print("Calculation time:",round(finish-start,2),"s")
         tot=round(finish-start,2)+round(file_time_finish-file_time_start,2)
         print("Total: ",tot,"s")
+
     ##########################
     #  Ensemble calculation  #
     ##########################
