@@ -135,8 +135,8 @@ class Parse:
 
             else:
                 continue
-            
-        structures=pool.starmap(SecondaryStructure,  [(non_parsed_struct[i][0], non_parsed_struct[i][1], non_parsed_struct[i][2], non_parsed_struct[i][3]) for i in range(len(non_parsed_struct))])
+           
+        structures=pool.starmap(SecondaryStructure, [(non_parsed_struct[i][0], non_parsed_struct[i][1], non_parsed_struct[i][2], non_parsed_struct[i][3]) for i in range(len(non_parsed_struct))])
             
         def get_id(struct):
             num=""
@@ -160,8 +160,8 @@ class Parse:
 
 class Dotbracket:
     """Create a DotBracket object"""
-    gap_penalty_matrix = [1, 1]
-
+    #gap_penalty_matrix = [0,0]
+    gap_penalty_matrix = [1,1]
     def __init__(self, dotbracket: str, gap_penalty=None):
         self.dotbracket = None
         self.gap = None
@@ -191,15 +191,18 @@ class Dotbracket:
         self.gap = self.gap_penalty(gap_penalty)
 
     def gap_penalty(self, gap_penalty):
-        penalty = 0
-        for i, c in enumerate(self.dotbracket):
-            if c == '-' and self.dotbracket[i - 1] == '-':
-                penalty += gap_penalty[1]
-            elif c == '-':
-                penalty += gap_penalty[0]
-            else:
-                pass
-        return penalty
+        if not gap_penalty[0]:
+            return 0
+        else:
+            return self.dotbracket.count("-")*gap_penalty[0]
+        # for i, c in enumerate(self.dotbracket):
+        #     if c == '-' and self.dotbracket[i - 1] == '-':
+        #         penalty += gap_penalty[1]
+        #     elif c == '-':
+        #         penalty += gap_penalty[0]
+        #     else:
+        #         pass
+
 
     @staticmethod
     def is_dotbracket(dotbracket):
@@ -243,14 +246,18 @@ class Dotplot(Dotbracket):
         matrix = np.zeros((len(self.dotbracket), len(self.dotbracket)),dtype=np.uint8)
         par="()"
         cro="[]"
+        acc="{}"
         #void=".-"
         dict_par={}
         dict_cro={}
+        dict_acc={}
         for i,elt in enumerate(self.dotbracket):
             if elt in par:
                 dict_par[i]=elt
             elif elt in cro:
                 dict_cro[i]=elt
+            elif elt in acc:
+                dict_acc[i]=elt
         
         while dict_par != {}:
             index_list=list(dict_par.keys())
@@ -260,16 +267,28 @@ class Dotplot(Dotbracket):
             matrix[index_list[i],index_list[i+1]]=np.uint8(1)
             del(dict_par[index_list[i]])
             del(dict_par[index_list[i+1]])
-            
-        while dict_cro != {}:
-            index_list=list(dict_cro.keys())
-            i=0
-            while dict_cro[index_list[i]]==dict_cro[index_list[i+1]]:
-                i+=1
-            matrix[index_list[i],index_list[i+1]]=np.uint8(1)
-            del(dict_cro[index_list[i]])
-            del(dict_cro[index_list[i+1]])
-        
+        try:    
+            while dict_cro != {}:
+                index_list=list(dict_cro.keys())
+                i=0
+                while dict_cro[index_list[i]]==dict_cro[index_list[i+1]]:
+                    i+=1
+                matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+                del(dict_cro[index_list[i]])
+                del(dict_cro[index_list[i+1]])
+                
+            while dict_acc != {}:
+                index_list=list(dict_acc.keys())
+                i=0
+                while dict_acc[index_list[i]]==dict_acc[index_list[i+1]]:
+                    i+=1
+                matrix[index_list[i],index_list[i+1]]=np.uint8(1)
+                del(dict_acc[index_list[i]])
+                del(dict_acc[index_list[i+1]])
+        except IndexError:
+            #In the case of a non closing pseudoknot.
+            dict_cro={}
+            dict_acc={}
         return matrix
 
     def get_coordinates(self):
@@ -301,9 +320,10 @@ class SecondaryStructure(Dotplot):
     Secondary Structure object shares its instances with Dotbracket and Dotplot classes
     """
 
-    def __init__(self, dotbracket: str, sequence: str = None, id: str = None, file=None):
+    def __init__(self, dotbracket: str, sequence: str = None, id: str = None, file=None, fam=None):
         self.id = id
         self.sequence = sequence
+        self.family=fam
         Dotplot.__init__(self, dotbracket)
         self.weight = 0
         if file is not None:
@@ -416,10 +436,11 @@ def compute_distance_clustering(struct_1: object, struct_2: object, method, spee
 
     # Check length of compared structures
     # Alignment is strongly recommended
-    if len(s1) != len(s2):
-        warnings.warn(
-            "Input structures with different sizes.\n "
-            "For accurate results, please perform sequence or structure alignment before. \n")
+    
+        if len(s1) != len(s2):
+            warnings.warn(
+                "Input structures with different sizes.\n "
+                "For accurate results, please perform sequence or structure alignment before. \n")
 
     if s2 == s1:
         return 0
@@ -460,11 +481,11 @@ def compute_distance_clustering(struct_1: object, struct_2: object, method, spee
         return dist
 
     elif s1.coordinates.size == 0:
-        warnings.warn("Template structure is not folded.\n")
+        warnings.warn("Template structure is not folded."+str(struct_1.id)+str(struct_1.dotbracket))
         return None
 
     else:
-        warnings.warn("Compared structure is not folded.\n")
+        warnings.warn("Compared structure is not folded."+str(struct_2.id)+str(struct_2.dotbracket))
         return None
 
 
