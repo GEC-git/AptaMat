@@ -124,8 +124,8 @@ def file_struct_gen(nb_struct,lgth):
             
     return output
 
-lgth=1000
-nb_struct=1000
+lgth=200
+nb_struct=2
 f=open("RandomWeightFile"+str(nb_struct)+"-"+str(lgth)+".fa","a")
 f.write(file_struct_gen(nb_struct,lgth))
 f.close()
