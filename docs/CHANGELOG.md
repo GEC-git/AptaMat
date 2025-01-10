@@ -1250,3 +1250,36 @@ Not compatible with pseudoknots.
 *mlocarna*
 
 Compatible with pseudoknots. Not compatible with certain letters in sequences such as R,N,W or Y. Made a cleaner version of the dataset without these letters.
+Aligned in 24h BUT no multithreading was used.
+
+With this dataset, we have this result via mlocarna:
+
+!["NewResultsmlocarna"](clustering_newdataset/dataset_150x8_mlocarnaaligned.png)
+
+Clustering in 1h47min
+
+Optimal Calinski Harabasz index = 5043.587614374944
+
+Optimal Silhouette score = 0.533925350561297
+
+Optimal Sigma = 27.600000000000023
+
+
+
+And via Aptalign:
+(aligned in 1647s)
+
+!["NewResultsAptalign"](clustering_newdataset/dataset_150x8_ULTRACLEANED_aptaligned.png)
+
+CLustering in 1h37min
+
+Optimal Calinski Harabasz index = 9423.787954905372
+
+Optimal Silhouette score = 0.569286004965478
+
+Optimal Sigma = 66.90000000000006
+
+
+We can see that The results with aptalign are better if we only view the metrics but worse if we actually see the clustering : there is more clusters and a bit more superposition.
+
+Still, the results are satisfactory.
