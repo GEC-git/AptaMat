@@ -22,9 +22,39 @@ def fam_compteur_fa(file_from):
     return dico
 
 
+def file_converter_PP_to_CLUSTER():
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_LOCARNALIGNED_150x8_ULTRACLEANED.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/results_mlocarna/results/result_prog.pp"
+    lines=open(file_from).readlines()
+    tbw=""
+    f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
+    for i, line in enumerate(lines):
+        line=line.replace("\n","")
+        if not(line.startswith("#")):
+            family=line[0:9]
+            dbn=line[0:13].replace(" ","")
+            sequence=False
+            dotbracket=""
+            ACTG=""
+            first=True
+            for k in range(13,len(line)):
+                j=line[k]
+                if j!=" ":
+                    if j in '.()[]' and first:
+                        sequence=True
+                        first=False
+                    
+                    if sequence:
+                        dotbracket+=j
+                    else:
+                        ACTG+=j
+            tbw+=family+"    "+dbn+"    "+ACTG+"    "+dotbracket+"\n"
+    f.write(tbw)
+    f.close()
+    
 def file_converter_FASTA_to_CLUSTER():
-    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_RNALIGNED_150x8_CLEANED.dat",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_NONALIGNED_8x150_CLEANED.fa"
+    f=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_150x8_ULTRACLEANED.dat",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_NONALIGNED_8x150_ULTRACLEANED.fa"
     lines=open(file_from).readlines()
     tbw=""
     f.write("FAMILY    dbn    SEQUENCE    DOTBRACKET\n")
@@ -92,8 +122,8 @@ def file_converter_FASTA_to_CLUSTER_choices(nb_fam_max,nb_max_per_fam):
 
            
 def file_converter_CLUSTER_to_FASTA():
-    f_created=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_FASTA_NONALIGNED_8x150.fa",'a')
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_8x150.dat"
+    f_created=open("/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/fasta_test.fa",'a')
+    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_LOCARNALIGNED_150x8_ULTRACLEANED.dat"
     lines=open(file_from).readlines()
     tbw=""
     for i, line in enumerate(lines):

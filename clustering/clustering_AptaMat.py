@@ -200,7 +200,6 @@ def initialize_dataset(structure_file):
                     structure_list.append(structure)
     return structure_list,family
 
-
 def calculation(structure_list, CORE, speed, depth, sigma_range):
     
     ### N for matrix size
@@ -306,6 +305,7 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
     #df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
+    #print(dict_label)
     df=pd.DataFrame(dict_label)
     s = df.sum()
     df = df[s.sort_values(ascending=False).index[:]]
@@ -325,6 +325,7 @@ def heatmap(family, labels, dict_label):
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
     # ax.set_yticks(np.arange(len(rfam)), labels=rfam)
     ax.set_xticks(np.arange(0, len(df)), labels=list(np.arange(0, len(df))))
+    #print(df)
     for i in range(len(df.columns)):
         for j in np.arange(0, len(df)):
             if round(family_p_t[i, j]) == 0:
@@ -414,7 +415,7 @@ def main():
     for i,struct in enumerate(structure_list):
         tbw+=str(labels[i])+"   "+struct.family+"   "+struct.id+"   "+struct.dotbracket+"\n"
     
-    f_created=open("DATASET_CLUSTERING_DISTRIBUTION.dat",'a')
+    f_created=open(structure_file.replace(".dat","")+"DATASET_CLUSTERING_DISTRIBUTION.dat",'a')
     f_created.write(tbw)
     f_created.close()
     labels = renumber_by_rank(labels)

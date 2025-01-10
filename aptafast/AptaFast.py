@@ -22,7 +22,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import colors as mcolors
 import matplotlib.image as mpimg
 from matplotlib.gridspec import GridSpec
-import varnaapi as varna
+#import varnaapi as varna
 #from varnaapi import BasicDraw
 
 np.set_printoptions(threshold=sys.maxsize)
