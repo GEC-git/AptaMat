@@ -1406,11 +1406,6 @@ def main():
                         nargs='+',
                         help='Input filepath containing structures to be aligned in structures format.')
     
-    parser.add_argument('-l',
-                        '--logs',
-                        help="Creates a log file when finished",
-                        action="store_true")
-    
     parser.add_argument('-pr',
                         '--pattern_recognition',
                         help="Only generates pattern recognition",

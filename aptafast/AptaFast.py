@@ -22,7 +22,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import colors as mcolors
 import matplotlib.image as mpimg
 from matplotlib.gridspec import GridSpec
-#import varnaapi as varna
+import varnaapi as varna
 #from varnaapi import BasicDraw
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -284,8 +284,10 @@ class Dotplot(Dotbracket):
                 matrix[index_list[i],index_list[i+1]]=np.uint8(1)
                 del(dict_acc[index_list[i]])
                 del(dict_acc[index_list[i+1]])
+                
         except IndexError:
             #In the case of a non closing pseudoknot.
+            print("Non closing pseudoknot, ignoring pseudoknots.")
             dict_cro={}
             dict_acc={}
         return matrix
