@@ -1283,3 +1283,76 @@ Optimal Sigma = 66.90000000000006
 We can see that The results with aptalign are better if we only view the metrics but worse if we actually see the clustering : there is more clusters and a bit more superposition.
 
 Still, the results are satisfactory.
+
+### WEEK 17 - 13/01/2025 -> 19/01/2025
+
+**Tests with a new dataset without pseudoknots:**
+
+RESULTS NON ALIGNED :
+
+!["NoPseudoNonaligned"](clustering_results_nopseudoknots/clustering_nopseudoknots_nonaligned.png)
+
+Optimal Calinski Harabasz index = 7091.544810797648 | 
+Optimal Silhouette score = 0.47467983046072604 | 
+Optimal Sigma = 6.400000000000005
+
+RESULTS APTALIGNED :
+
+!["NoPseudoAptaligned"](clustering_results_nopseudoknots/clustering_nopseudoknots_aptaligned.png)
+
+Optimal Calinski Harabasz index = 6874.679195364929 | 
+Optimal Silhouette score = 0.5083842999022997 | 
+Optimal Sigma = 3.300000000000002
+
+RESULTS WITH BEAGLE2 :
+
+*Beagle2 is not opensource and the webserver only allows 300 sequences maximum*
+
+RESULTS WITH RNAFORESTER :
+
+*RNAforester is very RAM intensive and stopped after 197 sequences because it completely filled the RAM+SWAP (204.6 GB)*
+
+
+**Test with a reduced dataset**
+
+*notaligned*
+
+!["ReducedNotaligned"](clustering_results_reduceddataset/clustering_reduced_notaligned.png)
+
+Optimal Calinski Harabasz index = 742.76662988697 | 
+Optimal Silhouette score = 0.5825496286753276 | 
+Optimal Sigma = 3.0000000000000018
+
+*RNAForester*
+
+!["ReducedForester"](clustering_results_reduceddataset/clustering_reduced_rnaforester.png)
+
+79GB of RAM used.
+
+Optimal Calinski Harabasz index = 3401.70375279206 | 
+Optimal Silhouette score = 0.6991339609268793 | 
+Optimal Sigma = 1.0
+
+*mlocarna*
+
+!["ReducedMLocarna"](clustering_results_reduceddataset/clustering_reduced_mlocarna.png)
+
+Optimal Calinski Harabasz index = 1083.571369813457 | 
+Optimal Silhouette score = 0.6767398993907191 | 
+Optimal Sigma = 3.9000000000000026
+
+*Beagle2*
+
+!["ReducedBeagle2"](clustering_results_reduceddataset/clustering_reduced_beagle2.png)
+
+Optimal Calinski Harabasz index = 399.7823136934146 | 
+Optimal Silhouette score = 0.6558934321767845 | 
+Optimal Sigma = 11.90000000000001
+
+*AptAlign*
+
+!["ReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_aptaligned.png)
+
+Optimal Calinski Harabasz index = 646.3805260649839 | 
+Optimal Silhouette score = 0.5598295533176815 | 
+Optimal Sigma = 2.5000000000000013
