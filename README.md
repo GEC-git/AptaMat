@@ -191,11 +191,12 @@ CLUSTER files must have on their first line:
 `FAMILY    ID    SEQUENCE    DOTBRACKET`
 
 They are then followed by the actual dataset with a single structure per line.
-`tRNA    6RFL_U.pdb    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
+
+    `tRNA    6RFL_U.pdb    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
 
 If you are making a clustering and you don't know the family and/or ID of the structures, please use a placeholder like that:
 
-`None    ID_num    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
+    `None    ID_num    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
 
 ID_num is the number of the sequence in the dataset.
 
