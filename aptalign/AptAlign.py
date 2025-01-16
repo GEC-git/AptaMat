@@ -1384,9 +1384,7 @@ def main():
     parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
                                                  "Use -fp for a file input of an ensemble of structures.\n"
                                                  "Use -s to input only two structures directly in the command line.\n"
-                                                 "Use -v to toggle verbose mode.\n"
-                                                 "Use -l to toggle the generation of a complete log file.\n"
-                                                 "Use -pr to only generate a pattern recognition.\n")
+                                                 "Use -v to toggle verbose mode.\n")
 
     parser.add_argument('-v',
                         '--verbose',
@@ -1405,11 +1403,6 @@ def main():
                         action="store",
                         nargs='+',
                         help='Input filepath containing structures to be aligned in structures format.')
-    
-    parser.add_argument('-pr',
-                        '--pattern_recognition',
-                        help="Only generates pattern recognition",
-                        action="store_true")
     
     args = parser.parse_args()
     
@@ -1467,7 +1460,7 @@ def main():
         
         
         
-    if args.structures is not None:
+    elif args.structures is not None:
         struct1=Structure(args.structures[0])
         struct2=Structure(args.structures[1])
         
