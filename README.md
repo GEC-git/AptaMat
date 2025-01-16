@@ -1,7 +1,6 @@
 <img src="triptych.png" alt="AptaMat2.0" height="300"/>
 
 # Purpose
--------------------
 
 This repository host the AptaMat2.0, AptAlign and clustering algorithms based on the first version of AptaMat.
 You can also find other scripts to convert datasets or generating ones randomly.
@@ -44,7 +43,6 @@ It can also display the affinity matrix when finished using a CPU or GPU acceler
 This algorithm then gives results inside of a CLUSTER file or as an heatmap if a quality test is performed using a dataset with known families.
 
 # Dependencies
-------------
 
 AptaMat2.0, AptAlign and clustering have been written in Python 3.8+
 
@@ -64,7 +62,6 @@ Add for clustering only:
 Use of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
 
 # Usage
-------------
 
 ## AptaMat2.0
 
@@ -128,14 +125,13 @@ instead of calculating pairwise distance.
       usage: AptaMat.py -files FILES [FILES ...] -ensemble
 
 # Note
-------------
 
 For the moment, no features have been included to check whether the base pair is able to exist or not, according 
 to literature. You must be careful about the sequence input and the base pairing associated.
 
 
 # Citation
-------------
+
 If you are using AptaMat in your research, please support us by citing us : Thomas Binet, Bérangère Avalle, Miraine Dávila Felipe, Irene Maffucci, AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures, Bioinformatics, Volume 39, Issue 1, January 2023, btac752, https://doi.org/10.1093/bioinformatics/btac752
 
 If you are using AptaMat2.0, an article is on the way.
