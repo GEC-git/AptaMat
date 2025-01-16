@@ -72,7 +72,7 @@ AptaMat2.0 is a flexible Python script which can take several arguments:
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
 - `-ensemble` (Optionnal) which indicates whether the input secondary structures are part of an ensemble
 - `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
-- `-speed` indicates the risk taken by the algorithm when calculating the searchg depth. (default: slow) Can be set to quick if the user is confident in its data.
+- `-speed` indicates the risk taken by the algorithm when calculating the search depth. (default: slow) Can be set to quick if the user is confident in its data.
 
       usage: AptaMat2.py [-h] [-v] [-speed [{slow,quick}]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]]
       
@@ -97,8 +97,74 @@ The `files` argument must be a formatted file. Multiple files can be parsed. The
 during the parsing is used as the template structure. The others are the compared structures.
 
     
-      usage: AptaMat.py -files FILES [FILES ...]
+      usage: AptaMat2.py -files FILES [FILES ...]
     
+
+`ensemble` is an optionnal argument which allow to calculate AptaMat distance value for an ensemble of structure
+instead of calculating pairwise distance.
+
+
+      usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...] -ensemble
+          or
+      usage: AptaMat.py -files FILES [FILES ...] -ensemble
+
+
+## AptAlign
+
+AptAlign is an alignment algorithm used to align DNA or RNA secondary structure.
+
+It takes several arguments:
+
+- `-s` (`--structures`) followed by secondary structures written in dotbracket format
+- `-fp` (`--filepath`) followed by the filepath of the CLUSTER file to be aligned.
+- `-v` (`--verbose`) to increase the verbosity of the output.
+
+Both `structures` and `filepath` are independent in the script and only the file aligning will be done if called at the same time.
+
+The `structures` argument must be a string formatted secondary structures array. You can only input two structures with this parameter. Quotes are necessary.
+
+      usage: AptAlign.py -s "STRUCTURE" "STRUCTURE"
+
+The output is only in the terminal.
+
+
+The `filepath` argument must be a formatted CLUSTER file. Only one file at a time can be aligned.
+
+      usage: AptAlign.py -fp FILE
+      
+The output is a CLUSTER file formatted the same way as the input file but with the alignment.
+Its name is the original name file followed by `_aptaligned`
+
+
+## clustering
+
+The clustering algorithm is used to cluster a dataset inside a CLUSTER file.
+
+It takes several arguments:
+
+- `-fp` (`--filepath`) followed by the filepath of the CLUSTER file.
+- `-speed` is the speed used when calling AptaMat2.0
+- `-visu` calls the affinity matrix visualizer. You can choose between `GPU` and `CPU` accelerated.
+- `-cv` (`--cluster_visualization`) saves a heatmap in PDF of the quality of the clustering (only testing purposes).
+- `-d` (`--depth`) controls the depth of iterations when calculating a clustering with a certain sigma value. (default = 1000)
+- `-sr` (`--sigma_range`) controls all the values taken by sigma to alter the affinity matrix (default = 100)
+
+Warning : A higher depth and sigma range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
+
+usage: clustering_AptaMat.py [-fp FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT]
+
+All of these parameters can be combined in a single call.
+
+The output can be given, depending on the parameters, as a combination of the three:
+
+- CLUSTER file labeled with clusters.
+- Heatmap in PDF if testing is necessary.
+- Visualizer of the affinity matrix.
+
+
+# Data files to use.
+
+## AptaMat2.0
 
 The input must be a text file, containing at least secondary structures, and accept additional 
 information such as Title, Sequence, Structure index and Weight. If several files are provided, the function parses the files one
@@ -115,20 +181,46 @@ by one and always takes the first structure encountered as the template structur
       ..........((.((((.......)))).)).
       [ weight ]
 
+This can be a modified FASTA file.
 
-`ensemble` is an optionnal argument which allow to calculate AptaMat distance value for an ensemble of structure
-instead of calculating pairwise distance.
+## AptAlign and clustering
 
+The input must be a .txt or .dat CLUSTER file.
 
-      usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...] -ensemble
-          or
-      usage: AptaMat.py -files FILES [FILES ...] -ensemble
+CLUSTER files must have on their first line:
+`FAMILY    ID    SEQUENCE    DOTBRACKET`
+
+They are then followed by the actual dataset with a single structure per line.
+`tRNA    6RFL_U.pdb    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
+
+If you are making a clustering and you don't know the family and/or ID of the structures, please use a placeholder like that:
+
+`None    ID_num    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))`
+
+ID_num is the number of the sequence in the dataset.
+
+The only requirement is to have the actual dotbracket chain at the end of each line with placeholders in the other fields.
+
+Please use the same amount of spaces between each fields of a line.
+
+### Output of the clustering algorithm:
+
+The clustering algorithm actually outputs a modified CLUSTER file with the cluster number at the start of each line:
+
+Example:
+
+```
+CLUSTER    FAMILY    ID    SEQUENCE    DOTBRACKET
+1    tRNA    6RFL_U.pdb    CCAUGGUGUAAUGGUUAGCACUCUGGACUUUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGG    (((..((((....[...)))).(((((.......)))))....(((((..]....))))))))
+...
+```
+
+This means that this structure have been put in the first cluster.
 
 # Note
 
 For the moment, no features have been included to check whether the base pair is able to exist or not, according 
 to literature. You must be careful about the sequence input and the base pairing associated.
-
 
 # Citation
 
