@@ -1,4 +1,4 @@
-<img src="triptych.png" alt="AptaMat2.0" height="300"/>
+<img src="triptych.png" alt="AptaMat2.0" height="250"/>
 
 # Purpose
 
@@ -151,7 +151,7 @@ It takes several arguments:
 
 Warning : A higher depth and sigma range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
 
-usage: clustering_AptaMat.py [-fp FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT]
+    usage: clustering_AptaMat.py [-fp FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT]
 
 All of these parameters can be combined in a single call.
 
