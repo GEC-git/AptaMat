@@ -2,12 +2,12 @@ import sys
 import os
 
 current_dir = os.path.dirname(__file__)
-root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
+root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
 sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..','clustering'))
 sys.path.append(root_path)
 #import clustering_AptaMat as CLAM
-import AptaFast as AF
+import AptaMat2 as AF
 import time
 import argparse
 import multiprocessing as mp

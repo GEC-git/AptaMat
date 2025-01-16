@@ -1,8 +1,3 @@
-###############################################################
-#           APTAFAST FOR RECURRING USE OF THE CALCULATIONS
-###############################################################
-
-
 #! /usr/bin/env python3
 import argparse
 import os

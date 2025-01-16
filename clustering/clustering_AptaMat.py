@@ -2,14 +2,14 @@ import sys
 import os
 
 current_dir = os.path.dirname(__file__)
-root_path = os.path.abspath(os.path.join(current_dir, '..','aptafast'))
+root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
 sys.path.append(root_path)
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, adjusted_rand_score
-import AptaFast as AF
+import AptaMat2 as AF
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
