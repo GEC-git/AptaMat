@@ -378,7 +378,7 @@ def main():
     parser.add_argument('-sr',
                         '--sigma_range',
                         type=int,
-                        default=10,
+                        default=100,
                         nargs='+',
                         help="Range of clustering calculation.")
     
