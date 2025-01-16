@@ -415,7 +415,7 @@ def main():
     for i,struct in enumerate(structure_list):
         tbw+=str(labels[i])+"   "+struct.family+"   "+struct.id+"   "+struct.dotbracket+"\n"
     
-    f_created=open(structure_file.replace(".dat","")+"DATASET_CLUSTERING_DISTRIBUTION.dat",'a')
+    f_created=open(structure_file.replace(".dat","")+"_CLUSTERING_DISTRIBUTION_RESULTS.dat",'a')
     f_created.write(tbw)
     f_created.close()
     labels = renumber_by_rank(labels)
