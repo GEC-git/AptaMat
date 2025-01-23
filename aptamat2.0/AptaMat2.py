@@ -281,9 +281,10 @@ class Dotplot(Dotbracket):
                 
         except IndexError:
             #In the case of a non closing pseudoknot.
-            print("Non closing pseudoknot, ignoring pseudoknots.")
+            #print("Non closing pseudoknot, ignoring pseudoknots.")
             dict_cro={}
             dict_acc={}
+        
         return matrix
 
     def get_coordinates(self):
@@ -829,6 +830,7 @@ def build_distance_matrix(struct_1: object, struct_2: object, method, plot, spee
             max_len_struct-=1
             for i in range(max_len_struct):
                 matrix[i,matrix.shape[1]-1-j]=-1
+    
     return matrix,list_dist
     
     
@@ -912,7 +914,7 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
 
         v1 = varna.Structure(structure=dotbracket_1)
         varna.BasicDraw.update(v1,bp="red", bpStyle="simple")
-        for i in range(len(l_struct_1_filtered)): 
+        for i in range(len(l_struct_1_filtered)):
             if l_struct_1_filtered[i]!=0:
                 color = cmap(l_struct_1_filtered[i]/max_value)
                 color_hex = mcolors.rgb2hex(color[:3])
