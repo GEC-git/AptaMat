@@ -7,6 +7,13 @@ sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptalign'))
 sys.path.append(root_path)
 
+#decomment if you have locarna installed in the PATH.
+root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
+sys.path.append(root_path)
+
+import locarnapi as loc
+#-----------------------#
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
@@ -214,6 +221,15 @@ def alignment_calc(struct1,struct2,speed):
     
     return dist
 
+def API_alignment_calc(struct1, struct2, speed):
+    
+    #Please put here the function used in API to align pairwise.
+    dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2)
+    
+    dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
+    
+    return dist
+
 def calculation(structure_list, CORE, speed, depth, sigma_range):
     
     ### N for matrix size
@@ -228,6 +244,8 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     results = []
     pool = multiprocessing.Pool(CORE)
     print("Aligning with AptAlign and creating matrix\n")
+    
+    #If using API, replace 'alignment_calc' with 'API_alignment_calc'.
     for result in pool.starmap(alignment_calc,
                                [(struct1, struct2,speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)

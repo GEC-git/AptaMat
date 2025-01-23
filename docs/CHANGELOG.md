@@ -1365,16 +1365,33 @@ Optimal Sigma = 2.5000000000000013
 
 ### REDOING CLUSTERING WITH RIGHT METHOD
 
-With the older 150x8 dataset (a bit cleaned).
+### With the older 150x8 dataset (a bit cleaned).
 
 **AptAlign**
 
 !["NotWrongAptaligned"](clustering_newdataset/clustering_nonwrong_newdataset_cleaned.png)
 
 Optimal Calinski Harabasz index = 1179.2947388163466
+
 Optimal Silhouette score = 0.6592796683184263
+
 Optimal Sigma = 11.80000000000001
 
-**Locarna**
+
+3h11min of clustering and aligning time.
 
 
+
+With the newer reduced dataset:
+
+**AptAlign**
+
+!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_aptaligned_goodmethod.png)
+
+Optimal Calinski Harabasz index = 552.5911757702988
+
+Optimal Silhouette score = 0.9189695439442402
+
+Optimal Sigma = 2.8000000000000016
+
+47 seconds of clustering and aligning time.
