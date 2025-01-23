@@ -782,7 +782,7 @@ class Pattern():
         self.finish=raw_range[1]
         self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
-        
+        self.paired=False
         self.subdiv_index=raw.count("#")
         
         self.isaligned=False
@@ -1153,51 +1153,49 @@ def matching_finder(struct1, struct2, verbose=False):
             
             matching_pass3=naive_matching(order1, order2)
             
-            full_paired=[]
             for elt in matching_pass3:
-                full_paired.append(elt[0])
-                full_paired.append(elt[1])
-            
+                elt[0].paired=True
+                elt[1].paired=True
             for pat1 in struct1.patterns:
-                if pat1 not in full_paired:
+                if not pat1.paired:
                     pat1.aligned(None,pat1.sequence)
-            
+
             for pat2 in struct2.patterns:
-                if pat2 not in full_paired:
+                if not pat2.paired:
                     pat2.aligned(None,pat2.sequence)
-                    
+
             return matching_pass3
         else:
             if verbose:
                 print("Pass2 valid, returning matching.")
-            full_paired=[]
+
             for elt in matching_pass2:
-                full_paired.append(elt[0])
-                full_paired.append(elt[1])
+                elt[0].paired=True
+                elt[1].paired=True
             
             for pat1 in struct1.patterns:
-                if pat1 not in full_paired:
+                if not pat1.paired:
                     pat1.aligned(None,pat1.sequence)
             
             for pat2 in struct2.patterns:
-                if pat2 not in full_paired:
+                if not pat2.paired:
                     pat2.aligned(None,pat2.sequence)
                     
             return matching_pass2
     else:
         if verbose:
             print("Pass1 valid, returning matching.")
-        full_paired=[]
+
         for elt in matching_pass1:
-            full_paired.append(elt[0])
-            full_paired.append(elt[1])
+            elt[0].paired=True
+            elt[1].paired=True
         
         for pat1 in struct1.patterns:
-            if pat1 not in full_paired:
+            if not pat1.paired:
                 pat1.aligned(None,pat1.sequence)
-        
+                
         for pat2 in struct2.patterns:
-            if pat2 not in full_paired:
+            if not pat2.paired:
                 pat2.aligned(None,pat2.sequence)
                 
         return matching_pass1
@@ -1310,74 +1308,7 @@ def full_alignment(struct1, struct2, verbose=False):
         b=time.time()
         print("Time spent:",str(round(b-a,3))+"s")
 
-#_____________________________MAIN FUNCTIONS_____________________________
-
-def row_builder(i,struct1, structure_list):
-    row=[]
-    for j,struct2 in enumerate(structure_list):
-        row.append((AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow"),struct1,struct2))
-    return row
-
-def build_aptamat_matrix(structure_list,verbose):
-    if verbose:
-        print("Building matrix (this might take a while)")
-
-    CORE=mp.cpu_count()
-    
-    pool = mp.Pool(CORE)
-    matrix=[]
-    matrix.append(pool.starmap(row_builder, [(i,struct1, structure_list) for i,struct1 in enumerate(structure_list)]))
-    pool.terminate()
-    
-    return np.array(matrix[0])
-
-
-def argmin(row,row_number):
-    mini=row[0][0]
-    argmini=0
-    for i,elt in enumerate(row):
-        if i!=row_number:
-            if elt[0]<=mini:
-                mini=elt[0]
-                argmini=i
-    return argmini, mini
-
-def ensemble_aligning(matrix):
-    aligned_structure_list=[]
-    for i,rows in enumerate(matrix):
-        argkeep,minval=argmin(rows,i)
-        full_alignment(matrix[i][argkeep][1], matrix[i][argkeep][2])
-        #matrix[i][argkeep][2].reset(matrix[i][argkeep][2].alignedsequence)
-        aligned_structure_list.append(matrix[i][argkeep][1])
-
-    return aligned_structure_list
-
-def initialize_dataset(structure_file):
-    """
-    Function used to read from the structure file.
-    """
-    structure_list = []
-    family = {}
-    with open(structure_file, 'r') as file:
-        for line in file:
-            content = line.strip().split()
-            
-            if content:
-                
-                if line.startswith('FAMILY'):
-                    pass
-                else:
-                    try:
-                        family[content[0]] += 1
-                    except KeyError:
-                        family[content[0]] = 1
-    
-                if AF.Dotbracket.is_dotbracket(content[3]):
-                    
-                    structure_list.append((content[3],content[1].split('.')[0],content[0],content[2]))
-                    
-    return structure_list,family
-
+#_____________________________MAIN FUNCTION_____________________________
 
 def main():
     start=time.time()
@@ -1397,12 +1328,6 @@ def main():
                         nargs='+',
                         type=str,
                         help='two 2D structures in dotbracket notation.')
-
-    parser.add_argument('-fp',
-                        '--filepath',
-                        action="store",
-                        nargs='+',
-                        help='Input filepath containing structures to be aligned in structures format.')
     
     args = parser.parse_args()
     
@@ -1410,57 +1335,7 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
     
-    if args.filepath is not None:
-        structure_file=""
-        for elt in args.filepath:
-            structure_file+=str(elt)
-        
-        if args.verbose:
-            print("Reading dataset")
-        
-        structure_list, families = initialize_dataset(structure_file)
-        
-        if args.verbose:
-            print("Slicing Structures")
-        
-        struct_obj_list=[]
-        for struct in structure_list:
-            struct_obj_list.append(Structure(struct[0],ident=str(struct[1]),fam=struct[2], AGU=struct[3]))
-        
-        fam_dict={}
-        for family in families:
-            fam_dict[family]=[]
-            
-        for struct in struct_obj_list:
-            fam_dict[struct.family].append(struct)
-        
-        matrix=build_aptamat_matrix(struct_obj_list,args.verbose)
-        
-        aligned_structure_list=ensemble_aligning(matrix)
-        
-        outputfilepath=structure_file.replace(".dat","")+"_aptaligned.dat"
-        
-        tbw="FAMILY    PDB_chain    SEQUENCE    DOTBRACKET\n"
-        
-        for struct in aligned_structure_list:
-            if args.verbose:
-                print(struct.id,struct.alignedsequence)
-            tbw+=struct.family+"    "+struct.id+"    "+struct.sequence+"    "+struct.alignedsequence+"\n"
-        
-        f_created=open(outputfilepath,'a')
-        f_created.write(tbw)
-        f_created.close()
-        
-        finish=time.time()
-        tot=round(finish-start,2)
-        print("Execution time: ",tot,"s")
-        
-        
-        sys.exit(0)
-        
-        
-        
-    elif args.structures is not None:
+    if args.structures is not None:
         struct1=Structure(args.structures[0])
         struct2=Structure(args.structures[1])
         
