@@ -19,7 +19,7 @@ by the sum of all the points in both matrices.
 
 AptaMat can handle extended dot-bracket notation and every additional bracket is converted into coordinates for the matrix.
 
-AptaMat can also compare structures of different length. However, we recommend to work with structure of same length. Our 
+AptaMat can also compare structures of different length. However, we recommend to work with structure of same length.
 The algorithm includes gap understanding, where each gap is considered as an additional penalized unpaired nucleotide.
 
 ____
@@ -30,12 +30,13 @@ It is designed to minimize the AptaMat distance between two DNA or RNA secondary
 This algorithm slices the dotbracket notation into notable patterns for each structure, then match the patterns between the two with three passes of calculation using a scoring matrix.
 It then aligns the patterns inside of the structures and return aligned dotbracket notations for each structures.
 
-AptAlign can align two structures or an ensemble of structures inside of a CLUSTER file.
+AptAlign can align two structures at a time and is used in the clustering algorithm.
 
 ____
 
 
-The **clustering** algorithm can be used with AptAlign to generate clusters from a dataset.
+The **clustering** algorithm is used in tandem with AptAlign to generate clusters from a dataset.
+It uses AptAlign to 
 It uses the AptaMat distance as a similarity index for the affinity propagation clustering provided by *scikit-learn*.
 
 It can also display the affinity matrix when finished using a CPU or GPU accelerated 3D matrix visualizer.
@@ -113,28 +114,16 @@ instead of calculating pairwise distance.
 
 AptAlign is an alignment algorithm used to align DNA or RNA secondary structure.
 
-It takes several arguments:
+It takes two arguments:
 
 - `-s` (`--structures`) followed by secondary structures written in dotbracket format
-- `-fp` (`--filepath`) followed by the filepath of the CLUSTER file to be aligned.
 - `-v` (`--verbose`) to increase the verbosity of the output.
-
-Both `structures` and `filepath` are independent in the script and only the file aligning will be done if called at the same time.
 
 The `structures` argument must be a string formatted secondary structures array. You can only input two structures with this parameter. Quotes are necessary.
 
       usage: AptAlign.py -s "STRUCTURE" "STRUCTURE"
 
 The output is only in the terminal.
-
-
-The `filepath` argument must be a formatted CLUSTER file. Only one file at a time can be aligned.
-
-      usage: AptAlign.py -fp FILE
-      
-The output is a CLUSTER file formatted the same way as the input file but with the alignment.
-Its name is the original name file followed by `_aptaligned`
-
 
 ## clustering
 
@@ -183,7 +172,7 @@ by one and always takes the first structure encountered as the template structur
 
 This can be a modified FASTA file.
 
-## AptAlign and clustering
+## Clustering
 
 The input must be a .txt or .dat CLUSTER file.
 
