@@ -36,7 +36,7 @@ ____
 
 
 The **clustering** algorithm is used in tandem with AptAlign to generate clusters from a dataset.
-It uses AptAlign to 
+It uses AptAlign to align all structures pair by pair before calculating the distance matrix.
 It uses the AptaMat distance as a similarity index for the affinity propagation clustering provided by *scikit-learn*.
 
 It can also display the affinity matrix when finished using a CPU or GPU accelerated 3D matrix visualizer.
