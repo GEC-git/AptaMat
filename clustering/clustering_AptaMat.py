@@ -4,12 +4,15 @@ import os
 current_dir = os.path.dirname(__file__)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
 sys.path.append(root_path)
+root_path = os.path.abspath(os.path.join(current_dir, '..','aptalign'))
+sys.path.append(root_path)
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, adjusted_rand_score
 import AptaMat2 as AF
+import AptAlign as AL
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
@@ -200,6 +203,17 @@ def initialize_dataset(structure_file):
                     structure_list.append(structure)
     return structure_list,family
 
+def alignment_calc(struct1,struct2,speed):
+    struct1al,struct2al=AL.Structure(struct1.dotbracket,ident=struct1.id),AL.Structure(struct2.dotbracket,ident=struct2.id)
+    AL.full_alignment(struct1al,struct2al)
+    
+    dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
+    
+    del struct1al
+    del struct2al
+    
+    return dist
+
 def calculation(structure_list, CORE, speed, depth, sigma_range):
     
     ### N for matrix size
@@ -213,12 +227,13 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     print("Job started",time.asctime())
     results = []
     pool = multiprocessing.Pool(CORE)
-    for result in pool.starmap(AF.compute_distance_clustering,
-                               [(struct1, struct2,"cityblock",speed) for struct1 in structure_list for struct2 in structure_list]):
+    print("Aligning with AptAlign and creating matrix\n")
+    for result in pool.starmap(alignment_calc,
+                               [(struct1, struct2,speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)
     
     pool.terminate()
-    
+    print("Starting clustering\n")
     ### Build distance matrix using AptaMat distance in 'results' tuples
     matrix_element = []
     for i in results:
