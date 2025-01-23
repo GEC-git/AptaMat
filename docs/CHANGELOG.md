@@ -1356,3 +1356,25 @@ Optimal Sigma = 11.90000000000001
 Optimal Calinski Harabasz index = 646.3805260649839 | 
 Optimal Silhouette score = 0.5598295533176815 | 
 Optimal Sigma = 2.5000000000000013
+
+
+
+
+
+### WEEK 18 - 20/01/2025 -> 26/01/2025
+
+### REDOING CLUSTERING WITH RIGHT METHOD
+
+With the older 150x8 dataset (a bit cleaned).
+
+**AptAlign**
+
+!["NotWrongAptaligned"](clustering_newdataset/clustering_nonwrong_newdataset_cleaned.png)
+
+Optimal Calinski Harabasz index = 1179.2947388163466
+Optimal Silhouette score = 0.6592796683184263
+Optimal Sigma = 11.80000000000001
+
+**Locarna**
+
+
