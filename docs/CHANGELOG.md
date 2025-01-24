@@ -1363,13 +1363,17 @@ Optimal Sigma = 2.5000000000000013
 
 ### WEEK 18 - 20/01/2025 -> 26/01/2025
 
+- Made an API to test the alignment with locarna. (not working for now)
+
+
+
 ### REDOING CLUSTERING WITH RIGHT METHOD
 
 ### With the older 150x8 dataset (a bit cleaned).
 
 **AptAlign**
 
-!["NotWrongAptaligned"](clustering_newdataset/clustering_nonwrong_newdataset_cleaned.png)
+!["NotWrongAptaligned"](clustering_newdataset/clustering_nonwrong_newdataset_cleaned_aptaligned.png)
 
 Optimal Calinski Harabasz index = 1179.2947388163466
 
@@ -1380,13 +1384,23 @@ Optimal Sigma = 11.80000000000001
 
 3h11min of clustering and aligning time.
 
+**locarna**
 
+!["NotWrongLocarna"](clustering_newdataset/clustering_nonwrong_newdataset_cleaned_locarna.png)
 
-With the newer reduced dataset:
+Optimal Calinski Harabasz index = 2184.863741381559
+
+Optimal Silhouette score = 0.39651247949877444
+
+Optimal Sigma = 48.80000000000004
+
+3h01min of clustering and aligning time.
+
+## With the newer reduced dataset:
 
 **AptAlign**
 
-!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_aptaligned_goodmethod.png)
+!["NotWrongReducedLocarna"](clustering_results_reduceddataset/clustering_reduced_locarna_goodmethod.png)
 
 Optimal Calinski Harabasz index = 552.5911757702988
 
@@ -1395,3 +1409,18 @@ Optimal Silhouette score = 0.9189695439442402
 Optimal Sigma = 2.8000000000000016
 
 47 seconds of clustering and aligning time.
+
+**locarna**
+
+!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_aptaligned_goodmethod.png)
+
+Optimal Calinski Harabasz index = 206.38901416455977
+
+Optimal Silhouette score = 0.7872993071792524
+
+Optimal Sigma = 4.600000000000003
+
+36 seconds of clustering and aligning time.
+
+**RNAforester**
+
