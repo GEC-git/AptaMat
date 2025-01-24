@@ -8,11 +8,12 @@ root_path = os.path.abspath(os.path.join(current_dir, '..','aptalign'))
 sys.path.append(root_path)
 
 #decomment if you have any of these alignment algorithms installed in the PATH.
-root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
-sys.path.append(root_path)
+# root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
+# sys.path.append(root_path)
 
-import locarnapi as loc
-import foresterAPI as forest
+# import locarnapi as loc
+# import foresterAPI as forest
+# import beagleAPI as beagle
 #-----------------------#
 
 import numpy as np
@@ -224,11 +225,14 @@ def alignment_calc(struct1,struct2,speed):
 
 def API_alignment_calc(struct1, struct2, speed):
     
-    #Please put here the function used in API to align pairwise.
-    dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2)
+    #Please decomment the function you want to use for API
+    #dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2)
     #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2)
+    #dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2)
+    #dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
     
-    dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
+    #comment this placeholder line when using API.
+    dist=0
     
     return dist
 
@@ -249,7 +253,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     
     
     #Replace here the function if using API
-    for result in pool.starmap(API_alignment_calc,
+    for result in pool.starmap(alignment_calc,
                                 [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)
 

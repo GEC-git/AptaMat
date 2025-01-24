@@ -1367,13 +1367,12 @@ Optimal Sigma = 2.5000000000000013
 
 - Made an API to test the alignment with RNAforester.
 
-
-
-
+- Made an adapter to input beagle export txt files (file to be referenced in API folder inside beagleAPI.py)
+    - You MUST use the exact same dataset when using beagle and clustering. (with the same IDs)
 
 ### REDOING CLUSTERING WITH RIGHT METHOD
 
-### With the older 150x8 dataset (a bit cleaned).
+### With the older 150x8 dataset (cleaned).
 
 **AptAlign**
 
@@ -1438,3 +1437,15 @@ Optimal Silhouette score = 0.9368989781387319
 Optimal Sigma = 2.5000000000000013
 
 41 seconds of clustering and aligning time.
+
+**Beagle2**
+
+!["NotWrongReducedBeagle2"](clustering_results_reduceddataset/clustering_reduced_beagle2_goodmethod.png)
+
+Optimal Calinski Harabasz index = 249.09662261136273
+
+Optimal Silhouette score = 0.7785955795553652
+
+Optimal Sigma = 2.6000000000000014
+
+29 seconds of ONLY clustering time.
