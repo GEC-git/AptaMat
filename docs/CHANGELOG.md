@@ -1363,7 +1363,11 @@ Optimal Sigma = 2.5000000000000013
 
 ### WEEK 18 - 20/01/2025 -> 26/01/2025
 
-- Made an API to test the alignment with locarna. (not working for now)
+- Made an API to test the alignment with locarna.
+
+- Made an API to test the alignment with RNAforester.
+
+
 
 
 
@@ -1400,7 +1404,7 @@ Optimal Sigma = 48.80000000000004
 
 **AptAlign**
 
-!["NotWrongReducedLocarna"](clustering_results_reduceddataset/clustering_reduced_locarna_goodmethod.png)
+!["NotWrongReducedLocarna"](clustering_results_reduceddataset/clustering_reduced_aptaligned_goodmethod.png)
 
 Optimal Calinski Harabasz index = 552.5911757702988
 
@@ -1412,7 +1416,7 @@ Optimal Sigma = 2.8000000000000016
 
 **locarna**
 
-!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_aptaligned_goodmethod.png)
+!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_locarna_goodmethod.png)
 
 Optimal Calinski Harabasz index = 206.38901416455977
 
@@ -1424,3 +1428,13 @@ Optimal Sigma = 4.600000000000003
 
 **RNAforester**
 
+!["NotWrongReducedAptaligned"](clustering_results_reduceddataset/clustering_reduced_forester_goodmethod.png)
+
+
+Optimal Calinski Harabasz index = 544.3919063761725
+
+Optimal Silhouette score = 0.9368989781387319
+
+Optimal Sigma = 2.5000000000000013
+
+41 seconds of clustering and aligning time.

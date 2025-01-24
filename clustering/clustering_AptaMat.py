@@ -225,7 +225,9 @@ def alignment_calc(struct1,struct2,speed):
 def API_alignment_calc(struct1, struct2, speed):
     
     #Please put here the function used in API to align pairwise.
-    dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2)
+    dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2)
+    #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2)
+    
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
     
     return dist
