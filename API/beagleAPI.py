@@ -1,6 +1,6 @@
 def file_reader():
     dot="(.-"
-    file_from="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED+NOPSEUDOKNOTS+REDUCED/beagle2_results/export_beagle.txt"
+    file_from="" #PLEASE PUT HERE PATH TO THE EXPORTED .TXT FROM BEAGLE2.
     lines=open(file_from).readlines()
     results_dictionnary={}
     for i,line in enumerate(lines):

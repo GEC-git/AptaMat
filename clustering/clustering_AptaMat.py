@@ -6,15 +6,12 @@ root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
 sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptalign'))
 sys.path.append(root_path)
+root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
+sys.path.append(root_path)
 
-#decomment if you have any of these alignment algorithms installed in the PATH.
-# root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
-# sys.path.append(root_path)
-
-# import locarnapi as loc
-# import foresterAPI as forest
-# import beagleAPI as beagle
-#-----------------------#
+import locarnapi as loc
+import foresterAPI as forest
+import beagleAPI as beagle
 
 import numpy as np
 import pandas as pd
@@ -225,14 +222,13 @@ def alignment_calc(struct1,struct2,speed):
 
 def API_alignment_calc(struct1, struct2, speed):
     
-    #Please decomment the function you want to use for API
-    #dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2)
-    #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2)
-    #dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2)
-    #dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
+    #Please decomment/comment the right functions depending of algorithm used.
+    dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2) #RNAforester
+    #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2) #LocARNA
+    #dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2) #Beagle2
+    #-----------------------#
     
-    #comment this placeholder line when using API.
-    dist=0
+    dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
     
     return dist
 
@@ -252,11 +248,17 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     print("Aligning with AptAlign and creating matrix\n")
     
     
-    #Replace here the function if using API
+    #Decoment here if using API.
+    # for result in pool.starmap(alignment_calc_API,
+    #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
+    #     results.append(result)
+    
+    # Comment here if using API.
     for result in pool.starmap(alignment_calc,
                                 [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)
-
+    #-------------------------#
+    
     pool.terminate()
     print("Starting clustering\n")
     ### Build distance matrix using AptaMat distance in 'results' tuples

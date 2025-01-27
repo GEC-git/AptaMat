@@ -22,6 +22,15 @@ AptaMat can handle extended dot-bracket notation and every additional bracket is
 AptaMat can also compare structures of different length. However, we recommend to work with structure of same length.
 The algorithm includes gap understanding, where each gap is considered as an additional penalized unpaired nucleotide.
 
+AptaMat can output different types of data :
+
+- Everytime, directly to stdout, the resulting distance.
+- The raw contribution matrices to a .dat file.
+- The colormap of nucleotide contribution to the distance for use in VARNA.
+- A PDF with a combination of:
+    - The VARNA outputs.
+    - The formatted combined matrix of contributions.
+
 ____
 
 **AptAlign** is an alignement algorithm based on pattern recognition inside of the dotbracket notation.
@@ -55,8 +64,6 @@ Those Python modules are needed for all algorithms:
 - [varnaapi](https://amibio.gitlabpages.inria.fr/varna-api/)
 - [pandas](https://pandas.pydata.org/)
 - [scikit-learn](https://scikit-learn.org/stable/)
-
-Add for clustering only:
 - [matplotlib](https://matplotlib.org/)
 - [vispy](https://vispy.org/)
 
@@ -74,8 +81,10 @@ AptaMat2.0 is a flexible Python script which can take several arguments:
 - `-ensemble` (Optionnal) which indicates whether the input secondary structures are part of an ensemble
 - `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
 - `-speed` indicates the risk taken by the algorithm when calculating the search depth. (default: slow) Can be set to quick if the user is confident in its data.
+- `-plot` indicates whether or not to output a pdf contribution file. The choices indicates the label of the matrix inside the pdf.
+- `-plot_type` gives what is actually put into the pdf file: Only VARNA representation (with raw outputs and colormap output) ; only formatted contribution matrix ; or both.
 
-      usage: AptaMat2.py [-h] [-v] [-speed [{slow,quick}]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]]
+      usage: AptaMat2.py [-h] [-v] [-speed [{slow,quick}]] [-structures STRUCTURES [STRUCTURES ...]] [-weights WEIGHTS [WEIGHTS ...]] [-files FILES [FILES ...]] [-ensemble] [-method [{cityblock,euclidean}]] [-plot [{manhattan, aptamat, contribution}]] [-plot_type [{matrix, varna, matrix_varna}]]
       
 Both `structures` and `files` are independent functions in the script and cannot be called at the same time.
 
@@ -108,6 +117,7 @@ instead of calculating pairwise distance.
       usage: AptaMat.py -structures STRUCTURES [STRUCTURES ...] -weigths WEIGHTS [WEIGHTS ...] -ensemble
           or
       usage: AptaMat.py -files FILES [FILES ...] -ensemble
+
 
 
 ## AptAlign
@@ -150,6 +160,22 @@ The output can be given, depending on the parameters, as a combination of the th
 - Heatmap in PDF if testing is necessary.
 - Visualizer of the affinity matrix.
 
+When clustering, the algorithm will automatically align each structures pair by pair using AptAlign.
+
+**ONLY TESTED IN LINUX**
+
+It is possible to use three other alignment algorithms using scripts inside the /API/ folder.
+- RNAforester : please ensure that the [ViennaRNA](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/install.html) suite is installed and located in the PATH. It should come with RNAforester.
+- LocARNA : please ensure that [LocARNA](http://www.bioinf.uni-freiburg.de/Software/LocARNA/) is installed and located in the PATH.
+- Beagle2 : Please extract the results from their [webserver](http://beagle2.bio.uniroma2.it/) as a .txt file and change the path to this file in the /API/beagleAPI.py file.
+
+When the chosen alignment algorithm is correctly installed, you will need:
+- to decomment the chosen function from line 225 as instructed by the commented line.
+- to decomment from line 252 as instructed by the commented line.
+
+Both in the clustering/clustering_AptaMat.py file.
+
+*it should not work on Windows/MacOS (untested).*
 
 # Data files to use.
 
