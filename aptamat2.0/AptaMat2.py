@@ -931,13 +931,13 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
         
         for i,char in enumerate(struct_1.dotbracket):
             if char == "-":
-                cmap_file1[i+1]=2
+                cmap_file1[i+1]=2.0
             else:
                 cmap_file1[i+1]=l_struct_1[i]/max_value
                 
         for i,char in enumerate(struct_2.dotbracket):
             if char == "-":
-                cmap_file2[i+1]=2
+                cmap_file2[i+1]=2.0
             else:
                 cmap_file2[i+1]=l_struct_2[i]/max_value
             

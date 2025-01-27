@@ -1358,9 +1358,6 @@ Optimal Silhouette score = 0.5598295533176815 |
 Optimal Sigma = 2.5000000000000013
 
 
-
-
-
 ### WEEK 18 - 20/01/2025 -> 26/01/2025
 
 - Made an API to test the alignment with locarna.
@@ -1382,7 +1379,7 @@ Optimal Calinski Harabasz index = 1179.2947388163466
 
 Optimal Silhouette score = 0.6592796683184263
 
-Optimal Sigma = 11.80000000000001
+Optimal Sigma = 11.80
 
 
 3h11min of clustering and aligning time.
@@ -1395,7 +1392,7 @@ Optimal Calinski Harabasz index = 2184.863741381559
 
 Optimal Silhouette score = 0.39651247949877444
 
-Optimal Sigma = 48.80000000000004
+Optimal Sigma = 48.80
 
 3h01min of clustering and aligning time.
 
@@ -1409,7 +1406,7 @@ Optimal Calinski Harabasz index = 552.5911757702988
 
 Optimal Silhouette score = 0.9189695439442402
 
-Optimal Sigma = 2.8000000000000016
+Optimal Sigma = 2.80
 
 47 seconds of clustering and aligning time.
 
@@ -1421,7 +1418,7 @@ Optimal Calinski Harabasz index = 206.38901416455977
 
 Optimal Silhouette score = 0.7872993071792524
 
-Optimal Sigma = 4.600000000000003
+Optimal Sigma = 4.60
 
 36 seconds of clustering and aligning time.
 
@@ -1434,7 +1431,7 @@ Optimal Calinski Harabasz index = 544.3919063761725
 
 Optimal Silhouette score = 0.9368989781387319
 
-Optimal Sigma = 2.5000000000000013
+Optimal Sigma = 2.50
 
 41 seconds of clustering and aligning time.
 
@@ -1446,6 +1443,17 @@ Optimal Calinski Harabasz index = 249.09662261136273
 
 Optimal Silhouette score = 0.7785955795553652
 
-Optimal Sigma = 2.6000000000000014
+Optimal Sigma = 2.60
 
 29 seconds of ONLY clustering time.
+
+
+### WEEK 19 - 27/01/2025 -> 02/02/2025
+
+- Updated AptaMat2.0 regarding VARNA plotting.
+    - Added automatic writing of colormap files for VARNA.
+    - Added VARNA binaries to the AptaMat2.0 folder.
+    - Added dynamic link to these binaries.
+    - Added automatic output of raw matrics to a .dat file.
+    
+- Updated README.
