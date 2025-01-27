@@ -1,8 +1,6 @@
-#! /usr/bin/env python3
 import argparse
 import os
 import pathlib
-#import string
 import sys
 import warnings
 from copy import deepcopy
@@ -18,6 +16,9 @@ from matplotlib import colors as mcolors
 import matplotlib.image as mpimg
 from matplotlib.gridspec import GridSpec
 import varnaapi as varna
+
+current_dir = os.path.dirname(__file__)
+varna.set_VARNA(current_dir+'/VARNA_applet/VARNAv3-93.jar')
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -872,6 +873,18 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
     matrix=m_struct_1.copy().T
     matrix[m_struct_2!=0]=m_struct_2[m_struct_2!=0]
     
+    print("Writing raw matrices into a file.")
+        
+    f_created=open("matrix_combined_"+struct_1.dotbracket+"_"+struct_2.dotbracket+".dat",'a')
+    tbw="# Matrix of"+struct_1.dotbracket+":\n"
+    tbw+=str(m_struct_1)
+    tbw+="\n# Matrix of"+struct_2.dotbracket+":\n"
+    tbw+=str(m_struct_2)
+    tbw+="\n# Combined matrix:\n"
+    tbw+=str(matrix)
+    f_created.write(tbw)
+    f_created.close()
+    
     if plot=='contribution':
         mask = (matrix != -2) & (matrix != -1)
         total = np.sum(matrix[mask])        
@@ -882,7 +895,6 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
         l_struct_1=np.round(l_struct_1, 2)
         l_struct_2 = [(x * 100 / total) for x in l_struct_2]
         l_struct_2=np.round(l_struct_2, 2)
-
 
     fig = plt.figure(figsize=(10, 6))
 
@@ -906,12 +918,48 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
         ax3.axis('off')
         ax4.axis('off')
         ax5.axis('off')
-         
-        dotbracket_1= struct_1.dotbracket.replace("-", "")    
+        
+        cmap_file1={}
+        cmap_file2={}
+        
+        dotbracket_1= struct_1.dotbracket.replace("-", "")
         dotbracket_2= struct_2.dotbracket.replace("-", "")
         l_struct_1_filtered = [l_struct_1[i] for i in range(len(struct_1.dotbracket)) if struct_1.dotbracket[i] != "-"]
         l_struct_2_filtered = [l_struct_2[i] for i in range(len(struct_2.dotbracket)) if struct_2.dotbracket[i] != "-"]
-
+        
+        print("Exporting colormaps of both structures.")
+        
+        for i,char in enumerate(struct_1.dotbracket):
+            if char == "-":
+                cmap_file1[i+1]=2
+            else:
+                cmap_file1[i+1]=l_struct_1[i]/max_value
+                
+        for i,char in enumerate(struct_2.dotbracket):
+            if char == "-":
+                cmap_file2[i+1]=2
+            else:
+                cmap_file2[i+1]=l_struct_2[i]/max_value
+            
+        f_created=open("cmap_"+struct_1.dotbracket+".cmap",'a')
+        tbw=""
+        for items in cmap_file1.items():
+            tbw+=str(items[0])+"; "+str(items[1])+"\n"
+        tbw+='\n# Colormap of struct1: '+struct_1.dotbracket+"\n"
+        tbw+="# If there are gaps, use this structure to input into VARNA: "+struct_1.dotbracket.replace("-",".")
+        f_created.write(tbw)
+        f_created.close()
+        
+        f_created=open("cmap_"+struct_2.dotbracket+".cmap",'a')
+        tbw=""
+        for items in cmap_file2.items():
+            tbw+=str(items[0])+"; "+str(items[1])+"\n"
+        tbw+='\n# Colormap of struct2: '+struct_2.dotbracket+"\n"
+        tbw+="# If there are gaps, use this structure to input into VARNA: "+struct_2.dotbracket.replace("-",".")
+        f_created.write(tbw)
+        f_created.close()
+        
+        print("Exporting pdf with filtered gaps.")
         v1 = varna.Structure(structure=dotbracket_1)
         varna.BasicDraw.update(v1,bp="red", bpStyle="simple")
         for i in range(len(l_struct_1_filtered)):
@@ -927,7 +975,8 @@ def plot_matrix(struct_1: object, struct_2: object, method, plot, speed:str, fil
             color_hex = mcolors.rgb2hex(color[:3])
             if l_struct_2_filtered[i]!=0:
                 v2.add_bases_style(varna.param.BasesStyle(fill=color_hex), [i+1])
-    
+                
+        print("Saving raw png filtered files from VARNA")
         v1.savefig('struct_1.png')
         img1 = mpimg.imread('struct_1.png')
         ax2.imshow(img1)
@@ -1162,7 +1211,7 @@ def main():
     res=[]
     
     if args.plot!=False:  
-        file_matrix=PdfPages('test.pdf')
+        file_matrix=PdfPages('PDFoutput_filtered.pdf')
     
     for i, compared_struct in enumerate(struct_list):
         template_struct = struct_list[0]
