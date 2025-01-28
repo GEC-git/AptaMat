@@ -9,9 +9,14 @@ sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
 sys.path.append(root_path)
 
-import locarnapi as loc
-import foresterAPI as forest
-import beagleAPI as beagle
+#Decomment/Comment the chosen APIs.
+#import locarnapi as loc
+#import foresterAPI as forest
+#import beagleAPI as beagle
+import RNAlignAPI as rnapi
+#--------------------------#
+
+
 
 import numpy as np
 import pandas as pd
@@ -28,9 +33,6 @@ import multiprocessing
 from vispy import scene
 from vispy import app
 import argparse
-
-
-
 
 def build_label_dict(labels, family):
     """
@@ -223,7 +225,8 @@ def alignment_calc(struct1,struct2,speed):
 def API_alignment_calc(struct1, struct2, speed):
     
     #Please decomment/comment the right functions depending of algorithm used.
-    dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2) #RNAforester
+    #dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2) #RNAforester
+    dotbracket1al, dotbracket2al = rnapi.rnalign2d_pairwise(struct1,struct2) #RNAlign2D
     #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2) #LocARNA
     #dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2) #Beagle2
     #-----------------------#
@@ -245,15 +248,15 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     print("Job started",time.asctime())
     results = []
     pool = multiprocessing.Pool(CORE)
-    print("Aligning with AptAlign and creating matrix\n")
+
     
     
     #Decoment here if using API.
-    # for result in pool.starmap(alignment_calc_API,
+    # for result in pool.starmap(API_alignment_calc,
     #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
     #     results.append(result)
     
-    # Comment here if using API.
+    # Comment here if using AptAlign.
     for result in pool.starmap(alignment_calc,
                                 [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
         results.append(result)
@@ -452,8 +455,12 @@ def main():
     print('Optimal Calinski Harabasz index =', aff_prop_calinski_best)
     print("Optimal Silhouette score =", silhouette_best)
     print('Optimal Sigma =', sigma_best)
-    labels = aff_prop_clust_best.labels_
-    tbw="CLUSTER   FAMILY   ID   DOTBRACKET\n"
+    labels = renumber_by_rank(aff_prop_clust_best.labels_)
+    
+    tbw='Optimal Calinski Harabasz index ='+str(aff_prop_calinski_best)+"\n"
+    tbw+="Optimal Silhouette score ="+str(silhouette_best)+"\n"
+    tbw+='Optimal Sigma ='+str(sigma_best)+"\n"
+    tbw+="CLUSTER   FAMILY   ID   DOTBRACKET\n"
     for i,struct in enumerate(structure_list):
         tbw+=str(labels[i])+"   "+struct.family+"   "+struct.id+"   "+struct.dotbracket+"\n"
     

@@ -164,14 +164,16 @@ When clustering, the algorithm will automatically align each structures pair by 
 
 **ONLY TESTED IN LINUX**
 
-It is possible to use three other alignment algorithms using scripts inside the /API/ folder.
+It is possible to use four other alignment algorithms using scripts inside the /API/ folder.
 - RNAforester : please ensure that the [ViennaRNA](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/install.html) suite is installed and located in the PATH. It should come with RNAforester.
 - LocARNA : please ensure that [LocARNA](http://www.bioinf.uni-freiburg.de/Software/LocARNA/) is installed and located in the PATH.
 - Beagle2 : Please extract the results from their [webserver](http://beagle2.bio.uniroma2.it/) as a .txt file and change the path to this file in the /API/beagleAPI.py file.
+- [RNAlign2D](https://github.com/tomaszwozniakihg/rnalign2d) : please ensure that the program is correctly installed.
 
 When the chosen alignment algorithm is correctly installed, you will need:
-- to decomment the chosen function from line 225 as instructed by the commented line.
-- to decomment from line 252 as instructed by the commented line.
+- to decomment/comment the chosen imported API imported from line 13.
+- to decomment the chosen function from line 228 as instructed by the commented line.
+- to decomment from line 255 as instructed by the commented line.
 
 Both in the clustering/clustering_AptaMat.py file.
 
