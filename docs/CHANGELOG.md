@@ -1457,3 +1457,5 @@ Optimal Sigma = 2.60
     - Added automatic output of raw matrics to a .dat file.
     
 - Updated README.
+
+- Completely debugged AptAlign
