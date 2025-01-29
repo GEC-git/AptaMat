@@ -217,10 +217,12 @@ def alignment_calc(struct1,struct2,speed):
     
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
     
+    
+    alignment=[struct1al.alignedsequence,struct2al.alignedsequence]
+    ids=[struct1.id, struct2.id]
     del struct1al
     del struct2al
-    
-    return dist
+    return dist, alignment, ids
 
 def API_alignment_calc(struct1, struct2, speed):
     
@@ -232,8 +234,9 @@ def API_alignment_calc(struct1, struct2, speed):
     #-----------------------#
     
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
-    
-    return dist
+    alignment=[dotbracket1al,dotbracket2al]
+    ids=[struct1.id, struct2.id]
+    return dist, alignment, ids
 
 def calculation(structure_list, CORE, speed, depth, sigma_range):
     
@@ -241,30 +244,42 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     N = len(structure_list)
     
     ### Calculate AptaMat distance for each
-    ### Each structure comparison result in a tuple (struct1, struct2, AptaMat distance)
+
     
-    #AF.compute_distance(struct_1, struct_2, method, nb_pool, pool, speed)
+
     start = time.time()
     print("Job started",time.asctime())
     results = []
     pool = multiprocessing.Pool(CORE)
 
-    
+    inter_res=[]
     
     #Decoment here if using API.
     # for result in pool.starmap(API_alignment_calc,
     #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-    #     results.append(result)
+    #     inter_res.append(result)
     
-    # Comment here if using AptAlign.
+    #Decomment here if using AptAlign.
     for result in pool.starmap(alignment_calc,
                                 [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-        results.append(result)
+        inter_res.append(result)
     #-------------------------#
     
+    tbw=""
+    for elt in inter_res:
+        results.append(elt[0])
+        tbw+=">"+str(elt[2][0])+" - "+str(elt[2][1])+" | AptaMat: "+str(elt[0])+"\n"
+        tbw+=str(elt[1][0])+"\n"
+        tbw+=str(elt[1][1])+"\n"
+    
     pool.terminate()
+    print("Creating all alignment file.")
+    f_created=open("CLUSTERING_ALIGNMENT_RESULTS.dat",'a')
+    f_created.write(tbw)
+    f_created.close()
     print("Starting clustering\n")
-    ### Build distance matrix using AptaMat distance in 'results' tuples
+    
+    
     matrix_element = []
     for i in results:
         if i == None:
