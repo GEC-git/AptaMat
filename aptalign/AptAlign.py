@@ -10,7 +10,7 @@ sys.path.append(root_path)
 import AptaMat2 as AF
 import time
 import argparse
-import multiprocessing as mp
+# import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 
@@ -64,6 +64,15 @@ def insert_gap_seq_dict(dict_seq,pos):
             
     return new_dict_seq
 
+def inverser_dico(dict_seq):
+    dico_tbd={}
+    maxi=max(dict_seq.keys())
+    mini=min(dict_seq.keys())
+    for i in range(maxi,mini-1,-1):
+        dico_tbd[maxi-i]=dict_seq[i]
+    
+    return dico_tbd
+
 def dict_seq_translation(dict_seq,trans_amount):
     """
     Dedicated function to translate a sequence dictionnary by *trans_amount* positions.
@@ -90,6 +99,7 @@ def dict_seq_cluster_finder(dict_seq,direction="Both"):
     if direction=="Right":
         par=")"
     elif direction=="Left":
+        dict_seq=inverser_dico(dict_seq)
         par="("
     else:
         par="()"
@@ -99,7 +109,6 @@ def dict_seq_cluster_finder(dict_seq,direction="Both"):
         if elt[1] in par:
             cluster_list_conca.append(elt[0])
 
-    
     return cluster_list_conca
 
 ### PATTERN ALIGNMENT
@@ -111,7 +120,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
     Used in inside-out aligning.
     """
     trans_amnt=abs(mid_g1-mid_g2) 
-    
+
     if diff1==diff2:
         #only translation operation
         if mid_g1<mid_g2:
@@ -127,11 +136,13 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
 
     elif diff1>diff2:
         #middle of pat1 > middle of pat2
+
         for i in range(diff1-diff2):
             dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2)
-        
+            
+            
         mid_d2=mid_d2+(diff1-diff2)
-        
+
         if mid_g1<mid_g2:
             #middle of 1 starts before middle of 2, so 1 is to be translated
             dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
@@ -147,6 +158,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         #middle of pat2 > middle of pat1
         for i in range(diff2-diff1):
             dict_seq1=insert_gap_seq_dict(dict_seq1, mid_d1)
+            
         
         mid_d1=mid_d1+(diff2-diff1)
         
@@ -160,7 +172,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
             dict_seq2=dict_seq_translation(dict_seq2, trans_amnt)
             mid_g2+=trans_amnt
             mid_d2+=trans_amnt
-        
+    
     return dict_seq1, dict_seq2, mid_g1, mid_d1, mid_g2, mid_d2
 
 def propagation_alignment(dict_tba1, dict_tba2, direction):
@@ -169,11 +181,56 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
     """
     cluster_1 = dict_seq_cluster_finder(dict_tba1, direction)
     cluster_2 = dict_seq_cluster_finder(dict_tba2, direction)
-
+    
     Pdiff = len(cluster_1)-len(cluster_2)
     
-    if direction=="Right" or Pdiff==0:
+    if direction=="Right":
         #aligning the right dictionnaries.
+        if Pdiff>0:
+            #more pairings in 1.
+            for i, elt2 in enumerate(cluster_2):
+                if elt2 != cluster_1[i]:
+                    local_diff = elt2-cluster_1[i]
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos cluster_1[i].
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i])
+                            
+                        #update cluster_1
+                        for j in range(i, len(cluster_1)):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos elt2.
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, elt2)
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+                        
+        else:
+            #more pairings in 2 or equal amount.
+            for i, elt1 in enumerate(cluster_1):
+                if elt1 != cluster_2[i]:
+                    local_diff=cluster_2[i]-elt1
+                    if local_diff > 0:
+                        #place local_diff gaps in 1 at pos elt1.
+                        for k in range(local_diff):
+                            dict_tba1=insert_gap_seq_dict(dict_tba1, elt1)
+                        #update cluster_1
+                        for j in range(i, len(cluster_1)):
+                            cluster_1[j]+=local_diff
+                    else:
+                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
+                        for k in range(abs(local_diff)):
+                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i])
+                        #update cluster_2
+                        for j in range(i, len(cluster_2)):
+                            cluster_2[j]+=abs(local_diff)
+                        
+    elif direction=="Left":
+        #aligning the left dictionnaries by starting from the right.
+        dict_tba1=inverser_dico(dict_tba1)
+        dict_tba2=inverser_dico(dict_tba2)
         if Pdiff>0:
             #more pairings in 1.
             for i, elt2 in enumerate(cluster_2):
@@ -217,53 +274,9 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                         #update cluster_2
                         for j in range(i, len(cluster_2)):
                             cluster_2[j]+=abs(local_diff)
-                        
-    elif direction=="Left" and Pdiff!=0:
-        #aligning the left dictionnaries by starting from the right.
-
-        if Pdiff>0:
-            #more pairings in 1.
-            for i in range(len(cluster_2)-1,-1,-1):
-                if cluster_2[i] != cluster_1[i+Pdiff]:
-                    local_diff = cluster_2[i]-cluster_1[i+Pdiff]
-                    if local_diff > 0:
-
-                        for k in range(local_diff):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i]+1)
                             
-
-                        for j in range(i+1,-1,-1):
-                            cluster_2[j]-=local_diff
-                    else:
-
-                        for k in range(abs(local_diff)):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i+Pdiff]+1)
-
-                        for j in range(i+1,-1,-1):
-                            cluster_1[j]-=abs(local_diff)
-        else:
-            #more pairings in 2 or equal amount.
-            for i in range(len(cluster_1)-1,-1,-1):
-
-                if cluster_2[i+abs(Pdiff)] != cluster_1[i]:
-                    
-                    local_diff = cluster_2[i+abs(Pdiff)]-cluster_1[i]
-
-                    if local_diff > 0:
-
-                        for k in range(local_diff):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i+abs(Pdiff)]+1)
-                            
-                        for j in range(i+1,-1,-1):
-                            cluster_2[j]-=local_diff
-                    else:
-
-                        for k in range(abs(local_diff)):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i]+1)
-
-                        for j in range(i+1,-1,-1):
-                            cluster_1[j]-=abs(local_diff)
-
+        dict_tba1=inverser_dico(dict_tba1)
+        dict_tba2=inverser_dico(dict_tba2)
 
     #account for the rest of pairings by placing gaps.
     
@@ -387,31 +400,28 @@ def inside_out_pat_alignment(pat1, pat2):
         start2=list(dict_tba2_L)[0]
         dict_tba2_L_translated=dict_seq_translation(dict_tba2_L,-start2)
             
-        #dict1_L, dict2_L = equal_propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated)
         dict1_L, dict2_L = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated, "Left")
     else:
         dict1_L, dict2_L = propagation_alignment(dict_tba1_L, dict_tba2_L, "Left")
-
+        
         start1=list(dict1_L.keys())[0]
         start2=list(dict2_L.keys())[0]
         
         dict1_L=dict_seq_translation(dict1_L,-start1)
         dict2_L=dict_seq_translation(dict2_L,-start2)
-        
+    
     # Now, translate the middle and right dictionnaries
     trans1 = list(dict1_L.values()).count("-") - start1
     trans2 = list(dict2_L.values()).count("-") - start2
-    
-    dict_tba1_R = dict_seq_translation(dict_tba1_R,trans1)
-    dict_tba2_R = dict_seq_translation(dict_tba2_R,trans2)
-    
+
     dict1_M = dict_seq_translation(dict_mid1, trans1)
     dict2_M = dict_seq_translation(dict_mid2, trans2)
     
     #aligning the right dictionnaries
-
-    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
     
+    
+    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
+
     #reagglomerating.
     seq1_L=dict_seq_reagglomerate(dict1_L)
     seq1_M=dict_seq_reagglomerate(dict1_M)
@@ -1234,10 +1244,7 @@ def full_alignment(struct1, struct2, verbose=False):
     ____________________
     
     """
-    if verbose:
-        a=time.time()
-        initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
-    
+
     matching=[]
 
     if struct1.raw == struct2.raw:
@@ -1296,22 +1303,11 @@ def full_alignment(struct1, struct2, verbose=False):
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
     
-    if verbose:
-        new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
-        print(struct1.alignedsequence)
-        print(struct2.alignedsequence)
-        if initial_dist!=0:
-            improvement = round((initial_dist-new_dist)/initial_dist *100,2)
-        else:
-            improvement = 1
-        print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
-        b=time.time()
-        print("Time spent:",str(round(b-a,3))+"s")
 
 #_____________________________MAIN FUNCTION_____________________________
 
 def main():
-    start=time.time()
+
     parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
                                                  "Use -fp for a file input of an ensemble of structures.\n"
                                                  "Use -s to input only two structures directly in the command line.\n"
@@ -1341,11 +1337,37 @@ def main():
         
         full_alignment(struct1, struct2, args.verbose)
         if not args.verbose:
+            a=time.time()
+            initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
+            
             print("Structure 1:")
             print(struct1.alignedsequence)
             print("Structure 2:")
             print(struct2.alignedsequence)
+            new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
+            if initial_dist!=0:
+                improvement = round((initial_dist-new_dist)/initial_dist *100,2)
+            else:
+                improvement = 1
+            print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
+            b=time.time()
+            print("Time spent:",str(round(b-a,3))+"s")
         else:
+            a=time.time()
+            initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
+            
+            print("Structure 1:")
+            print(struct1.alignedsequence)
+            print("Structure 2:")
+            print(struct2.alignedsequence)
+            new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
+            if initial_dist!=0:
+                improvement = round((initial_dist-new_dist)/initial_dist *100,2)
+            else:
+                improvement = 1
+            print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
+            b=time.time()
+            print("Time spent:",str(round(b-a,3))+"s")
             print("\nDetailed results:\n")
             print("______________________________________\n")
             print("\n","First Structure","\n")
