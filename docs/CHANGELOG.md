@@ -1454,8 +1454,23 @@ Optimal Sigma = 2.60
     - Added automatic writing of colormap files for VARNA.
     - Added VARNA binaries to the AptaMat2.0 folder.
     - Added dynamic link to these binaries.
-    - Added automatic output of raw matrics to a .dat file.
+    - Added automatic output of raw matrices to a .dat file.
     
 - Updated README.
 
 - Completely debugged AptAlign
+
+- Added RNAlign2D API.
+
+- Added automatic output of all alignments to a FASTA file.
+
+
+### WEEK 20 - 03/02/2025 -> 09/02/2025
+
+
+**AptAlign**
+
+- Added surrounding overdivision check in aptalign.
+- Added pseudoknots aligning when in the middle of two patterns.
+
+
