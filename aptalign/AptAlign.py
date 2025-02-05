@@ -45,6 +45,14 @@ def insert_str(string,num,char):
         res+=elt
     return res
 
+def count_pseudo(seq):
+    pseudo_char="[{<123456789>}]"
+    count=0
+    for elt in seq:
+        if seq in pseudo_char:
+            count+=1
+    return count
+
     # For sequence dictionnary manipulations
 
 def insert_gap_seq_dict(dict_seq,pos):
@@ -119,10 +127,51 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
     
     Used in inside-out aligning.
     """
-    trans_amnt=abs(mid_g1-mid_g2) 
+    
+    #counting pseudoknots and determining start. Aligning them if possible.
+    pseudo="[{<>}]"
+    seq1=""
+    for key,value in dict_seq1.items():
+        if mid_g1 < key < mid_d1:
+            seq1+=value
 
+    seq2=""
+    for key,value in dict_seq2.items():
+        if mid_g2 < key < mid_d2:
+            seq2+=value
+    
+    nb_pk1=seq1.count("[")+seq1.count("{")+seq1.count("<")+seq1.count(">")+seq1.count("}")+seq1.count("]")
+    nb_pk2=seq2.count("[")+seq2.count("{")+seq2.count("<")+seq2.count(">")+seq2.count("}")+seq2.count("]")
+    if nb_pk1 !=0 and nb_pk2 !=0:
+        start1=0
+        while seq1[start1] not in pseudo:
+            start1+=1
+        
+        start2=0
+        while seq2[start2] not in pseudo:
+            start2+=1
+    
+        if start1<start2:
+            #displace mid1 by start1 gaps at start1 to make pseudoknots match.
+            for i in range(start2-start1):
+                dict_seq1=insert_gap_seq_dict(dict_seq1, start1+mid_g1+1)
+                  
+            mid_d1=mid_d1+(start2-start1)
+        
+        elif start2<start1:
+            #displace mid2 by start2 gaps at start2 to make pseudoknots match.
+            for i in range(start1-start2):
+                dict_seq2=insert_gap_seq_dict(dict_seq2, start2+mid_g2+1)
+                  
+            mid_d2=mid_d2+(start1-start2)
+    
+    trans_amnt=abs(mid_g1-mid_g2)
+
+    diff1=mid_d1-mid_g1
+    diff2=mid_d2-mid_g2
+    
     if diff1==diff2:
-        #only translation operation
+        #only translation operation, we don't accept to align pseudoknots
         if mid_g1<mid_g2:
             #middle of 1 starts before middle of 2, so 1 is to be translated
             dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
@@ -136,7 +185,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
 
     elif diff1>diff2:
         #middle of pat1 > middle of pat2
-
+        
         for i in range(diff1-diff2):
             dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2)
             
@@ -504,26 +553,35 @@ def subdiv_finder(sequence,subdiv_param):
         del(dict_par[index_list[i+1]])
         
     for elt in subdiv.keys():
-        dict_seq[elt]="#"
+        if dict_seq[elt]=="(":
+            dict_seq[elt]="O"
+        elif dict_seq[elt]==")":
+            dict_seq[elt]="C"
     new_seq=''
     for elt in dict_seq.values():
         new_seq+=elt
     
-    
-    order=[]
-    for elt in subdiv.items():
-        order.append(elt)
-    
-    def get_index(pair):
-        return pair[0]
-    
-    order=sorted(order, key=lambda pair : get_index(pair))
-    
-    subdiv_fin={}
-    for i,pairs in enumerate(order):
-        subdiv_fin[i]=pairs[1]
-        
-    return subdiv_fin,new_seq
+    subdiv_list=[]
+    subdiv_dict={}
+    new_subdiv=True
+    for i,elt in enumerate(new_seq):
+        if elt=="O":
+            if new_subdiv:
+                new_subdiv=False
+                
+            subdiv_dict[i]="("
+        elif elt =="C":
+            if new_subdiv:
+
+                new_subdiv=False
+            subdiv_dict[i]=")"
+        else:
+            new_subdiv=True
+            if subdiv_dict!={}:
+                subdiv_list.append(subdiv_dict)
+            subdiv_dict={}
+            
+    return subdiv_list, new_seq
 
 def slicer(sequence):
     """
@@ -613,6 +671,25 @@ def slicer(sequence):
     
     return sep,pat
 
+def surround(subdiv,sep):
+    """
+    Checks if an overdivision found is around a single pattern or not.
+    """
+    order_dict={}
+    for i in range(len(subdiv)):
+        order_dict[i]=None
+    for i,subdiv_dict in enumerate(subdiv):
+        for separator in sep:
+            if separator.start <= list(subdiv_dict)[0] < separator.finish and separator.start != -1:
+                order_dict[i]=separator.nb
+                
+    if order_dict[0]==order_dict[1]-2:
+        return True
+    else:
+        return False
+        
+    
+    
 ### CLASSES
 
 class Structure():
@@ -624,8 +701,13 @@ class Structure():
     def __init__(self, sequence, ident=None, fam=None, AGU=None):
         self.raw=sequence
         self.sequence=AGU
-        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
+        if self.subdiv_list!=[]:
+            if surround(self.subdiv_list,sep):
+                self.raw_nosubdiv=self.raw
+                self.subdiv_list=[]
+                sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
         self.length=len(sequence)
@@ -656,7 +738,7 @@ class Structure():
         tbp+="Length: "+str(self.length)+"\n"
         tbp+="Raw Sequence: "+self.raw+"\n"
         tbp+="Subdiv sequence: "+str(self.raw_nosubdiv)+"\n"
-        tbp+="Subdiv: "+str(self.subdiv)+"\n"
+        tbp+="Subdiv: "+str(self.subdiv_list)+"\n"
         tbp+="\nSeparators: \n"
         for i,elt in enumerate(self.separators):
             tbp+="\nSeparator number "+str(i+1)+":\n"+str(elt)+"\n"
@@ -717,11 +799,11 @@ class Structure():
                     seqint+=patsep.alignedsequence
             
             seq_dic={}
-            cpt=0
             for i,elt in enumerate(seqint):
-                if elt == "#":
-                    seq_dic[i]=self.subdiv[cpt]
-                    cpt+=1
+                if elt == "O":
+                    seq_dic[i]="("
+                elif elt =="C":
+                    seq_dic[i]=")"
                 else:
                     seq_dic[i]=elt
             
@@ -755,11 +837,20 @@ class Separator():
             
         self.sequence=raw
         
-        self.subdiv_index=raw.count('#')
+        self.subdiv_index=raw.count('O')+raw.count('C')
         
         if self.subdiv_index!=0:
             self.subdiv_accounted=False
             
+        self.pk_index_opened=raw.count("[")+raw.count("{")+raw.count("<")
+        self.pk_index_closed=raw.count("]")+raw.count("}")+raw.count(">")
+        
+        if self.pk_index_closed!=0:
+            self.pk_index_c_accounted=False
+        
+        if self.pk_index_opened!=0:
+            self.pk_index_o_accounted=False
+        
     def __eq__(self,other):
         if isinstance(other,Separator):
             return self.length==other.length
@@ -785,6 +876,7 @@ class Pattern():
     
     Example: `(((((..))..)))` is a pattern but `(..)(((.)))` isn't.
     """
+    
     def __init__(self,raw,raw_range,order,pat_num):
         self.nb=order
         self.pattern_nb=pat_num
@@ -793,8 +885,8 @@ class Pattern():
         self.length=raw_range[1]-raw_range[0]+1
         self.sequence=raw
         self.paired=False
-        self.subdiv_index=raw.count("#")
-        
+        self.subdiv_index=raw.count("O")+raw.count("C")
+        self.pseudo_index=count_pseudo(raw)
         self.isaligned=False
         self.alignedwith=None
         self.alignedsequence=""
@@ -866,6 +958,43 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
 
 ### SEPARATOR ALIGNMENT FUNCTIONs
 
+def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
+    """
+    Spatially aware pseudoknots compensation inside of separators.
+    """
+    #creating necessary separator matching 
+    sep_opened_matching=[]
+    sep_closed_matching=[]
+    
+    for pairs in matching:
+        if ordered1[pairs[0].nb-1].pk_index_opened !=0 and ordered2[pairs[1].nb-1].pk_index_opened !=0:
+            if not(ordered1[pairs[0].nb-1].pk_index_o_accounted) and not(ordered2[pairs[1].nb-1].pk_index_o_accounted):
+                ordered1[pairs[0].nb-1].pk_index_o_accounted = True
+                ordered2[pairs[1].nb-1].pk_index_o_accounted = True
+                sep_opened_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
+                
+        if ordered1[pairs[0].nb-1].pk_index_closed !=0 and ordered2[pairs[1].nb-1].pk_index_closed !=0:
+            if not(ordered1[pairs[0].nb-1].pk_index_c_accounted) and not(ordered2[pairs[1].nb-1].pk_index_c_accounted):
+                ordered1[pairs[0].nb-1].pk_index_c_accounted = True
+                ordered2[pairs[1].nb-1].pk_index_c_accounted = True
+                sep_closed_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
+            
+        if ordered1[pairs[0].nb+1].pk_index_opened != 0 and ordered2[pairs[1].nb+1].pk_index_opened !=0:
+            if not(ordered1[pairs[0].nb+1].pk_index_o_accounted) and not(ordered2[pairs[1].nb+1].pk_index_o_accounted):
+                ordered1[pairs[0].nb+1].pk_index_o_accounted = True
+                ordered2[pairs[1].nb+1].pk_index_o_accounted = True
+                sep_opened_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
+                
+        if ordered1[pairs[0].nb+1].pk_index_closed != 0 and ordered2[pairs[1].nb+1].pk_index_closed !=0:
+            if not(ordered1[pairs[0].nb+1].pk_index_c_accounted) and not(ordered2[pairs[1].nb+1].pk_index_c_accounted):
+                ordered1[pairs[0].nb+1].pk_index_c_accounted = True
+                ordered2[pairs[1].nb+1].pk_index_c_accounted = True
+                sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
+
+        
+    print(sep_opened_matching)
+    print(sep_closed_matching)
+
 def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
     Accounting for overdivision and aligning separators where hashtags are present.
@@ -890,7 +1019,8 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
                 ordered1[pairs[0].nb+1].subdiv_accounted = True
                 ordered2[pairs[1].nb+1].subdiv_accounted = True
                 sep_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
-
+    
+    
     for sep_pairs in sep_matching:
         #making sequence dictionnaries
         dict_seq1={}
@@ -900,14 +1030,14 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
         dict_seq2={}
         for i,elt in enumerate(sep_pairs[1].sequence):
             dict_seq2[i]=elt
-        
-        #determining the start of both subdiv
+
+        #determining the start of both overdiv
         start1=0
-        while dict_seq1[start1]!="#":
+        while dict_seq1[start1]!="O" and dict_seq1[start1]!="C":
             start1+=1
             
         start2=0
-        while dict_seq2[start2]!="#":
+        while dict_seq2[start2]!="O" and dict_seq2[start2]!="C":
             start2+=1
         
         
@@ -1035,8 +1165,10 @@ def pair_pat_score_pass1(pat1,pat2):
     
     pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))
     pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))
-
-    return abs(pat1_sc - pat2_sc) + apta_dist + abs(pat1.length - pat2.length)
+    
+    #pseudo=abs(pat1.pseudo_index - pat2.pseudo_index)
+    
+    return abs(pat1_sc - pat2_sc) + apta_dist + abs(pat1.length - pat2.length)# + pseudo
 
 def pair_pat_score_pass2(pat1,pat2):
     """
@@ -1046,8 +1178,10 @@ def pair_pat_score_pass2(pat1,pat2):
     
     pat1_sc = (pat1.sequence.count("(")+pat1.sequence.count(")"))
     pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))
-
-    return abs(pat1_sc - pat2_sc) + apta_dist
+    
+    #pseudo=abs(pat1.pseudo_index - pat2.pseudo_index)
+    
+    return abs(pat1_sc - pat2_sc) + apta_dist# + pseudo
 
 def matching_test(matching):
     pair_order=[matching[0][0].nb,matching[0][1].nb]
@@ -1225,9 +1359,9 @@ def full_alignment(struct1, struct2, verbose=False):
         
         MATCHING
         
-        - Testing for compatibility using a pairing score.
+        - Testing for compatibility using a pairing score and three passes.
         
-        - If the best match is not compatible with an alignment, returns the matching instead.
+        - If the best match is not compatible with an alignment, use naive matching instead.
         
         ALIGNING
         
@@ -1280,12 +1414,14 @@ def full_alignment(struct1, struct2, verbose=False):
         pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
 
     if verbose:
-        print("\nAccounting for overdivison")
+        print("\nAccounting for overdivison and pseudoknots")
 
         
     order1=struct1.order_list()
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
+    
+    pseudoknots_compensating(struct1, struct2, order1, order2, matching)
 
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
@@ -1302,7 +1438,6 @@ def full_alignment(struct1, struct2, verbose=False):
   
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
-    
 
 #_____________________________MAIN FUNCTION_____________________________
 
