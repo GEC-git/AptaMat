@@ -205,6 +205,13 @@ class Dotbracket:
         if any('(' == char or '.' == char for char in dotbracket):
             return True
 
+def reduce_penalty(struct1, struct2):
+    """
+    (((((....)))))..........
+    (((--....--)))...-------
+    """
+    None
+
 
 class Dotplot(Dotbracket):
     """ Create a Dotplot from a dotbracket object"""
