@@ -259,7 +259,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
     #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
     #     inter_res.append(result)
     
-    #Decomment here if using AptAlign.
+    # Decomment here if using AptAlign.
     for result in pool.starmap(alignment_calc,
                                 [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
         inter_res.append(result)

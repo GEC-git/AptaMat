@@ -13,6 +13,7 @@ import argparse
 # import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 ### BASE FUNCTIONS
 
@@ -570,17 +571,24 @@ def subdiv_finder(sequence,subdiv_param):
                 new_subdiv=False
                 
             subdiv_dict[i]="("
+
         elif elt =="C":
             if new_subdiv:
-
+                
                 new_subdiv=False
             subdiv_dict[i]=")"
+
         else:
             new_subdiv=True
             if subdiv_dict!={}:
+
                 subdiv_list.append(subdiv_dict)
             subdiv_dict={}
             
+    if subdiv_dict!={}:
+
+        subdiv_list.append(subdiv_dict)
+    
     return subdiv_list, new_seq
 
 def slicer(sequence):
@@ -680,16 +688,30 @@ def surround(subdiv,sep):
         order_dict[i]=None
     for i,subdiv_dict in enumerate(subdiv):
         for separator in sep:
-            if separator.start <= list(subdiv_dict)[0] < separator.finish and separator.start != -1:
+            if separator.start <= list(subdiv_dict)[0] <= separator.finish and separator.start != -1:
                 order_dict[i]=separator.nb
-                
-    if order_dict[0]==order_dict[1]-2:
+
+    order_before=order_dict[0]
+    inter_order_dict=copy.deepcopy(order_dict)
+    for nb,order in order_dict.items():
+        if nb!=0:
+            if order_before==order:
+                del inter_order_dict[nb]
+            else:
+                order_before=order
+    
+    order_dict={}
+    
+    i=0
+    for value in inter_order_dict.values():
+        order_dict[i]=value
+        i+=1
+    
+    if order_dict[0]==order_dict[1]-2 and len(order_dict)==2:
         return True
     else:
         return False
-        
-    
-    
+
 ### CLASSES
 
 class Structure():
@@ -992,8 +1014,8 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                 sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
 
         
-    print(sep_opened_matching)
-    print(sep_closed_matching)
+    #print(sep_opened_matching)
+    #print(sep_closed_matching)
 
 def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
@@ -1421,7 +1443,7 @@ def full_alignment(struct1, struct2, verbose=False):
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
     
-    pseudoknots_compensating(struct1, struct2, order1, order2, matching)
+    #pseudoknots_compensating(struct1, struct2, order1, order2, matching)
 
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
