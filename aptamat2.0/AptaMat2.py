@@ -268,7 +268,10 @@ class Dotplot(Dotbracket):
             matrix[index_list[i],index_list[i+1]]=np.uint8(1)
             del(dict_par[index_list[i]])
             del(dict_par[index_list[i+1]])
-        try:    
+        
+        pk_index_cro = self.dotbracket.count("[")-self.dotbracket.count("]")
+        
+        if pk_index_cro ==0:
             while dict_cro != {}:
                 index_list=list(dict_cro.keys())
                 i=0
@@ -277,7 +280,10 @@ class Dotplot(Dotbracket):
                 matrix[index_list[i],index_list[i+1]]=np.uint8(1)
                 del(dict_cro[index_list[i]])
                 del(dict_cro[index_list[i+1]])
-                
+        
+        pk_index_acc = self.dotbracket.count("{")-self.dotbracket.count("}")
+        
+        if pk_index_acc==0:
             while dict_acc != {}:
                 index_list=list(dict_acc.keys())
                 i=0
@@ -286,12 +292,6 @@ class Dotplot(Dotbracket):
                 matrix[index_list[i],index_list[i+1]]=np.uint8(1)
                 del(dict_acc[index_list[i]])
                 del(dict_acc[index_list[i+1]])
-                
-        except IndexError:
-            #In the case of a non closing pseudoknot.
-            #print("Non closing pseudoknot, ignoring pseudoknots.")
-            dict_cro={}
-            dict_acc={}
         
         return matrix
 
