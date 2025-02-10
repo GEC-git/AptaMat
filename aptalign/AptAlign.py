@@ -912,7 +912,17 @@ class Pattern():
         self.isaligned=False
         self.alignedwith=None
         self.alignedsequence=""
-
+        
+        self.pk_index_opened=raw.count("[")+raw.count("{")+raw.count("<")
+        self.pk_index_closed=raw.count("]")+raw.count("}")+raw.count(">")
+        
+        if self.pk_index_closed!=0:
+            self.pk_index_c_accounted=False
+        
+        if self.pk_index_opened!=0:
+            self.pk_index_o_accounted=False
+            
+        
     def __eq__(self,other):
         if isinstance(other,Pattern):
             return self.sequence==other.sequence
@@ -982,48 +992,265 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
 
 def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
-    Spatially aware pseudoknots compensation inside of separators.
+    Spatially aware pseudoknots compensation inside of separators and non paired patterns.
     """
     #creating necessary separator matching 
     sep_opened_matching=[]
     sep_closed_matching=[]
     
     for pairs in matching:
+        
+        #BEFORE - OPENED    
+        
+        #test only separators BEFORE for opened pseudoknots
         if ordered1[pairs[0].nb-1].pk_index_opened !=0 and ordered2[pairs[1].nb-1].pk_index_opened !=0:
             if not(ordered1[pairs[0].nb-1].pk_index_o_accounted) and not(ordered2[pairs[1].nb-1].pk_index_o_accounted):
                 ordered1[pairs[0].nb-1].pk_index_o_accounted = True
                 ordered2[pairs[1].nb-1].pk_index_o_accounted = True
                 sep_opened_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
-                
+        
+
+        else:
+            #test non paired Pattern BEFORE for opened pseudoknots in ordered1.
+            if pairs[0].nb-1 != 0:
+                if ordered1[pairs[0].nb-2].alignedwith == EmptyPattern:
+                    if ordered1[pairs[0].nb-2].pk_index_opened != 0 and ordered2[pairs[1].nb-1].pk_index_opened !=0:
+                        if not(ordered2[pairs[1].nb-1].pk_index_o_accounted) and not (ordered1[pairs[0].nb-2].pk_index_o_accounted):
+                            ordered2[pairs[1].nb-1].pk_index_o_accounted = True
+                            ordered1[pairs[0].nb-2].pk_index_o_accounted = True
+                            sep_opened_matching.append([ordered1[pairs[0].nb-2],ordered2[pairs[1].nb-1]])
+            
+            #test non paired Pattern BEFORE for opened pseudoknots in ordered2.
+            if pairs[1].nb-1 != 0:
+                if ordered2[pairs[1].nb-2].alignedwith == EmptyPattern:
+                    if ordered2[pairs[1].nb-2].pk_index_opened != 0 and ordered1[pairs[0].nb-1].pk_index_opened !=0:
+                        if not(ordered1[pairs[0].nb-1].pk_index_o_accounted) and not (ordered2[pairs[1].nb-2].pk_index_o_accounted):
+                            ordered1[pairs[0].nb-1].pk_index_o_accounted = True
+                            ordered2[pairs[1].nb-2].pk_index_o_accounted = True
+                            sep_opened_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-2]])
+        
+        #BEFORE - CLOSED
+        
+        #test only separators BEFORE for closed pseudoknots
         if ordered1[pairs[0].nb-1].pk_index_closed !=0 and ordered2[pairs[1].nb-1].pk_index_closed !=0:
             if not(ordered1[pairs[0].nb-1].pk_index_c_accounted) and not(ordered2[pairs[1].nb-1].pk_index_c_accounted):
                 ordered1[pairs[0].nb-1].pk_index_c_accounted = True
                 ordered2[pairs[1].nb-1].pk_index_c_accounted = True
                 sep_closed_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
+        
+        else:
             
+            #test non paired Pattern BEFORE for closed pseudoknots in ordered1
+            if pairs[0].nb-1 != 0:
+                if ordered1[pairs[0].nb-2].alignedwith == EmptyPattern:
+                    if ordered1[pairs[0].nb-2].pk_index_closed != 0 and ordered2[pairs[1].nb-1].pk_index_closed !=0:
+                        if not(ordered2[pairs[1].nb-1].pk_index_c_accounted) and not (ordered1[pairs[0].nb-2].pk_index_c_accounted):
+                            ordered2[pairs[1].nb-1].pk_index_c_accounted = True
+                            ordered1[pairs[0].nb-2].pk_index_c_accounted = True
+                            sep_closed_matching.append([ordered1[pairs[0].nb-2],ordered2[pairs[1].nb-1]])
+                        
+            #test non paired Pattern BEFORE for closed pseudoknots in ordered2
+            if pairs[1].nb-1 != 0:
+                if ordered2[pairs[1].nb-2].alignedwith == EmptyPattern:
+                    if ordered2[pairs[1].nb-2].pk_index_closed != 0 and ordered1[pairs[0].nb-1].pk_index_closed !=0:
+                        if not(ordered1[pairs[0].nb-1].pk_index_c_accounted) and not (ordered2[pairs[1].nb-2].pk_index_c_accounted):
+                            ordered1[pairs[0].nb-1].pk_index_c_accounted = True
+                            ordered2[pairs[1].nb-2].pk_index_c_accounted = True
+                            sep_closed_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-2]])
+        
+        
+        #AFTER - OPENED
+        #test only separators AFTER for opened pseudoknots
         if ordered1[pairs[0].nb+1].pk_index_opened != 0 and ordered2[pairs[1].nb+1].pk_index_opened !=0:
             if not(ordered1[pairs[0].nb+1].pk_index_o_accounted) and not(ordered2[pairs[1].nb+1].pk_index_o_accounted):
                 ordered1[pairs[0].nb+1].pk_index_o_accounted = True
                 ordered2[pairs[1].nb+1].pk_index_o_accounted = True
                 sep_opened_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
-                
+        else:
+            #test non paired Pattern AFTER for opened pseudoknots in ordered1.
+            if pairs[0].nb+1 != len(ordered1)-1:
+                if ordered1[pairs[0].nb+2].alignedwith == EmptyPattern:
+                    if ordered1[pairs[0].nb+2].pk_index_opened != 0 and ordered2[pairs[1].nb+1].pk_index_opened !=0:
+                        if not(ordered2[pairs[1].nb+1].pk_index_o_accounted) and not (ordered1[pairs[0].nb+2].pk_index_o_accounted):
+                            ordered2[pairs[1].nb+1].pk_index_o_accounted = True
+                            ordered1[pairs[0].nb+2].pk_index_o_accounted = True
+                            sep_opened_matching.append([ordered1[pairs[0].nb+2],ordered2[pairs[1].nb+1]])
+            
+            #test non paired Pattern AFTER for opened pseudoknots in ordered2.
+            if pairs[1].nb+1 != len(ordered2)-1:
+                if ordered2[pairs[1].nb+2].alignedwith == EmptyPattern:
+                    if ordered2[pairs[1].nb+2].pk_index_opened != 0 and ordered1[pairs[0].nb+1].pk_index_opened !=0:
+                        if not(ordered1[pairs[0].nb+1].pk_index_o_accounted) and not (ordered2[pairs[1].nb+2].pk_index_o_accounted):
+                            ordered1[pairs[0].nb+1].pk_index_o_accounted = True
+                            ordered2[pairs[1].nb+2].pk_index_o_accounted = True
+                            sep_opened_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+2]])
+        
+        #AFTER - CLOSED
+
+        #test only separators AFTER for closed pseudoknots
         if ordered1[pairs[0].nb+1].pk_index_closed != 0 and ordered2[pairs[1].nb+1].pk_index_closed !=0:
             if not(ordered1[pairs[0].nb+1].pk_index_c_accounted) and not(ordered2[pairs[1].nb+1].pk_index_c_accounted):
                 ordered1[pairs[0].nb+1].pk_index_c_accounted = True
                 ordered2[pairs[1].nb+1].pk_index_c_accounted = True
                 sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
-
+             
+        else:
+            
+            #test non paired Pattern AFTER for closed pseudoknots in ordered1.
+            if pairs[0].nb+1 != len(ordered1)-1:
+                if ordered1[pairs[0].nb+2].alignedwith == EmptyPattern:
+                    if ordered1[pairs[0].nb+2].pk_index_closed != 0 and ordered2[pairs[1].nb+1].pk_index_closed !=0:
+                        if not(ordered2[pairs[1].nb+1].pk_index_c_accounted) and not (ordered1[pairs[0].nb+2].pk_index_c_accounted):
+                            ordered2[pairs[1].nb+1].pk_index_c_accounted = True
+                            ordered1[pairs[0].nb+2].pk_index_c_accounted = True
+                            sep_closed_matching.append([ordered1[pairs[0].nb+2],ordered2[pairs[1].nb+1]])
+                            
+            #test non paired Pattern AFTER for opened pseudoknots in ordered2.
+            if pairs[1].nb+1 != len(ordered2)-1:
+                if ordered2[pairs[1].nb+2].alignedwith == EmptyPattern:
+                    if ordered2[pairs[1].nb+2].pk_index_closed != 0 and ordered1[pairs[0].nb+1].pk_index_closed !=0:
+                        if not(ordered1[pairs[0].nb+1].pk_index_c_accounted) and not (ordered2[pairs[1].nb+2].pk_index_c_accounted):
+                            ordered1[pairs[0].nb+1].pk_index_c_accounted = True
+                            ordered2[pairs[1].nb+2].pk_index_c_accounted = True
+                            sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+2]])
+         
+    for pair in sep_opened_matching:
+        dict_seq1={}
+        for i,elt in enumerate(pair[0].sequence):
+            dict_seq1[i]=elt
         
-    #print(sep_opened_matching)
-    #print(sep_closed_matching)
+        dict_seq2={}
+        for i,elt in enumerate(pair[1].sequence):
+            dict_seq2[i]=elt
+        
+        start_diff1=0
+        if pair[0].nb-1>=0 and isinstance(pair[0],Separator):
+            if ordered1[pair[0].nb-1].alignedwith == EmptyPattern:
+                start_diff1=ordered1[pair[0].nb-1].length
+        
+        start_diff2=0
+        if pair[1].nb-1>=0 and isinstance(pair[1],Separator):
+            if ordered2[pair[1].nb-1].alignedwith == EmptyPattern:
+                start_diff2=ordered2[pair[1].nb-1].length
+        
+        opened="[{<"
+        #determining the start of both pseudoknots
+        start1=0
+        while dict_seq1[start1] not in opened:
+            start1+=1
+            
+        start2=0
+        while dict_seq2[start2] not in opened:
+            start2+=1
+        
+        start1+=start_diff1
+        start2+=start_diff2
+        
+        #aligning if pk starts at different places in the separator
+        if start1!=start2:
+            
+            diff=start1-start2
+            
+            if diff > 0:
+                #start1>start2, # starts after in 1; placing gaps in 2.
+                for i in range(abs(diff)):
+                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
+            elif diff <0:
+                #start2>start1, # starts after in 2; placing gaps in 1.
+                for i in range(abs(diff)):
+                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
+            
+            pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
+            pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
+            
+            nb_gaps1=pair[0].sequence.count('-')
+            nb_gaps2=pair[1].sequence.count('-')
+            
+            pair[0].length+=nb_gaps1
+            pair[1].length+=nb_gaps2
+            
+            pair[0].finish+=nb_gaps1
+            pair[1].finish+=nb_gaps2
+
+            add_gaps(pair[0].nb,nb_gaps1,ordered1)
+            add_gaps(pair[1].nb,nb_gaps2,ordered2)
+
+            struct1.length+=nb_gaps1
+            struct2.length+=nb_gaps2
+    
+    for pair in sep_closed_matching:
+    
+        dict_seq1={}
+        for i,elt in enumerate(pair[0].sequence):
+            dict_seq1[i]=elt
+        
+        dict_seq2={}
+        for i,elt in enumerate(pair[1].sequence):
+            dict_seq2[i]=elt
+
+        start_diff1=0
+        if pair[0].nb-1>=0 and isinstance(pair[0],Separator):
+            if ordered1[pair[0].nb-1].alignedwith == EmptyPattern:
+                start_diff1=ordered1[pair[0].nb-1].length
+        
+        start_diff2=0
+        if pair[1].nb-1>=0 and isinstance(pair[1],Separator):
+            if ordered2[pair[1].nb-1].alignedwith == EmptyPattern:
+                start_diff2=ordered2[pair[1].nb-1].length
+        
+        closed="]}>"
+        #determining the start of both pseudoknots
+        start1=0
+        while dict_seq1[start1] not in closed:
+            start1+=1
+            
+        start2=0
+        while dict_seq2[start2] not in closed:
+            start2+=1
+        
+        start1+=start_diff1
+        start2+=start_diff2
+        
+        #aligning if pk starts at different places in the separator
+        if start1!=start2:
+            
+            diff=start1-start2
+            
+            if diff > 0:
+                #start1>start2, # starts after in 1; placing gaps in 2.
+                for i in range(abs(diff)):
+                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
+            elif diff <0:
+                #start2>start1, # starts after in 2; placing gaps in 1.
+                for i in range(abs(diff)):
+                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
+            
+            pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
+            pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
+            
+            nb_gaps1=pair[0].sequence.count('-')
+            nb_gaps2=pair[1].sequence.count('-')
+            
+            pair[0].length+=nb_gaps1
+            pair[1].length+=nb_gaps2
+            
+            pair[0].finish+=nb_gaps1
+            pair[1].finish+=nb_gaps2
+
+            add_gaps(pair[0].nb,nb_gaps1,ordered1)
+            add_gaps(pair[1].nb,nb_gaps2,ordered2)
+
+            struct1.length+=nb_gaps1
+            struct2.length+=nb_gaps2
+
 
 def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
-    Accounting for overdivision and aligning separators where hashtags are present.
+    Accounting for overdivision and aligning separators where overdivisions are present.
     
     We are only looking at separators present right before or after matched patterns.
     
-    If there are hashtags in both separators compared, we align them with eachother.
+    If there are spcial overdivision characters in both separators compared, we align them with eachother.
     """
     
     #creating necessary separator matching 
@@ -1274,7 +1501,7 @@ def matching_finder(struct1, struct2, verbose=False):
             
             pairing_matrix_pass2[i,j]=(pair_pat_score_pass2(pat1, pat2),pat1,pat2)
             pairing_matrix_score_pass2[i,j]=pair_pat_score_pass2(pat1, pat2)
-            
+
     max_pairings = min(len(struct1.patterns),len(struct2.patterns))
     
     for i in range(max_pairings):
@@ -1443,7 +1670,7 @@ def full_alignment(struct1, struct2, verbose=False):
     order2=struct2.order_list()
     overdivision_compensating(struct1, struct2, order1, order2, matching)
     
-    #pseudoknots_compensating(struct1, struct2, order1, order2, matching)
+    pseudoknots_compensating(struct1, struct2, order1, order2, matching)
 
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
