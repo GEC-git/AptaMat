@@ -1473,4 +1473,12 @@ Optimal Sigma = 2.60
 - Added surrounding overdivision check in aptalign.
 - Added pseudoknots aligning when in the middle of two patterns.
 
+### WEEK 21 - 10/02/2025 -> 16/02/2025
 
+**AptAlign**
+
+- Added pseudoknots aligning in separators and with non matched pattern.
+
+**AptaMat**
+
+- Added better handling of non-closing pseudoknots.
