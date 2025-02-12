@@ -154,14 +154,14 @@ class Parse:
 
 class Dotbracket:
     """Create a DotBracket object"""
-    #gap_penalty_matrix = [0,0]
-    gap_penalty_matrix = [1,1]
+
+    gap_penalty_amount = 1
     def __init__(self, dotbracket: str, gap_penalty=None):
         self.dotbracket = None
         self.gap = None
 
         if gap_penalty is None:
-            gap_penalty = self.gap_penalty_matrix
+            gap_penalty = self.gap_penalty_amount
 
         if self.is_dotbracket(dotbracket):
             self.set_dotbracket(dotbracket, gap_penalty)
@@ -185,33 +185,32 @@ class Dotbracket:
         self.gap = self.gap_penalty(gap_penalty)
 
     def gap_penalty(self, gap_penalty):
-        if not gap_penalty[0]:
-            return 0
-        else:
-            return self.dotbracket.count("-")*gap_penalty[0]
-        # for i, c in enumerate(self.dotbracket):
-        #     if c == '-' and self.dotbracket[i - 1] == '-':
-        #         penalty += gap_penalty[1]
-        #     elif c == '-':
-        #         penalty += gap_penalty[0]
-        #     else:
-        #         pass
-
-
+        all_char="([{<>}])"
+        penalty=0
+        first=True
+        for char in self.dotbracket:
+            if char == "-" and first:
+                penalty+=gap_penalty/2
+            elif char in all_char and first:
+                first=False
+            elif char=="-" and not first:
+                penalty+=gap_penalty
+        
+        minus=0
+        back=len(self.dotbracket)-1
+        while self.dotbracket[back] not in all_char:
+            if self.dotbracket[back] == "-":
+                minus+=gap_penalty/2
+            back-=1
+        
+        return penalty - minus
+        
     @staticmethod
     def is_dotbracket(dotbracket):
         if any(char.isdigit() for char in dotbracket):
             return False
         if any('(' == char or '.' == char for char in dotbracket):
             return True
-
-def reduce_penalty(struct1, struct2):
-    """
-    (((((....)))))..........
-    (((--....--)))...-------
-    """
-    None
-
 
 class Dotplot(Dotbracket):
     """ Create a Dotplot from a dotbracket object"""
