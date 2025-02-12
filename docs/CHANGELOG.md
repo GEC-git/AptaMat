@@ -1482,3 +1482,5 @@ Optimal Sigma = 2.60
 **AptaMat**
 
 - Added better handling of non-closing pseudoknots.
+- Added new penalty calculation for gaps used only for distance compensation at the start and end of sequences.
+- Added overhang calculation when aligning the start of patterns.
