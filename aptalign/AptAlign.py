@@ -47,7 +47,7 @@ def insert_str(string,num,char):
     return res
 
 def count_pseudo(seq):
-    pseudo_char="[{<123456789>}]"
+    pseudo_char="[{<>}]"
     count=0
     for elt in seq:
         if seq in pseudo_char:
@@ -336,9 +336,19 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
     finish2=list(dict_tba2.keys())[-1]
     start1=list(dict_tba1.keys())[0]
     start2=list(dict_tba2.keys())[0]
-
+    
+    if main_diff>0:
+        overhang_seq2=abs(main_diff)
+        overhang_seq1=0
+    elif main_diff<0:
+        overhang_seq1=abs(main_diff)
+        overhang_seq2=0
+    else:
+        overhang_seq2=0
+        overhang_seq1=0
+    
     if main_diff==0:
-        return dict_tba1, dict_tba2
+        return dict_tba1, dict_tba2, overhang_seq1, overhang_seq2
     elif direction == "Right":
         if main_diff > 0:
             #gaps to be placed in 2
@@ -360,7 +370,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
             for i in range(abs(main_diff)):
                 dict_tba1=insert_gap_seq_dict(dict_tba1,start1)
     
-    return dict_tba1, dict_tba2
+    return dict_tba1, dict_tba2, overhang_seq1, overhang_seq2
 
 
 
@@ -450,9 +460,9 @@ def inside_out_pat_alignment(pat1, pat2):
         start2=list(dict_tba2_L)[0]
         dict_tba2_L_translated=dict_seq_translation(dict_tba2_L,-start2)
             
-        dict1_L, dict2_L = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated, "Left")
+        dict1_L, dict2_L, left_overhang_pat1, left_overhang_pat2 = propagation_alignment(dict_tba1_L_translated, dict_tba2_L_translated, "Left")
     else:
-        dict1_L, dict2_L = propagation_alignment(dict_tba1_L, dict_tba2_L, "Left")
+        dict1_L, dict2_L, left_overhang_pat1, left_overhang_pat2 = propagation_alignment(dict_tba1_L, dict_tba2_L, "Left")
         
         start1=list(dict1_L.keys())[0]
         start2=list(dict2_L.keys())[0]
@@ -470,7 +480,7 @@ def inside_out_pat_alignment(pat1, pat2):
     #aligning the right dictionnaries
     
     
-    dict1_R, dict2_R = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
+    dict1_R, dict2_R, right_overhang_pat1, right_overhang_pat2 = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
 
     #reagglomerating.
     seq1_L=dict_seq_reagglomerate(dict1_L)
@@ -485,7 +495,7 @@ def inside_out_pat_alignment(pat1, pat2):
     
     seq2=seq2_L+seq2_M+seq2_R
 
-    return seq1, seq2
+    return seq1, seq2, left_overhang_pat1, right_overhang_pat1, left_overhang_pat2, right_overhang_pat2
 
 def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=False):
     """
@@ -507,8 +517,13 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=Fals
         pat1.aligned(pat2,pat2.sequence)
         pat2.aligned(pat1,pat1.sequence)
     else:
-        seq1,seq2=inside_out_pat_alignment(pat1, pat2)
+        seq1,seq2, left_overhang_pat1, right_overhang_pat1, left_overhang_pat2, right_overhang_pat2=inside_out_pat_alignment(pat1, pat2)
         
+        pat1.left_overhang=left_overhang_pat1
+        pat1.right_overhang=right_overhang_pat1
+        
+        pat2.left_overhang=left_overhang_pat2
+        pat2.right_overhang=right_overhang_pat2
         pat1.aligned(pat2,seq1)
         pat2.aligned(pat1,seq2)
         
@@ -743,8 +758,13 @@ class Structure():
     
     def reset(self, sequence):
         self.raw=sequence
-        self.subdiv,self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
+        if self.subdiv_list!=[]:
+            if surround(self.subdiv_list,sep):
+                self.raw_nosubdiv=self.raw
+                self.subdiv_list=[]
+                sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
         self.length=len(sequence)
@@ -912,6 +932,9 @@ class Pattern():
         self.isaligned=False
         self.alignedwith=None
         self.alignedsequence=""
+        self.left_overhang=0
+        self.right_overhang=0
+        
         
         self.pk_index_opened=raw.count("[")+raw.count("{")+raw.count("<")
         self.pk_index_closed=raw.count("]")+raw.count("}")+raw.count(">")
@@ -960,9 +983,22 @@ EmptyPattern=Pattern('',[-1,-1],-1,-1)
 
 ### BASE SEPARATOR GAPS FUNCTIONS=
 
+def del_gaps(current_order, nb_gaps_deleted, order):
+    """
+    Updates the start and finish positions of further separators and patterns when gaps are deleted.
+    """
+    for elt in order:
+        if elt.nb > current_order:
+            if elt.start == -1:
+                elt.finish-=nb_gaps_deleted
+            else:
+                elt.start-=nb_gaps_deleted
+                elt.finish-=nb_gaps_deleted
+    
+    
 def add_gaps(current_order,added_gaps,order_list):
     """
-    Updates the start and finish positions of further separators and patterns.
+    Updates the start and finish positions of further separators and patterns when gaps are added.
     """
     for elt in order_list:
         if elt.nb > current_order:
@@ -994,7 +1030,7 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
     Spatially aware pseudoknots compensation inside of separators and non paired patterns.
     """
-    #creating necessary separator matching 
+    #creating necessary separator and pattern matching 
     sep_opened_matching=[]
     sep_closed_matching=[]
     
@@ -1322,6 +1358,283 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
             struct1.length+=nb_gaps1
             struct2.length+=nb_gaps2
 
+def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
+    """
+    Function used to calculate the diff found in sep_gap_inserter.
+    
+    Takes into account the overhang of matched patterns and the length of separators.
+    """
+    
+    if pat1.left_overhang !=0:
+        # check for overhang deletion possibility on the left of pat1.
+        if pat1.start > pat2.start:
+            diff=pat1.start-pat2.start
+            seq=pat1.alignedsequence
+            if diff <= pat1.left_overhang:
+
+                for i in range(diff):
+                    seq=del_str(seq, 0)
+                ret_diff=0
+                    
+                pat1.alignedsequence=seq
+                    
+                pat1.length-=diff
+                pat1.finish-=diff
+                struct1.length-=diff
+                    
+                del_gaps(pat1.nb, diff, order1)
+            else:
+
+                for i in range(pat1.left_overhang):
+                    seq=del_str(seq, 0) 
+                ret_diff = - (pat1.left_overhang - diff)
+                    
+                pat1.alignedsequence=seq
+                    
+                pat1.length-=pat1.left_overhang
+                pat1.finish-=pat1.left_overhang
+                struct1.length-=pat1.left_overhang
+                    
+                del_gaps(pat1.nb, pat1.left_overhang, order1)
+        else:
+            ret_diff=pat1.start-pat2.start
+            
+    elif pat2.left_overhang != 0:
+        # check for overhang deletion possibility on the left of pat2
+        if pat2.start > pat1.start:
+            diff=pat2.start-pat1.start
+            seq=pat2.alignedsequence
+            
+            if diff <= pat2.left_overhang:
+                for i in range(diff):
+                    seq=del_str(seq,0)
+
+                ret_diff = 0
+                
+                pat2.alignedsequence=seq
+                    
+                pat2.length-=diff
+                pat2.finish-=diff
+                struct2.length-=diff
+                    
+                del_gaps(pat2.nb, diff, order2)
+            else:
+
+                for i in range(pat2.left_overhang):
+                    seq=del_str(seq,0)
+                ret_diff = pat2.left_overhang - diff
+                
+                pat2.alignedsequence=seq
+                    
+                pat2.length-=pat2.left_overhang
+                pat2.finish-=pat2.left_overhang
+                struct2.length-=pat2.left_overhang
+                    
+                del_gaps(pat2.nb, pat2.left_overhang, order2)
+        else:
+            ret_diff=pat1.start-pat2.start
+    else:
+        ret_diff=pat1.start-pat2.start  
+            
+    #now, check for the right sides:
+    # if right overhang, check for (in this order) :
+        # The end of the structure.
+        # A non matched pattern after.
+        # A big separator after.
+     
+    if pat1.right_overhang !=0:
+        seq=pat1.alignedsequence
+        if order1[pat1.nb+1].nb==len(order1)-1:
+            #end of the structure! completely remove overhang!
+            back = len(seq)-1
+            cpt=0
+            while cpt <= pat1.right_overhang-1:
+                seq=del_str(seq,back)
+                cpt+=1
+                back-=1
+            
+            pat1.alignedsequence=seq
+                 
+            pat1.length-=pat1.right_overhang
+            pat1.finish-=pat1.right_overhang
+            struct1.length-=pat1.right_overhang
+                 
+            del_gaps(pat1.nb, pat1.right_overhang, order1)
+            
+        elif order1[pat1.nb+2].alignedwith == EmptyPattern:
+            #take the length of the empty pattern and reduce the gaps accordingly.
+            full_length=(order1[pat1.nb+2].length + order1[pat1.nb+1].length + order1[pat1.nb+3].length)
+            diff = pat1.right_overhang - full_length
+           
+            if diff >= 0:
+                #overhang > length of pattern + length of separators, reduce by length of all. (very unlikely)
+                back = len(seq)-1
+                cpt=0
+                while cpt <= full_length-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat1.alignedsequence=seq
+
+                pat1.length-=full_length
+                pat1.finish-=full_length
+                struct1.length-=full_length
+                     
+                del_gaps(pat1.nb, full_length, order1)
+            else:
+                #reduce by the amount of overhang.
+                back = len(seq)-1
+                cpt=0
+                while cpt <= pat1.right_overhang-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat1.alignedsequence=seq
+                     
+                pat1.length-=pat1.right_overhang
+                pat1.finish-=pat1.right_overhang
+                struct1.length-=pat1.right_overhang
+                     
+                del_gaps(pat1.nb, pat1.right_overhang, order1)
+        else:
+            #separator after!
+            diff = pat1.right_overhang - order1[pat1.nb+1].length
+            if diff >=0:
+                #overhang bigger than separator! Reduce by length of separator.
+                back = len(seq)-1
+                cpt=0
+                if order1[pat1.nb+1].length != 0:
+                    while cpt <= order1[pat1.nb+1].length -1 :
+                        seq=del_str(seq,back)
+                        cpt+=1
+                        back-=1
+    
+                        
+                    pat1.alignedsequence=seq
+                         
+                    pat1.length-=order1[pat1.nb+1].length
+                    pat1.finish-=order1[pat1.nb+1].length
+                    struct1.length-=order1[pat1.nb+1].length
+                         
+                    del_gaps(pat1.nb, order1[pat1.nb+1].length, order1)
+            else:
+                #seprator bigger!, reduce by length of overhang!
+                back = len(seq)-1
+                cpt=0
+                while cpt <= pat1.right_overhang-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat1.alignedsequence=seq
+                     
+                pat1.length-=pat1.right_overhang
+                pat1.finish-=pat1.right_overhang
+                struct1.length-=pat1.right_overhang
+                     
+                del_gaps(pat1.nb, pat1.right_overhang, order1)
+                
+    elif pat2.right_overhang !=0:
+        seq=pat2.alignedsequence
+        if order2[pat2.nb+1].nb==len(order2)-1:
+            #end of the structure! completely remove overhang!
+            
+            back = len(seq)-1
+            cpt=0
+            while cpt <= pat2.right_overhang-1:
+                seq=del_str(seq,back)
+                cpt+=1
+                back-=1
+                
+            
+            pat2.alignedsequence=seq
+                 
+            pat2.length-=pat2.right_overhang
+            pat2.finish-=pat2.right_overhang
+            struct2.length-=pat2.right_overhang
+                 
+            del_gaps(pat2.nb, pat2.right_overhang, order2)
+            
+        elif order2[pat2.nb+2].alignedwith == EmptyPattern:
+            #take the length of the empty pattern and reduce the gaps accordingly.
+            full_length=(order2[pat2.nb+2].length + order2[pat2.nb+1].length + order2[pat2.nb+3].length)
+            diff = pat2.right_overhang - full_length
+           
+            if diff >= 0:
+                #overhang > length of pattern + length of separators, reduce by length of all. (very unlikely)
+                back = len(seq)-1
+                cpt=0
+                while cpt <= full_length-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat2.alignedsequence=seq
+                     
+                pat2.length-=full_length
+                pat2.finish-=full_length
+                struct2.length-=full_length
+                     
+                del_gaps(pat2.nb, full_length, order2)
+            else:
+                #reduce by the amount of overhang.
+                back = len(seq)-1
+                cpt=0
+                while cpt <= pat2.right_overhang-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat2.alignedsequence=seq
+                     
+                pat2.length-=pat2.right_overhang
+                pat2.finish-=pat2.right_overhang
+                struct2.length-=pat2.right_overhang
+                     
+                del_gaps(pat2.nb, pat2.right_overhang, order2)
+        else:
+            #separator after!
+            diff = pat2.right_overhang - order2[pat2.nb+1].length
+            
+            if diff >=0:
+                #overhang bigger than separator! Reduce by length of seprator.
+                back = len(seq)-1
+                if order2[pat2.nb+1].length != 0:
+                    cpt=0
+                    while cpt <= order2[pat2.nb+1].length-1:
+                        seq=del_str(seq,back)
+                        cpt+=1
+                        back-=1
+                        
+                    pat2.alignedsequence=seq
+                         
+                    pat2.length-=order2[pat2.nb+1].length
+                    pat2.finish-=order2[pat2.nb+1].length
+                    struct2.length-=order2[pat2.nb+1].length
+                         
+                    del_gaps(pat2.nb, order2[pat2.nb+1].length, order2)
+            else:
+                #seprator bigger!, reduce by length of overhang!
+                back = len(seq)-1
+                cpt=0
+                while cpt <= pat2.right_overhang-1:
+                    seq=del_str(seq,back)
+                    cpt+=1
+                    back-=1
+                    
+                pat2.alignedsequence=seq
+                     
+                pat2.length-=pat2.right_overhang
+                pat2.finish-=pat2.right_overhang
+                struct2.length-=pat2.right_overhang
+                     
+                del_gaps(pat2.nb, pat2.right_overhang, order2)
+                
+    return ret_diff
+    
+
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
     Function used to insert gaps in separators where it is necessary in regards to:
@@ -1330,14 +1643,15 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
     
     for elt in matching:
-        
         if struct1.length-struct2.length > 0:
             bigger = 1
         else:
             bigger = 2
         #struct1 ~ elt[0] - struct2 ~ elt[1]
         if not elt[0].start == elt[1].start:
-            diff=elt[0].start-elt[1].start
+            
+            diff = diff_overhang_calculator(elt[0], elt[1], struct1, struct2, ordered1, ordered2)
+            
             if diff < 0:
                 #start pat1 < start pat2
                 #pat1 starts before pat2
@@ -1366,7 +1680,6 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
                     sep_gap_adder(struct2, abs(diff), ordered2[elt[1].nb-1],ordered2)
                     
         main_diff=abs(struct1.length-struct2.length)
-              
     #Adding the last gaps at the end of the structures if main_diff is still positive.
 
     if struct1.length-struct2.length > 0:
@@ -1387,7 +1700,7 @@ def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
             last_sep.sequence+=added_gaps1*'-'
             add_gaps(last_sep.nb, added_gaps1, ordered1)
             struct1.length+=added_gaps1
-
+            
 def separator_compensating(struct1, struct2, matching):
     """
     Used after pattern aligning to add gaps in separators to match the final length and returning the aligned structures.
@@ -1429,8 +1742,8 @@ def pair_pat_score_pass2(pat1,pat2):
     pat2_sc = (pat2.sequence.count("(")+pat2.sequence.count(")"))
     
     #pseudo=abs(pat1.pseudo_index - pat2.pseudo_index)
-    
-    return abs(pat1_sc - pat2_sc) + apta_dist# + pseudo
+
+    return abs(pat1_sc - pat2_sc) + apta_dist # + pseudo
 
 def matching_test(matching):
     pair_order=[matching[0][0].nb,matching[0][1].nb]
@@ -1663,14 +1976,16 @@ def full_alignment(struct1, struct2, verbose=False):
         pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
 
     if verbose:
-        print("\nAccounting for overdivison and pseudoknots")
+        print("\nAccounting for pseudoknots and overdivision.")
 
         
     order1=struct1.order_list()
     order2=struct2.order_list()
-    overdivision_compensating(struct1, struct2, order1, order2, matching)
     
     pseudoknots_compensating(struct1, struct2, order1, order2, matching)
+    
+    overdivision_compensating(struct1, struct2, order1, order2, matching)
+
 
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
