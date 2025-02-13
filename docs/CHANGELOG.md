@@ -1478,9 +1478,21 @@ Optimal Sigma = 2.60
 **AptAlign**
 
 - Added pseudoknots aligning in separators and with non matched pattern.
+- Added overhang calculation when aligning the start of patterns.
+- debugged overdivision alignment.
 
 **AptaMat**
 
 - Added better handling of non-closing pseudoknots.
 - Added new penalty calculation for gaps used only for distance compensation at the start and end of sequences.
-- Added overhang calculation when aligning the start of patterns.
+
+
+ADDED LAST CLUSTERING RESULTS.
+
+
+
+
+### THANKS TO EVERYONE WHO HELPED FOR THIS INTERNSHIP AT GEC!
+
+This is the last line I write in this Changelog so I would like to thank everyone who participated in the creation of AptAlign and optimisation of other scripts.
+May this changelog be useful to the future user!
