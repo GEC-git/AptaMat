@@ -47,6 +47,9 @@ def insert_str(string,num,char):
     return res
 
 def count_pseudo(seq):
+    """
+    Counts the number of 
+    """
     pseudo_char="[{<>}]"
     count=0
     for elt in seq:
@@ -738,6 +741,7 @@ class Structure():
     def __init__(self, sequence, ident=None, fam=None, AGU=None):
         self.raw=sequence
         self.sequence=AGU
+        self.length=len(sequence)
         self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, 2)
         sep,pat=slicer(self.raw_nosubdiv)
         if self.subdiv_list!=[]:
@@ -747,7 +751,6 @@ class Structure():
                 sep,pat=slicer(self.raw_nosubdiv)
         self.separators=sep
         self.patterns=pat
-        self.length=len(sequence)
         self.pattern_nb=len(pat)
         self.separator_nb=len(sep)
         self.isaligned=False
@@ -1335,17 +1338,18 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
                 #start1>start2, # starts after in sep1; placing gaps in sep2.
                 for i in range(abs(diff)):
                     dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
+                nb_gaps1=0
+                nb_gaps2=abs(diff)
             elif diff <0:
                 #start2>start1, # starts after in sep2; placing gaps in sep1.
                 for i in range(abs(diff)):
                     dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
+                nb_gaps1=abs(diff)
+                nb_gaps2=0
             
             sep_pairs[0].sequence=dict_seq_reagglomerate(dict_seq1)
             sep_pairs[1].sequence=dict_seq_reagglomerate(dict_seq2)
-            
-            nb_gaps1=sep_pairs[0].sequence.count('-')
-            nb_gaps2=sep_pairs[1].sequence.count('-')
-            
+
             sep_pairs[0].length+=nb_gaps1
             sep_pairs[1].length+=nb_gaps2
             
@@ -1956,10 +1960,9 @@ def full_alignment(struct1, struct2, verbose=False):
         
         struct1.alignedsequence = struct1.reagglomerate()
         struct2.alignedsequence = struct2.reagglomerate()
-        if verbose:
-            print("Same structures, returning the same sequence")
-        return struct1, struct2
         
+        if verbose:
+            print("Same structures.")
     else:
         if verbose:
             print("\nDetermining the optimal pattern match if possible \n")
@@ -1981,15 +1984,14 @@ def full_alignment(struct1, struct2, verbose=False):
         
     order1=struct1.order_list()
     order2=struct2.order_list()
-    
+
     pseudoknots_compensating(struct1, struct2, order1, order2, matching)
     
     overdivision_compensating(struct1, struct2, order1, order2, matching)
 
-
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
-
+    
     separator_compensating(struct1, struct2, matching)
 
     if verbose:
@@ -2051,6 +2053,7 @@ def main():
             print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
             b=time.time()
             print("Time spent:",str(round(b-a,3))+"s")
+            print(struct1.length, struct2.length)
         else:
             a=time.time()
             initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
