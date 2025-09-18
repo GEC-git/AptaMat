@@ -6,10 +6,12 @@ root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
 sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..','clustering'))
 sys.path.append(root_path)
+
 #import clustering_AptaMat as CLAM
 import AptaMat2 as AF
 import time
 import argparse
+
 # import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -106,7 +108,7 @@ def dict_seq_reagglomerate(dict_seq):
 
 def dict_seq_cluster_finder(dict_seq,direction="Both"):
     """
-    Function used to find clusters of parentheses in a sequence_dictionnary.
+    Function used to find all parentheses and isolate them in a sequence_dictionnary.
     """
     if direction=="Right":
         par=")"
@@ -624,6 +626,7 @@ def slicer(sequence):
         if elt in par:
             dict_par[i]=elt
         dict_seq[i]=elt
+    
     open_db = 0
     start = min(dict_par.keys())
     finish=0
@@ -1037,122 +1040,142 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
     sep_opened_matching=[]
     sep_closed_matching=[]
     
+    def gen_pair(triad, pairs):
+        return triad[0][pairs[triad[1]].nb+triad[2]]
+    
+
+    def only_sep(upk, pairs):        
+        if upk[0]=="o":
+            if gen_pair(upk[1],pairs).pk_index_opened !=0 and gen_pair(upk[2],pairs).pk_index_opened !=0:
+                if not(gen_pair(upk[1],pairs).pk_index_o_accounted) and not(gen_pair(upk[2],pairs).pk_index_o_accounted):
+                    gen_pair(upk[1],pairs).pk_index_o_accounted = True
+                    gen_pair(upk[2],pairs).pk_index_o_accounted = True
+                    
+                return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+        
+        elif upk[0]=="c":
+            if gen_pair(upk[1],pairs).pk_index_closed !=0 and gen_pair(upk[2],pairs).pk_index_closed !=0:
+                if not(gen_pair(upk[1],pairs).pk_index_c_accounted) and not(gen_pair(upk[2],pairs).pk_index_c_accounted):
+                    gen_pair(upk[1],pairs).pk_index_c_accounted = True
+                    gen_pair(upk[2],pairs).pk_index_c_accounted = True
+            
+                return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+
+        return False
+            
+
+    def non_paired(upk,pairs):
+
+        if upk[4][0]=="b":
+            bool_res = pairs[upk[1][0]].nb+upk[1][1] != 0
+        elif upk[4][0]=="a":
+            bool_res = pairs[upk[1][0]].nb+upk[1][1] != len(upk[4][1])-1
+        if bool_res:
+            if gen_pair(upk[2],pairs).alignedwith == EmptyPattern:
+                if upk[0]=="o":
+                    if gen_pair(upk[2],pairs).pk_index_opened != 0 and gen_pair(upk[3],pairs).pk_index_opened !=0:
+                        if not(gen_pair(upk[3],pairs).pk_index_o_accounted) and not (gen_pair(upk[2],pairs).pk_index_o_accounted):
+                            gen_pair(upk[3],pairs).pk_index_o_accounted = True
+                            gen_pair(upk[2],pairs).pk_index_o_accounted = True
+                        return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
+                
+                elif upk[0]=="c":
+                    if gen_pair(upk[2],pairs).pk_index_closed != 0 and gen_pair(upk[3],pairs).pk_index_closed !=0:
+                        if not(gen_pair(upk[3],pairs).pk_index_c_accounted) and not (gen_pair(upk[2],pairs).pk_index_c_accounted):
+                            gen_pair(upk[3],pairs).pk_index_c_accounted = True
+                            gen_pair(upk[2],pairs).pk_index_c_accounted = True
+                    
+                        return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
+                
+        return False
+    
     for pairs in matching:
         
         #BEFORE - OPENED    
-        
         #test only separators BEFORE for opened pseudoknots
-        if ordered1[pairs[0].nb-1].pk_index_opened !=0 and ordered2[pairs[1].nb-1].pk_index_opened !=0:
-            if not(ordered1[pairs[0].nb-1].pk_index_o_accounted) and not(ordered2[pairs[1].nb-1].pk_index_o_accounted):
-                ordered1[pairs[0].nb-1].pk_index_o_accounted = True
-                ordered2[pairs[1].nb-1].pk_index_o_accounted = True
-                sep_opened_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
         
-
+        unpacking=["o",[ordered1, 0, -1],[ordered2, 1, -1]]
+        add=only_sep(unpacking,pairs)
+        if add:
+            sep_opened_matching.append(add)
+    
         else:
             #test non paired Pattern BEFORE for opened pseudoknots in ordered1.
-            if pairs[0].nb-1 != 0:
-                if ordered1[pairs[0].nb-2].alignedwith == EmptyPattern:
-                    if ordered1[pairs[0].nb-2].pk_index_opened != 0 and ordered2[pairs[1].nb-1].pk_index_opened !=0:
-                        if not(ordered2[pairs[1].nb-1].pk_index_o_accounted) and not (ordered1[pairs[0].nb-2].pk_index_o_accounted):
-                            ordered2[pairs[1].nb-1].pk_index_o_accounted = True
-                            ordered1[pairs[0].nb-2].pk_index_o_accounted = True
-                            sep_opened_matching.append([ordered1[pairs[0].nb-2],ordered2[pairs[1].nb-1]])
+            unpacking=["o", [0,-1],[ordered1, 0, -2], [ordered2, 1, -1], ["b"]]
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_opened_matching.append(add)
             
             #test non paired Pattern BEFORE for opened pseudoknots in ordered2.
-            if pairs[1].nb-1 != 0:
-                if ordered2[pairs[1].nb-2].alignedwith == EmptyPattern:
-                    if ordered2[pairs[1].nb-2].pk_index_opened != 0 and ordered1[pairs[0].nb-1].pk_index_opened !=0:
-                        if not(ordered1[pairs[0].nb-1].pk_index_o_accounted) and not (ordered2[pairs[1].nb-2].pk_index_o_accounted):
-                            ordered1[pairs[0].nb-1].pk_index_o_accounted = True
-                            ordered2[pairs[1].nb-2].pk_index_o_accounted = True
-                            sep_opened_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-2]])
+            unpacking=["o", [1,-1],[ordered2, 1, -2], [ordered1, 0, -1], ["b"]]            
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_opened_matching.append(add)
         
         #BEFORE - CLOSED
-        
         #test only separators BEFORE for closed pseudoknots
-        if ordered1[pairs[0].nb-1].pk_index_closed !=0 and ordered2[pairs[1].nb-1].pk_index_closed !=0:
-            if not(ordered1[pairs[0].nb-1].pk_index_c_accounted) and not(ordered2[pairs[1].nb-1].pk_index_c_accounted):
-                ordered1[pairs[0].nb-1].pk_index_c_accounted = True
-                ordered2[pairs[1].nb-1].pk_index_c_accounted = True
-                sep_closed_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-1]])
+        
+        unpacking=["c",[ordered1, 0, -1],[ordered2, 1, -1]]
+        add=only_sep(unpacking,pairs)
+        if add:
+            sep_closed_matching.append(add)
         
         else:
-            
             #test non paired Pattern BEFORE for closed pseudoknots in ordered1
-            if pairs[0].nb-1 != 0:
-                if ordered1[pairs[0].nb-2].alignedwith == EmptyPattern:
-                    if ordered1[pairs[0].nb-2].pk_index_closed != 0 and ordered2[pairs[1].nb-1].pk_index_closed !=0:
-                        if not(ordered2[pairs[1].nb-1].pk_index_c_accounted) and not (ordered1[pairs[0].nb-2].pk_index_c_accounted):
-                            ordered2[pairs[1].nb-1].pk_index_c_accounted = True
-                            ordered1[pairs[0].nb-2].pk_index_c_accounted = True
-                            sep_closed_matching.append([ordered1[pairs[0].nb-2],ordered2[pairs[1].nb-1]])
-                        
+            unpacking=["c", [0,-1],[ordered1, 0, -2], [ordered2, 1, -1], ["b"]]
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_closed_matching.append(add)
+            
+            unpacking=["c", [1,-1],[ordered2, 1, -2], [ordered1, 0, -1], ["b"]] 
             #test non paired Pattern BEFORE for closed pseudoknots in ordered2
-            if pairs[1].nb-1 != 0:
-                if ordered2[pairs[1].nb-2].alignedwith == EmptyPattern:
-                    if ordered2[pairs[1].nb-2].pk_index_closed != 0 and ordered1[pairs[0].nb-1].pk_index_closed !=0:
-                        if not(ordered1[pairs[0].nb-1].pk_index_c_accounted) and not (ordered2[pairs[1].nb-2].pk_index_c_accounted):
-                            ordered1[pairs[0].nb-1].pk_index_c_accounted = True
-                            ordered2[pairs[1].nb-2].pk_index_c_accounted = True
-                            sep_closed_matching.append([ordered1[pairs[0].nb-1],ordered2[pairs[1].nb-2]])
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_closed_matching.append(add)
         
         
         #AFTER - OPENED
         #test only separators AFTER for opened pseudoknots
-        if ordered1[pairs[0].nb+1].pk_index_opened != 0 and ordered2[pairs[1].nb+1].pk_index_opened !=0:
-            if not(ordered1[pairs[0].nb+1].pk_index_o_accounted) and not(ordered2[pairs[1].nb+1].pk_index_o_accounted):
-                ordered1[pairs[0].nb+1].pk_index_o_accounted = True
-                ordered2[pairs[1].nb+1].pk_index_o_accounted = True
-                sep_opened_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
+        
+        unpacking=["o",[ordered1, 0, 1],[ordered2, 1, 1]]
+        add=only_sep(unpacking,pairs)
+        if add:
+            sep_opened_matching.append(add)
+            
         else:
             #test non paired Pattern AFTER for opened pseudoknots in ordered1.
-            if pairs[0].nb+1 != len(ordered1)-1:
-                if ordered1[pairs[0].nb+2].alignedwith == EmptyPattern:
-                    if ordered1[pairs[0].nb+2].pk_index_opened != 0 and ordered2[pairs[1].nb+1].pk_index_opened !=0:
-                        if not(ordered2[pairs[1].nb+1].pk_index_o_accounted) and not (ordered1[pairs[0].nb+2].pk_index_o_accounted):
-                            ordered2[pairs[1].nb+1].pk_index_o_accounted = True
-                            ordered1[pairs[0].nb+2].pk_index_o_accounted = True
-                            sep_opened_matching.append([ordered1[pairs[0].nb+2],ordered2[pairs[1].nb+1]])
+            unpacking=["o", [0,1],[ordered1, 0, 2], [ordered2, 1, 1], ["a",ordered1]]
+            add=non_paired(unpacking,pairs)
+            if add:
+                sep_opened_matching.append(add)
             
             #test non paired Pattern AFTER for opened pseudoknots in ordered2.
-            if pairs[1].nb+1 != len(ordered2)-1:
-                if ordered2[pairs[1].nb+2].alignedwith == EmptyPattern:
-                    if ordered2[pairs[1].nb+2].pk_index_opened != 0 and ordered1[pairs[0].nb+1].pk_index_opened !=0:
-                        if not(ordered1[pairs[0].nb+1].pk_index_o_accounted) and not (ordered2[pairs[1].nb+2].pk_index_o_accounted):
-                            ordered1[pairs[0].nb+1].pk_index_o_accounted = True
-                            ordered2[pairs[1].nb+2].pk_index_o_accounted = True
-                            sep_opened_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+2]])
+            unpacking=["o", [1,1], [ordered2, 1, 2], [ordered1, 0, 1], ["a",ordered2]]
+            add=non_paired(unpacking,pairs)
+            if add:
+                sep_opened_matching.append(add)
         
         #AFTER - CLOSED
-
         #test only separators AFTER for closed pseudoknots
-        if ordered1[pairs[0].nb+1].pk_index_closed != 0 and ordered2[pairs[1].nb+1].pk_index_closed !=0:
-            if not(ordered1[pairs[0].nb+1].pk_index_c_accounted) and not(ordered2[pairs[1].nb+1].pk_index_c_accounted):
-                ordered1[pairs[0].nb+1].pk_index_c_accounted = True
-                ordered2[pairs[1].nb+1].pk_index_c_accounted = True
-                sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+1]])
-             
-        else:
+        
+        unpacking=["c",[ordered1, 0, 1],[ordered2, 1, 1]]
+        add=only_sep(unpacking,pairs)
+        if add:
+            sep_closed_matching.append(add)
             
+        else:
             #test non paired Pattern AFTER for closed pseudoknots in ordered1.
-            if pairs[0].nb+1 != len(ordered1)-1:
-                if ordered1[pairs[0].nb+2].alignedwith == EmptyPattern:
-                    if ordered1[pairs[0].nb+2].pk_index_closed != 0 and ordered2[pairs[1].nb+1].pk_index_closed !=0:
-                        if not(ordered2[pairs[1].nb+1].pk_index_c_accounted) and not (ordered1[pairs[0].nb+2].pk_index_c_accounted):
-                            ordered2[pairs[1].nb+1].pk_index_c_accounted = True
-                            ordered1[pairs[0].nb+2].pk_index_c_accounted = True
-                            sep_closed_matching.append([ordered1[pairs[0].nb+2],ordered2[pairs[1].nb+1]])
-                            
+            unpacking=["c", [0,1],[ordered1, 0, 2], [ordered2, 1, 1], ["a",ordered1]]
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_closed_matching.append(add)
+            
             #test non paired Pattern AFTER for opened pseudoknots in ordered2.
-            if pairs[1].nb+1 != len(ordered2)-1:
-                if ordered2[pairs[1].nb+2].alignedwith == EmptyPattern:
-                    if ordered2[pairs[1].nb+2].pk_index_closed != 0 and ordered1[pairs[0].nb+1].pk_index_closed !=0:
-                        if not(ordered1[pairs[0].nb+1].pk_index_c_accounted) and not (ordered2[pairs[1].nb+2].pk_index_c_accounted):
-                            ordered1[pairs[0].nb+1].pk_index_c_accounted = True
-                            ordered2[pairs[1].nb+2].pk_index_c_accounted = True
-                            sep_closed_matching.append([ordered1[pairs[0].nb+1],ordered2[pairs[1].nb+2]])
-         
+            unpacking=["o", [1,1], [ordered2, 1, 2], [ordered1, 0, 1], ["a",ordered2]]        
+            add = non_paired(unpacking,pairs)
+            if add:
+                sep_closed_matching.append(add)
+    
     for pair in sep_opened_matching:
         dict_seq1={}
         for i,elt in enumerate(pair[0].sequence):
@@ -2053,7 +2076,6 @@ def main():
             print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
             b=time.time()
             print("Time spent:",str(round(b-a,3))+"s")
-            print(struct1.length, struct2.length)
         else:
             a=time.time()
             initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
