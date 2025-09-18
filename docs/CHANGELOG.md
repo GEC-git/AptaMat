@@ -1496,3 +1496,12 @@ ADDED LAST CLUSTERING RESULTS.
 
 This is the last line I write in this Changelog so I would like to thank everyone who participated in the creation of AptAlign and optimisation of other scripts.
 May this changelog be useful to the future user!
+
+
+
+
+# CHANGELOG - TX
+
+### THURSDAY 18/09/25
+
+- Code cleaning
