@@ -1030,7 +1030,7 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
     add_gaps(sep.nb, nb_gaps, ordered)
     struct.length+=nb_gaps
 
-### SEPARATOR ALIGNMENT FUNCTIONs
+### SEPARATOR ALIGNMENT FUNCTIONS
 
 def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
@@ -1050,16 +1050,14 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                 if not(gen_pair(upk[1],pairs).pk_index_o_accounted) and not(gen_pair(upk[2],pairs).pk_index_o_accounted):
                     gen_pair(upk[1],pairs).pk_index_o_accounted = True
                     gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                    
-                return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
         
         elif upk[0]=="c":
             if gen_pair(upk[1],pairs).pk_index_closed !=0 and gen_pair(upk[2],pairs).pk_index_closed !=0:
                 if not(gen_pair(upk[1],pairs).pk_index_c_accounted) and not(gen_pair(upk[2],pairs).pk_index_c_accounted):
                     gen_pair(upk[1],pairs).pk_index_c_accounted = True
                     gen_pair(upk[2],pairs).pk_index_c_accounted = True
-            
-                return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
 
         return False
             
@@ -1077,15 +1075,13 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                         if not(gen_pair(upk[3],pairs).pk_index_o_accounted) and not (gen_pair(upk[2],pairs).pk_index_o_accounted):
                             gen_pair(upk[3],pairs).pk_index_o_accounted = True
                             gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                        return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
-                
+                            return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
                 elif upk[0]=="c":
                     if gen_pair(upk[2],pairs).pk_index_closed != 0 and gen_pair(upk[3],pairs).pk_index_closed !=0:
                         if not(gen_pair(upk[3],pairs).pk_index_c_accounted) and not (gen_pair(upk[2],pairs).pk_index_c_accounted):
                             gen_pair(upk[3],pairs).pk_index_c_accounted = True
                             gen_pair(upk[2],pairs).pk_index_c_accounted = True
-                    
-                        return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
+                            return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
                 
         return False
     
