@@ -66,6 +66,7 @@ Those Python modules are needed for all algorithms:
 - [scikit-learn](https://scikit-learn.org/stable/)
 - [matplotlib](https://matplotlib.org/)
 - [vispy](https://vispy.org/)
+- [tabulate](https://pypi.org/project/tabulate/)
 
 Use of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
 
