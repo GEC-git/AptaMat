@@ -1505,3 +1505,8 @@ May this changelog be useful to the future user!
 ### THURSDAY 18/09/25
 
 - Code cleaning
+
+### MONDAY 22/09/25
+
+- Debugging and code cleaning.
+- Added pretty formatting
