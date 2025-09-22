@@ -11,11 +11,42 @@ sys.path.append(root_path)
 import AptaMat2 as AF
 import time
 import argparse
-
 # import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 import copy
+from tabulate import tabulate
+
+### DEBUGGING FUNCTIONS
+
+def vis_align(struct1,struct2,step="NULL"):
+    """
+    Function used to visualize the alignment at any step in the full_alignment function.
+    """
+    seq1=""
+    for elt in struct1.order_list():
+        if isinstance(elt, Pattern):
+            if elt.alignedsequence=="":
+                seq1+=elt.sequence
+            else:
+                seq1+=elt.alignedsequence
+        else:
+            seq1+=elt.sequence
+    seq2=""
+    for elt in struct2.order_list():
+        if isinstance(elt, Pattern):
+            if elt.alignedsequence=="":
+                seq2+=elt.sequence
+            else:
+                seq2+=elt.alignedsequence
+        else:
+            seq2+=elt.sequence
+            
+    print("\nSTEP:",step," | Calculated lengths: - Struct1: ",struct1.length,"- Struct2: ",struct2.length)
+    print(seq1,"    Real Length of Struct1: ",len(seq1))
+    print(seq2,"    Real Length of Struct2: ",len(seq2))
+    if len(seq1) != struct1.length or len(seq2) != struct2.length:
+        print("ERROR IN LENGTH CALCULATION AT STEP: ",step)
 
 ### BASE FUNCTIONS
 
@@ -40,7 +71,9 @@ def find_dash(string):
     return res
     
 def insert_str(string,num,char):
-    """dedicated function to insert the character *char* at position *num* in *string*"""
+    """
+    dedicated function to insert the character *char* at position *num* in *string*
+    """
     string=list(string)
     string.insert(num,char)
     res=""
@@ -50,7 +83,7 @@ def insert_str(string,num,char):
 
 def count_pseudo(seq):
     """
-    Counts the number of 
+    Counts the number of pseudoknots characters in a sequence.
     """
     pseudo_char="[{<>}]"
     count=0
@@ -177,7 +210,7 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
     diff2=mid_d2-mid_g2
     
     if diff1==diff2:
-        #only translation operation, we don't accept to align pseudoknots
+        #only translation operation.
         if mid_g1<mid_g2:
             #middle of 1 starts before middle of 2, so 1 is to be translated
             dict_seq1=dict_seq_translation(dict_seq1, trans_amnt)
@@ -191,10 +224,8 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
 
     elif diff1>diff2:
         #middle of pat1 > middle of pat2
-        
         for i in range(diff1-diff2):
             dict_seq2=insert_gap_seq_dict(dict_seq2, mid_d2)
-            
             
         mid_d2=mid_d2+(diff1-diff2)
 
@@ -214,7 +245,6 @@ def middle_aligning(dict_seq1,dict_seq2, diff1, diff2, mid_g1, mid_d1, mid_g2, m
         for i in range(diff2-diff1):
             dict_seq1=insert_gap_seq_dict(dict_seq1, mid_d1)
             
-        
         mid_d1=mid_d1+(diff2-diff1)
         
         if mid_g1<mid_g2:
@@ -238,98 +268,57 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
     cluster_2 = dict_seq_cluster_finder(dict_tba2, direction)
     
     Pdiff = len(cluster_1)-len(cluster_2)
-    
-    if direction=="Right":
-        #aligning the right dictionnaries.
-        if Pdiff>0:
-            #more pairings in 1.
-            for i, elt2 in enumerate(cluster_2):
-                if elt2 != cluster_1[i]:
-                    local_diff = elt2-cluster_1[i]
-                    if local_diff > 0:
-                        #place local_diff gaps in 1 at pos cluster_1[i].
-                        for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i])
-                            
-                        #update cluster_1
-                        for j in range(i, len(cluster_1)):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos elt2.
-                        for k in range(abs(local_diff)):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, elt2)
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
-                        
-        else:
-            #more pairings in 2 or equal amount.
-            for i, elt1 in enumerate(cluster_1):
-                if elt1 != cluster_2[i]:
-                    local_diff=cluster_2[i]-elt1
-                    if local_diff > 0:
-                        #place local_diff gaps in 1 at pos elt1.
-                        for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, elt1)
-                        #update cluster_1
-                        for j in range(i, len(cluster_1)):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
-                        for k in range(abs(local_diff)):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i])
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
-                        
-    elif direction=="Left":
-        #aligning the left dictionnaries by starting from the right.
+
+    if direction=="Left":
+        #inversing the dictionnaries when aligning left hand side of pattern.
         dict_tba1=inverser_dico(dict_tba1)
         dict_tba2=inverser_dico(dict_tba2)
-        if Pdiff>0:
-            #more pairings in 1.
-            for i, elt2 in enumerate(cluster_2):
-                if elt2 != cluster_1[i]:
-                    local_diff = elt2-cluster_1[i]
-                    if local_diff > 0:
-                        #place local_diff gaps in 1 at pos cluster_1[i].
-                        for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, cluster_1[i])
-                            
-                        #update cluster_1
-                        for j in range(i, len(cluster_1)):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos elt2.
-                        for k in range(abs(local_diff)):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, elt2)
-                            
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
+    
+    if Pdiff > 0:
+        # more pairings in 1.
+        for i, elt2 in enumerate(cluster_2):
+            if elt2 != cluster_1[i]:
+                local_diff = elt2-cluster_1[i]
+                if local_diff > 0:
+                    # place local_diff gaps in 1 at pos cluster_1[i].
+                    for k in range(local_diff):
+                        dict_tba1 = insert_gap_seq_dict(
+                            dict_tba1, cluster_1[i])
+
+                    # update cluster_1
+                    for j in range(i, len(cluster_1)):
+                        cluster_1[j] += local_diff
+                else:
+                    # place abs(local_diff) gaps in 2 at pos elt2.
+                    for k in range(abs(local_diff)):
+                        dict_tba2 = insert_gap_seq_dict(dict_tba2, elt2)
+                    # update cluster_2
+                    for j in range(i, len(cluster_2)):
+                        cluster_2[j] += abs(local_diff)
+
+    else:
+        # more pairings in 2 or equal amount.
+        for i, elt1 in enumerate(cluster_1):
+            if elt1 != cluster_2[i]:
+                local_diff = cluster_2[i]-elt1
+                if local_diff > 0:
+                    # place local_diff gaps in 1 at pos elt1.
+                    for k in range(local_diff):
+                        dict_tba1 = insert_gap_seq_dict(dict_tba1, elt1)
+                    # update cluster_1
+                    for j in range(i, len(cluster_1)):
+                        cluster_1[j] += local_diff
+                else:
+                    # place abs(local_diff) gaps in 2 at pos cluster_2[i].
+                    for k in range(abs(local_diff)):
+                        dict_tba2 = insert_gap_seq_dict(
+                            dict_tba2, cluster_2[i])
+                    # update cluster_2
+                    for j in range(i, len(cluster_2)):
+                        cluster_2[j] += abs(local_diff)
                         
-        else:
-            #more pairings in 2 or equal amount.
-            for i, elt1 in enumerate(cluster_1):
-                if elt1 != cluster_2[i]:
-                    local_diff=cluster_2[i]-elt1
-                    if local_diff > 0:
-                        #place local_diff gaps in 1 at pos elt1.
-                        for k in range(local_diff):
-                            dict_tba1=insert_gap_seq_dict(dict_tba1, elt1)
-                            
-                        #update cluster_1
-                        for j in range(i, len(cluster_1)):
-                            cluster_1[j]+=local_diff
-                    else:
-                        #place abs(local_diff) gaps in 2 at pos cluster_2[i].
-                        for k in range(abs(local_diff)):
-                            dict_tba2=insert_gap_seq_dict(dict_tba2, cluster_2[i])
-                            
-                        #update cluster_2
-                        for j in range(i, len(cluster_2)):
-                            cluster_2[j]+=abs(local_diff)
-                            
+    if direction=="Left":        
+        #reinversing the dictionnaries when finished aligning.
         dict_tba1=inverser_dico(dict_tba1)
         dict_tba2=inverser_dico(dict_tba2)
 
@@ -376,8 +365,6 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                 dict_tba1=insert_gap_seq_dict(dict_tba1,start1)
     
     return dict_tba1, dict_tba2, overhang_seq1, overhang_seq2
-
-
 
 def inside_out_pat_alignment(pat1, pat2):
     """
@@ -483,8 +470,6 @@ def inside_out_pat_alignment(pat1, pat2):
     dict2_M = dict_seq_translation(dict_mid2, trans2)
     
     #aligning the right dictionnaries
-    
-    
     dict1_R, dict2_R, right_overhang_pat1, right_overhang_pat2 = propagation_alignment(dict_tba1_R, dict_tba2_R, "Right")
 
     #reagglomerating.
@@ -545,10 +530,9 @@ def pattern_alignment(struct1, struct2, pat1, pat2, order1, order2, verbose=Fals
 
 def subdiv_finder(sequence,subdiv_param):
     """
-    Finds and marks with hashtags the pairings that compose overdivisions.
+    Finds and marks with "O" and "C" the pairings that compose opening and closing overdivisions.
     """
     par="()"
-    #void=".-"
     dict_par={}
     dict_seq={}
     for i,elt in enumerate(sequence):
@@ -589,24 +573,20 @@ def subdiv_finder(sequence,subdiv_param):
         if elt=="O":
             if new_subdiv:
                 new_subdiv=False
-                
             subdiv_dict[i]="("
 
         elif elt =="C":
             if new_subdiv:
-                
                 new_subdiv=False
             subdiv_dict[i]=")"
 
         else:
             new_subdiv=True
             if subdiv_dict!={}:
-
                 subdiv_list.append(subdiv_dict)
             subdiv_dict={}
             
     if subdiv_dict!={}:
-
         subdiv_list.append(subdiv_dict)
     
     return subdiv_list, new_seq
@@ -733,8 +713,22 @@ def surround(subdiv,sep):
     else:
         return False
 
-### CLASSES
+def subdiv_param_calculator(seq_length):
+    return 2
 
+### CLASSES
+"""
+>_RF00010_579 - _RF00010_538 | AptaMat: 4.748878923766816
+.(((((((((([[[[[[[.(((((((((..........)))))))))....(((.(((((((((-...[[[[.((((((((((.....)))))(((((....))))-)((...(((((............(((((((((((...))))))--))--------------------)..)).......((((((.......)))-------------))).(((((((((....)))))-)--)).)..)))..)))))))))))))...((((......((((((---------------------(((((.]]]]-)))))..-)))))).....))))......((((((((....))))))))..........]]]]]]]..................---------------------)))))))).).))))))))).....
+.(((((((((([[[[[[[.(((((((((----------)))))))))....(((.(((((((((....[[[[.((((((((((.....)))))(((((....)))).)((...(((((.............((((((((.....))))))..)).......((((((.......)--))--------------------)))(((((((((....)))--------------))))).)..))-)..)))--))))))))))---...((((......((((((.....................(((((.]]]].)))))...)))))).....))))......((((((((....))))))))..........]]]]]]].......................................)))))))).).))))))))).....
+
+.(((((((((([[[[[[[.(((((((((..........)))))))))....(((.(((((((((...[[[[.((((((((((.....)))))(((((....)))))((...(((((............(((((((((((...)))))))))..)).......((((((.......)))))).(((((((((....)))))))).)..)))..)))))))))))))...((((......(((((((((((.]]]])))))..)))))).....))))......((((((((....))))))))..........]]]]]]]..................)))))))).).))))))))).....
+.(((((((((([[[[[[[.((((((((()))))))))....(((.(((((((((....[[[[.((((((((((.....)))))(((((....)))).)((...(((((.............((((((((.....))))))..)).......((((((.......))))))(((((((((....)))))))).)..)))..)))))))))))))...((((......((((((.....................(((((.]]]].)))))...)))))).....))))......((((((((....))))))))..........]]]]]]].......................................)))))))).).))))))))).....
+
+best subdiv param = 10
+                  
+"""
+                  
 class Structure():
     """
     Class representing an aligned or not dotbracket sequence.
@@ -745,7 +739,7 @@ class Structure():
         self.raw=sequence
         self.sequence=AGU
         self.length=len(sequence)
-        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, 2)
+        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param_calculator(len(sequence)))
         sep,pat=slicer(self.raw_nosubdiv)
         if self.subdiv_list!=[]:
             if surround(self.subdiv_list,sep):
@@ -781,24 +775,26 @@ class Structure():
         self.alignedwith=None
     
     def __str__(self):
-        tbp="Type: Structure\n"
-        tbp+="ID: "+str(self.id)+"\n"
-        tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Raw Sequence: "+self.raw+"\n"
-        tbp+="Subdiv sequence: "+str(self.raw_nosubdiv)+"\n"
-        tbp+="Subdiv: "+str(self.subdiv_list)+"\n"
+        tab=[["Type:","Structure"],
+             ["Length:",self.length],
+             ["ID:",self.id],
+             ["Dotbracket Sequence:",self.raw],
+             ["Subdiv Sequence:",self.raw_nosubdiv],
+             ["Nucleotides Sequence:",self.sequence],
+             ["Subdiv:",self.subdiv_list]]
+        if self.isaligned:
+            tab.append(["Aligned:","Yes"])
+            tab.append(["Aligned Sequence:",self.alignedsequence])
+            tab.append(["Aligned with:",self.alignedwith.alignedsequence])
+        else:
+            tab.append(["Aligned:","No"])
+        tbp=tabulate(tab,tablefmt="fancy_outline",headers="firstrow")
         tbp+="\nSeparators: \n"
         for i,elt in enumerate(self.separators):
-            tbp+="\nSeparator number "+str(i+1)+":\n"+str(elt)+"\n"
+            tbp+="\n"+str(elt)
         tbp+="\nPatterns: \n"
         for i,elt in enumerate(self.patterns):
-            tbp+="\nPattern number "+str(i+1)+":\n"+str(elt)+"\n"
-
-        if self.isaligned:
-            tbp+="Aligned sequence: "+self.alignedsequence+"\n"
-            tbp+="Aligned with:"+self.alignedwith.alignedsequence+"\n"
-        else:
-            tbp+="Not yet aligned\n"
+            tbp+="\n"+str(elt)
         return tbp
 
     def aligned(self):
@@ -808,11 +804,6 @@ class Structure():
                 self.isaligned=False
         if not self.isaligned:
             print("Structure not yet aligned")
-        
-
-    def __eq__(self, other):
-        if isinstance(other, Structure):
-            return other.raw == self.raw
         
     def order_list(self):
         
@@ -898,20 +889,17 @@ class Separator():
         
         if self.pk_index_opened!=0:
             self.pk_index_o_accounted=False
-        
-    def __eq__(self,other):
-        if isinstance(other,Separator):
-            return self.length==other.length
-    
+
     def __str__(self):
-        tbp="Type: Separator\n"
-        tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Order: "+str(self.nb)+"\n"
-        tbp+="Sequence: "+self.sequence+"\n"
-        tbp+="Start: "+str(self.start)+"\n"
-        tbp+="Finish: "+str(self.finish)+"\n"
-        tbp+="Subdiv index: "+str(self.subdiv_index)+"\n"
-        return tbp
+        tab=[["Type:","Separator"],
+             ["Length:",self.length],
+             ["Order:",self.nb],
+             ["Sequence:",self.sequence],
+             ["Start:",self.start],
+             ["Finish:",self.finish],
+             ["Subdiv index:",self.subdiv_index]]
+        return tabulate(tab,tablefmt="fancy_outline",headers="firstrow")
+
     
     def compare(self,other):
         if isinstance(other,Separator):
@@ -971,23 +959,25 @@ class Pattern():
         self.finish+=new_seq.count('-')
         
     def __str__(self):
-        tbp="Type: Pattern\n"
-        tbp+="Length: "+str(self.length)+"\n"
-        tbp+="Order: "+str(self.nb)+"\n"
-        tbp+="Start: "+str(self.start)+"\n"
-        tbp+="Finish: "+str(self.finish)+"\n"
-        tbp+="Starting Sequence: "+self.sequence+"\n"
-        tbp+="Subdiv index: "+str(self.subdiv_index)+"\n"
+        
+        tab=[["Type:","Pattern"],
+             ["Length:",self.length],
+             ["Order:",self.nb],
+             ["Sequence:",self.sequence],
+             ["Start:",self.start],
+             ["Finish:",self.finish],
+             ["Subdiv index:",self.subdiv_index]]
         if self.isaligned:
-            tbp+="Aligned sequence: "+self.alignedsequence+"\n"
-            tbp+="Aligned with: "+self.alignedwith.alignedsequence+"\n"
+            tab.append(["Aligned:","Yes"])
+            tab.append(["Aligned Sequence:",self.alignedsequence])
+            tab.append(["Aligned with:",self.alignedwith.alignedsequence])
         else:
-            tbp+="Not yet aligned\n"
-        return tbp
+            tab.append(["Aligned:","No"])
+        return tabulate(tab,tablefmt="fancy_outline",headers="firstrow")
 
 EmptyPattern=Pattern('',[-1,-1],-1,-1)
 
-### BASE SEPARATOR GAPS FUNCTIONS=
+### BASE SEPARATOR GAPS FUNCTIONS
 
 def del_gaps(current_order, nb_gaps_deleted, order):
     """
@@ -1000,7 +990,6 @@ def del_gaps(current_order, nb_gaps_deleted, order):
             else:
                 elt.start-=nb_gaps_deleted
                 elt.finish-=nb_gaps_deleted
-    
     
 def add_gaps(current_order,added_gaps,order_list):
     """
@@ -1050,20 +1039,25 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                 if not(gen_pair(upk[1],pairs).pk_index_o_accounted) and not(gen_pair(upk[2],pairs).pk_index_o_accounted):
                     gen_pair(upk[1],pairs).pk_index_o_accounted = True
                     gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                    return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    if upk[1][0]==ordered1:
+                        return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    else:
+                        return [gen_pair(upk[2],pairs),gen_pair(upk[1],pairs)]
         
         elif upk[0]=="c":
             if gen_pair(upk[1],pairs).pk_index_closed !=0 and gen_pair(upk[2],pairs).pk_index_closed !=0:
                 if not(gen_pair(upk[1],pairs).pk_index_c_accounted) and not(gen_pair(upk[2],pairs).pk_index_c_accounted):
                     gen_pair(upk[1],pairs).pk_index_c_accounted = True
                     gen_pair(upk[2],pairs).pk_index_c_accounted = True
-                    return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    if upk[1][0]==ordered1:
+                        return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                    else:
+                        return [gen_pair(upk[2],pairs),gen_pair(upk[1],pairs)]
 
         return False
             
 
     def non_paired(upk,pairs):
-
         if upk[4][0]=="b":
             bool_res = pairs[upk[1][0]].nb+upk[1][1] != 0
         elif upk[4][0]=="a":
@@ -1075,7 +1069,10 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                         if not(gen_pair(upk[3],pairs).pk_index_o_accounted) and not (gen_pair(upk[2],pairs).pk_index_o_accounted):
                             gen_pair(upk[3],pairs).pk_index_o_accounted = True
                             gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                            return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
+                            if upk[2][0]==ordered1:
+                                return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
+                            else:
+                                return [gen_pair(upk[3],pairs),gen_pair(upk[2],pairs)]
                 elif upk[0]=="c":
                     if gen_pair(upk[2],pairs).pk_index_closed != 0 and gen_pair(upk[3],pairs).pk_index_closed !=0:
                         if not(gen_pair(upk[3],pairs).pk_index_c_accounted) and not (gen_pair(upk[2],pairs).pk_index_c_accounted):
@@ -1218,8 +1215,15 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                 for i in range(abs(diff)):
                     dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
             
-            pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
-            pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
+            if isinstance(pair[0],Pattern):
+                pair[0].alignedsequence=dict_seq_reagglomerate(dict_seq1)
+            else:
+                pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
+                
+            if isinstance(pair[1],Pattern):
+                pair[1].alignedsequence=dict_seq_reagglomerate(dict_seq2)
+            else:
+                pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
             
             nb_gaps1=pair[0].sequence.count('-')
             nb_gaps2=pair[1].sequence.count('-')
@@ -1235,7 +1239,8 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
 
             struct1.length+=nb_gaps1
             struct2.length+=nb_gaps2
-    
+        
+            
     for pair in sep_closed_matching:
     
         dict_seq1={}
@@ -1283,9 +1288,16 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
                 for i in range(abs(diff)):
                     dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
             
-            pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
-            pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
-            
+            if isinstance(pair[0],Pattern):
+                pair[0].alignedsequence=dict_seq_reagglomerate(dict_seq1)
+            else:
+                pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
+                
+            if isinstance(pair[1],Pattern):
+                pair[1].alignedsequence=dict_seq_reagglomerate(dict_seq2)
+            else:
+                pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
+                
             nb_gaps1=pair[0].sequence.count('-')
             nb_gaps2=pair[1].sequence.count('-')
             
@@ -1294,13 +1306,13 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
             
             pair[0].finish+=nb_gaps1
             pair[1].finish+=nb_gaps2
-
+            
             add_gaps(pair[0].nb,nb_gaps1,ordered1)
             add_gaps(pair[1].nb,nb_gaps2,ordered2)
-
+            
+            
             struct1.length+=nb_gaps1
             struct2.length+=nb_gaps2
-
 
 def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
@@ -1656,7 +1668,6 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
                 del_gaps(pat2.nb, pat2.right_overhang, order2)
                 
     return ret_diff
-    
 
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
     """
@@ -1996,23 +2007,23 @@ def full_alignment(struct1, struct2, verbose=False):
         order1=struct1.order_list()
         order2=struct2.order_list()
         pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
-
+        
     if verbose:
         print("\nAccounting for pseudoknots and overdivision.")
 
-        
     order1=struct1.order_list()
     order2=struct2.order_list()
-
-    pseudoknots_compensating(struct1, struct2, order1, order2, matching)
+    
+    
+    pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
     
     overdivision_compensating(struct1, struct2, order1, order2, matching)
-
+    
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
     
     separator_compensating(struct1, struct2, matching)
-
+    
     if verbose:
         print("\nUpdating last parameters and finishing\n")
     struct1.alignedwith=struct2
@@ -2054,46 +2065,59 @@ def main():
     if args.structures is not None:
         struct1=Structure(args.structures[0])
         struct2=Structure(args.structures[1])
-        
+        a=time.time()
         full_alignment(struct1, struct2, args.verbose)
+        
         if not args.verbose:
-            a=time.time()
             initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
-            
-            print("Structure 1:")
-            print(struct1.alignedsequence)
-            print("Structure 2:")
-            print(struct2.alignedsequence)
             new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
             if initial_dist!=0:
                 improvement = round((initial_dist-new_dist)/initial_dist *100,2)
             else:
                 improvement = 1
-            print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
             b=time.time()
-            print("Time spent:",str(round(b-a,3))+"s")
+            str1=struct1.alignedsequence
+            str2=struct2.alignedsequence
+            
+            for i in range(int(len(str1)/190)+1):
+                str1=insert_str(str1,i*190, "\n")
+            for i in range(int(len(str2)/190)+1):
+                str2=insert_str(str2,i*190, "\n")
+                count=i
+            
+            tab=[["Structure 1:"+(count+2)*"\n"+"Structure 2:",str1+"\n"+str2],
+                 ["Improvement: ",str(initial_dist)+" -> "+str(new_dist)+" | in %: "+str(improvement)+"%"]]
+            print("\n")
+            print(tabulate(tab,headers=["Results","In "+str(round(b-a,3))+"s"],tablefmt="fancy_grid"))
+            print("\n")
         else:
-            a=time.time()
             initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
-            
-            print("Structure 1:")
-            print(struct1.alignedsequence)
-            print("Structure 2:")
-            print(struct2.alignedsequence)
             new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
             if initial_dist!=0:
-                improvement = round((initial_dist-new_dist)/initial_dist *100,2)
+               improvement = round((initial_dist-new_dist)/initial_dist *100,2)
             else:
-                improvement = 1
-            print("Improvement:",initial_dist,"->",new_dist,"| in %:",str(improvement)+"%")
+               improvement = 1
             b=time.time()
-            print("Time spent:",str(round(b-a,3))+"s")
+            str1=struct1.alignedsequence
+            str2=struct2.alignedsequence
+            
+            for i in range(int(len(str1)/190)+1):
+                str1=insert_str(str1,i*190, "\n")
+            for i in range(int(len(str2)/190)+1):
+                str2=insert_str(str2,i*190, "\n")
+                count=i
+            
+            tab=[["Structure 1:"+(count+2)*"\n"+"Structure 2:",str1+"\n"+str2],
+                 ["Improvement: ",str(initial_dist)+" -> "+str(new_dist)+" | in %: "+str(improvement)+"%"]]
+            print("\n")
+            print(tabulate(tab,headers=["Results","In "+str(round(b-a,3))+"s"],tablefmt="fancy_grid"))
+            print("\n")
             print("\nDetailed results:\n")
             print("______________________________________\n")
-            print("\n","First Structure","\n")
+            print("First Structure","\n")
             print(struct1)
             print("______________________________________\n")
-            print("\n","Second Structure","\n")
+            print("Second Structure","\n")
             print(struct2)
         sys.exit(0)
 
