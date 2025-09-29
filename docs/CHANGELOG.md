@@ -1499,6 +1499,7 @@ May this changelog be useful to the future user!
 
 
 
+Looks like I'm back, let's go!
 
 # CHANGELOG - TX
 
@@ -1510,3 +1511,10 @@ May this changelog be useful to the future user!
 
 - Debugging and code cleaning.
 - Added pretty formatting
+
+### MONDAY 29/09/25
+
+- Added search for optimal overdivision calculation.
+    - Optimised and unoptimised versions.
+    
+- Bug fixes regarding the new feature.
