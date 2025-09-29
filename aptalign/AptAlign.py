@@ -11,7 +11,7 @@ sys.path.append(root_path)
 import AptaMat2 as AF
 import time
 import argparse
-# import multiprocessing as mp
+import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
 import copy
@@ -562,6 +562,7 @@ def subdiv_finder(sequence,subdiv_param):
             dict_seq[elt]="O"
         elif dict_seq[elt]==")":
             dict_seq[elt]="C"
+            
     new_seq=''
     for elt in dict_seq.values():
         new_seq+=elt
@@ -713,9 +714,6 @@ def surround(subdiv,sep):
     else:
         return False
 
-def subdiv_param_calculator(seq_length):
-    return 2
-
 ### CLASSES
                   
 class Structure():
@@ -724,11 +722,11 @@ class Structure():
     
     It is formed of two lists : one with its patterns and one with its separators.
     """
-    def __init__(self, sequence, ident=None, fam=None, AGU=None):
+    def __init__(self, sequence, ident=None, fam=None, AGU=None, subdiv_param=2):
         self.raw=sequence
         self.sequence=AGU
         self.length=len(sequence)
-        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param_calculator(len(sequence)))
+        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param)
         sep,pat=slicer(self.raw_nosubdiv)
         if self.subdiv_list!=[]:
             if surround(self.subdiv_list,sep):
@@ -2023,15 +2021,64 @@ def full_alignment(struct1, struct2, verbose=False):
   
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
+    
+    return struct1,struct2
 
-#_____________________________MAIN FUNCTION_____________________________
+#_____________________________MAIN FUNCTIONS_____________________________
 
+def opt_subdiv(seq1, seq2, depth):
+    """
+    opt_subdiv finds the best subdiv parameter via brute force. This function runs the alignments in parallel.
+    """
+    if mp.cpu_count() < depth:
+        pool = mp.Pool(mp.cpu_count())
+    else:
+        pool = mp.Pool(depth)
+        
+    structure_list=[]
+    for i in range(1,depth+1):
+        structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
+    
+    results=[]
+    for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1]) for structs in structure_list]):
+        results.append([struct1,struct2])
+    dists=[]
+    
+    
+    for struct1, struct2 in results:
+        dists.append(AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow"))
+    
+    min_dist = np.argmin(dists)
+    
+    return results[min_dist][0], results[min_dist][1]
+
+def clustering_opt_subdiv(seq1,seq2, depth):
+    """
+    clustering_opt_subdiv finds the best subdiv parameter via brute force. This function does NOT run the alignments in parallel.
+    """
+    structure_list=[]
+    for i in range(1,depth+1):
+        structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
+    
+    results=[]
+    for struct1, struct2 in structure_list:
+        results.append(full_alignment(struct1,struct2))
+    dists=[]
+    
+    for struct1, struct2 in results:
+        dists.append(AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow"))
+    
+    min_dist = np.argmin(dists)
+    
+    return results[min_dist][0], results[min_dist][1]
+    
 def main():
 
     parser = argparse.ArgumentParser(description="AptAlign is an alignment algorithm designed around pattern recognition.\n"
-                                                 "Use -fp for a file input of an ensemble of structures.\n"
                                                  "Use -s to input only two structures directly in the command line.\n"
-                                                 "Use -v to toggle verbose mode.\n")
+                                                 "Use -v to toggle verbose mode.\n"
+                                                 "Use -d to set the depth value for optimal overdivision parameter search.\n"
+                                                 "Use -u to toggle the unoptimised version of the optimal overdivision parameter search.")
 
     parser.add_argument('-v',
                         '--verbose',
@@ -2045,6 +2092,19 @@ def main():
                         type=str,
                         help='two 2D structures in dotbracket notation.')
     
+    parser.add_argument('-d',
+                        '--depth',
+                        nargs='+',
+                        type=int,
+                        default=[10],
+                        help='Search depth for optimal overdivision parameter.')
+                        
+    parser.add_argument('-u',
+                        '--unoptimised',
+                        help="Use the unoptimised overdivision parameter calculator function.",
+                        default=False,
+                        action="store_true")
+    
     args = parser.parse_args()
     
     if len(sys.argv) == 1:
@@ -2052,21 +2112,26 @@ def main():
         sys.exit(1)
     
     if args.structures is not None:
-        struct1=Structure(args.structures[0])
-        struct2=Structure(args.structures[1])
         a=time.time()
-        full_alignment(struct1, struct2, args.verbose)
+        
+        if args.unoptimised:
+            struct1, struct2 = clustering_opt_subdiv(args.structures[0],args.structures[1],args.depth[0])
+        else:
+            struct1, struct2 = opt_subdiv(args.structures[0],args.structures[1],args.depth[0])
+        
+        initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
+        new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
+        
+        str1=struct1.alignedsequence
+        str2=struct2.alignedsequence
         
         if not args.verbose:
-            initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
-            new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
+            
             if initial_dist!=0:
                 improvement = round((initial_dist-new_dist)/initial_dist *100,2)
             else:
                 improvement = 1
             b=time.time()
-            str1=struct1.alignedsequence
-            str2=struct2.alignedsequence
             
             for i in range(int(len(str1)/190)+1):
                 str1=insert_str(str1,i*190, "\n")
@@ -2080,15 +2145,11 @@ def main():
             print(tabulate(tab,headers=["Results","In "+str(round(b-a,3))+"s"],tablefmt="fancy_grid"))
             print("\n")
         else:
-            initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
-            new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
             if initial_dist!=0:
                improvement = round((initial_dist-new_dist)/initial_dist *100,2)
             else:
                improvement = 1
             b=time.time()
-            str1=struct1.alignedsequence
-            str2=struct2.alignedsequence
             
             for i in range(int(len(str1)/190)+1):
                 str1=insert_str(str1,i*190, "\n")
