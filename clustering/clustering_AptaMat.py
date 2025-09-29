@@ -211,8 +211,8 @@ def initialize_dataset(structure_file):
     return structure_list,family
 
 def alignment_calc(struct1,struct2,speed):
-    struct1al,struct2al=AL.Structure(struct1.dotbracket,ident=struct1.id),AL.Structure(struct2.dotbracket,ident=struct2.id)
-    AL.full_alignment(struct1al,struct2al)
+    
+    struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=5)
     
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
     
