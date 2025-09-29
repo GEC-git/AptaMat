@@ -212,10 +212,9 @@ def initialize_dataset(structure_file):
 
 def alignment_calc(struct1,struct2,speed):
     
-    struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=5)
+    struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=5,ident1=struct1.id,ident2=struct2.id)
     
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
-    
     
     alignment=[struct1al.alignedsequence,struct2al.alignedsequence]
     ids=[struct1.id, struct2.id]

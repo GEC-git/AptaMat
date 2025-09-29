@@ -2052,13 +2052,13 @@ def opt_subdiv(seq1, seq2, depth):
     
     return results[min_dist][0], results[min_dist][1]
 
-def clustering_opt_subdiv(seq1,seq2, depth):
+def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ident2=None, fam2=None, AGU2=None):
     """
     clustering_opt_subdiv finds the best subdiv parameter via brute force. This function does NOT run the alignments in parallel.
     """
     structure_list=[]
     for i in range(1,depth+1):
-        structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
+        structure_list.append([Structure(seq1,subdiv_param=i,ident=ident1,fam=fam1,AGU=AGU1),Structure(seq2,subdiv_param=i,ident=ident2,fam=fam2,AGU=AGU2)])
     
     results=[]
     for struct1, struct2 in structure_list:
