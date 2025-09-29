@@ -695,6 +695,7 @@ def surround(subdiv,sep):
 
     order_before=order_dict[0]
     inter_order_dict=copy.deepcopy(order_dict)
+
     for nb,order in order_dict.items():
         if nb!=0:
             if order_before==order:
@@ -708,8 +709,10 @@ def surround(subdiv,sep):
     for value in inter_order_dict.values():
         order_dict[i]=value
         i+=1
-    
-    if order_dict[0]==order_dict[1]-2 and len(order_dict)==2:
+        
+    if len(order_dict) <= 1:
+        return False
+    elif order_dict[0]==order_dict[1]-2 and len(order_dict)==2:
         return True
     else:
         return False
@@ -727,12 +730,19 @@ class Structure():
         self.sequence=AGU
         self.length=len(sequence)
         self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param)
+        count_par=sequence.count("(")+sequence.count(")")
+        if len(self.subdiv_list) == count_par:
+            self.subdiv_list=[]
+            self.raw_nosubdiv=self.raw
+            
         sep,pat=slicer(self.raw_nosubdiv)
+
         if self.subdiv_list!=[]:
             if surround(self.subdiv_list,sep):
                 self.raw_nosubdiv=self.raw
                 self.subdiv_list=[]
-                sep,pat=slicer(self.raw_nosubdiv)
+                sep,pat=slicer(self.raw_nosubdiv)    
+        
         self.separators=sep
         self.patterns=pat
         self.pattern_nb=len(pat)

@@ -401,7 +401,7 @@ def heatmap(family, labels, dict_label):
     fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
 
 def main():
-    parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaFast to determine"
+    parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaMat2.0 to determine"
                                      "a distribution of structures inputed from a file.")
     parser.add_argument('-fp',
                         '--filepath',
