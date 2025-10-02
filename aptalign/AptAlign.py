@@ -88,7 +88,7 @@ def count_pseudo(seq):
     pseudo_char="[{<>}]"
     count=0
     for elt in seq:
-        if seq in pseudo_char:
+        if elt in pseudo_char:
             count+=1
     return count
 
