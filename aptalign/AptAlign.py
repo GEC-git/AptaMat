@@ -11,6 +11,7 @@ sys.path.append(root_path)
 import AptaMat2 as AF
 import time
 import argparse
+import traceback
 import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -63,6 +64,15 @@ class ODCompensatingError(Exception):
     pass
 
 class SepCompensatingError(Exception):
+    pass
+
+class GeneralAlignmentError(Exception):
+    pass
+
+class StructBuildError(Exception):
+    pass
+
+class MultiprocessingError(Exception):
     pass
 
 ### BASE FUNCTIONS
@@ -2013,7 +2023,7 @@ def full_alignment(struct1, struct2, verbose=False):
         try:
             matching = matching_finder(struct1, struct2, verbose)
         except Exception as e:
-            print(f"An error occured when matching patterns: {e}")
+            e = f"An error occured when matching patterns on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
             raise MatchingError(e)
     
     if verbose:
@@ -2026,7 +2036,7 @@ def full_alignment(struct1, struct2, verbose=False):
         try:
             pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
         except Exception as e:
-            print(f"An error occured when aligning patterns: {e}")
+            e = f"An error occured when aligning patterns on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
             raise PatternAlignmentError(e)
         
     if verbose:
@@ -2039,13 +2049,13 @@ def full_alignment(struct1, struct2, verbose=False):
     try:
         pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
     except Exception as e:
-        print(f"An error occured when compensating for pseudoknots: {e}")
+        e=f"An error occured when compensating for pseudoknots on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise PKCompensatingError(e)
         
     try:
         overdivision_compensating(struct1, struct2, order1, order2, matching)
     except Exception as e:
-        print(f"An error occured when compensating for overdivision: {e}")
+        e = f"An error occured when compensating for overdivision on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise ODCompensatingError(e)
     
     if verbose:
@@ -2054,7 +2064,7 @@ def full_alignment(struct1, struct2, verbose=False):
     try:
         separator_compensating(struct1, struct2, matching)
     except Exception as e:
-        print(f"An error occured when aligning separators: {e}")
+        e = f"An error occured when aligning separators on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise SepCompensatingError(e)
     
     if verbose:
@@ -2080,27 +2090,31 @@ def opt_subdiv(seq1, seq2, depth):
         try:
             pool = mp.Pool(mp.cpu_count())
         except Exception as e:
-            print(f"Error creating multiprocessing pool: {e}")
-            sys.exit(1)
+            e = f"Error creating multiprocessing pool: \n     {e}"
+            raise MultiprocessingError(e)
     else:
         try:
             pool = mp.Pool(depth)
         except Exception as e:
-            print(f"Error creating multiprocessing pool: {e}")
-            sys.exit(1)
+            e = f"Error creating multiprocessing pool: \n     {e}"
+            raise MultiprocessingError(e)
         
     structure_list=[]
     for i in range(1,depth+1):
-        structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
+        try:
+            structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
+        except Exception as e:
+            e = f"Error when creating structures on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
+            raise StructBuildError(e)
     
     results=[]
     try:
         for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1]) for structs in structure_list]):
             results.append([struct1,struct2])
     except Exception as e:
-        print(f"Error during parallelization of overdivision parameter calculation : {e}")
+        e = f"An error occured while aligning in parallel: \n     {e}"
         pool.close()
-        sys.exit(1)
+        raise GeneralAlignmentError(e)
     
     dists=[]
     
@@ -2117,12 +2131,21 @@ def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ide
     clustering_opt_subdiv finds the best subdiv parameter via brute force. This function does NOT run the alignments in parallel.
     """
     structure_list=[]
-    for i in range(1,depth+1):
-        structure_list.append([Structure(seq1,subdiv_param=i,ident=ident1,fam=fam1,AGU=AGU1),Structure(seq2,subdiv_param=i,ident=ident2,fam=fam2,AGU=AGU2)])
     
+    try:
+        for i in range(1,depth+1):
+            structure_list.append([Structure(seq1,subdiv_param=i,ident=ident1,fam=fam1,AGU=AGU1),Structure(seq2,subdiv_param=i,ident=ident2,fam=fam2,AGU=AGU2)])
+    except Exception as e:
+        e = f"Error when creating Structures on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
+        raise StructBuildError(e)
+        
     results=[]
     for struct1, struct2 in structure_list:
-        results.append(full_alignment(struct1,struct2))
+        try:
+            results.append(full_alignment(struct1,struct2))
+        except Exception as e:
+            e = f"An error occured while aligning on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
+            raise GeneralAlignmentError(e)
     dists=[]
     
     for struct1, struct2 in results:
@@ -2241,5 +2264,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        print(f"General Alignment Error on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}")
         sys.exit(1)
