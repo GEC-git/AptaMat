@@ -1518,3 +1518,10 @@ Looks like I'm back, let's go!
     - Optimised and unoptimised versions.
     
 - Bug fixes regarding the new feature.
+
+- Small bug fix regarding the slicing of entirely overdivised structures.
+    - This returned an error whereas now, it ignores the overdivision if it's superimposing on all the structure.
+
+### THURSDAY 02/10/25
+
+- Added last clustering results for aptalign v1.4
