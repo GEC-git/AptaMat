@@ -129,10 +129,12 @@ It takes two arguments:
 
 - `-s` (`--structures`) followed by secondary structures written in dotbracket format
 - `-v` (`--verbose`) to increase the verbosity of the output.
+- `-d` (`--depth`) to set the depth at which the overdivision calculation will go. (if set too high, WILL hinder performances, default = 10)
+- `-u` (`--unoptimised`) to use the unoptimised version of the overdivision calculation. (Can be of use if singlecore performances is very high compared to multicore)
 
 The `structures` argument must be a string formatted secondary structures array. You can only input two structures with this parameter. Quotes are necessary.
 
-      usage: AptAlign.py -s "STRUCTURE" "STRUCTURE"
+      usage: AptAlign.py [-s "STRUCTURE" "STRUCTURE"] [-d int] [-u] 
 
 The output is only in the terminal.
 
