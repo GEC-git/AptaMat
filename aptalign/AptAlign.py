@@ -48,6 +48,23 @@ def vis_align(struct1,struct2,step="NULL"):
     if len(seq1) != struct1.length or len(seq2) != struct2.length:
         print("ERROR IN LENGTH CALCULATION AT STEP: ",step)
 
+### ERROR HANDLING CLASSES
+
+class MatchingError(Exception):
+    pass
+
+class PatternAlignmentError(Exception):
+    pass
+
+class PKCompensatingError(Exception):
+    pass
+
+class ODCompensatingError(Exception):
+    pass
+
+class SepCompensatingError(Exception):
+    pass
+
 ### BASE FUNCTIONS
 
     # For string manipulations
@@ -1993,8 +2010,11 @@ def full_alignment(struct1, struct2, verbose=False):
     else:
         if verbose:
             print("\nDetermining the optimal pattern match if possible \n")
-        
-        matching = matching_finder(struct1, struct2, verbose)
+        try:
+            matching = matching_finder(struct1, struct2, verbose)
+        except Exception as e:
+            print(f"An error occured when matching patterns: {e}")
+            raise MatchingError(e)
     
     if verbose:
         print("\nAligning patterns.")
@@ -2003,7 +2023,11 @@ def full_alignment(struct1, struct2, verbose=False):
     for elt in matching:
         order1=struct1.order_list()
         order2=struct2.order_list()
-        pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
+        try:
+            pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
+        except Exception as e:
+            print(f"An error occured when aligning patterns: {e}")
+            raise PatternAlignmentError(e)
         
     if verbose:
         print("\nAccounting for pseudoknots and overdivision.")
@@ -2012,14 +2036,26 @@ def full_alignment(struct1, struct2, verbose=False):
     order2=struct2.order_list()
     
     
-    pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
-    
-    overdivision_compensating(struct1, struct2, order1, order2, matching)
+    try:
+        pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
+    except Exception as e:
+        print(f"An error occured when compensating for pseudoknots: {e}")
+        raise PKCompensatingError(e)
+        
+    try:
+        overdivision_compensating(struct1, struct2, order1, order2, matching)
+    except Exception as e:
+        print(f"An error occured when compensating for overdivision: {e}")
+        raise ODCompensatingError(e)
     
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
-    
-    separator_compensating(struct1, struct2, matching)
+        
+    try:
+        separator_compensating(struct1, struct2, matching)
+    except Exception as e:
+        print(f"An error occured when aligning separators: {e}")
+        raise SepCompensatingError(e)
     
     if verbose:
         print("\nUpdating last parameters and finishing\n")
@@ -2041,17 +2077,31 @@ def opt_subdiv(seq1, seq2, depth):
     opt_subdiv finds the best subdiv parameter via brute force. This function runs the alignments in parallel.
     """
     if mp.cpu_count() < depth:
-        pool = mp.Pool(mp.cpu_count())
+        try:
+            pool = mp.Pool(mp.cpu_count())
+        except Exception as e:
+            print(f"Error creating multiprocessing pool: {e}")
+            sys.exit(1)
     else:
-        pool = mp.Pool(depth)
+        try:
+            pool = mp.Pool(depth)
+        except Exception as e:
+            print(f"Error creating multiprocessing pool: {e}")
+            sys.exit(1)
         
     structure_list=[]
     for i in range(1,depth+1):
         structure_list.append([Structure(seq1,subdiv_param=i),Structure(seq2,subdiv_param=i)])
     
     results=[]
-    for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1]) for structs in structure_list]):
-        results.append([struct1,struct2])
+    try:
+        for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1]) for structs in structure_list]):
+            results.append([struct1,struct2])
+    except Exception as e:
+        print(f"Error during parallelization of overdivision parameter calculation : {e}")
+        pool.close()
+        sys.exit(1)
+    
     dists=[]
     
     
@@ -2114,9 +2164,13 @@ def main():
                         help="Use the unoptimised overdivision parameter calculator function.",
                         default=False,
                         action="store_true")
-    
-    args = parser.parse_args()
-    
+    try:
+        args = parser.parse_args()
+        
+    except Exception as e:
+        print(f"Error parsing arguments: {e}")
+        sys.exit(1)
+        
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -2180,6 +2234,12 @@ def main():
             print("Second Structure","\n")
             print(struct2)
         sys.exit(0)
+    else:
+        raise ValueError("The Structures were incorrectly parsed from command line.")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        sys.exit(1)
