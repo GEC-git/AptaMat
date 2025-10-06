@@ -150,6 +150,7 @@ It takes several arguments:
 - `-cv` (`--cluster_visualization`) saves a heatmap in PDF of the quality of the clustering (only testing purposes).
 - `-d` (`--depth`) controls the depth of iterations when calculating a clustering with a certain sigma value. (default = 1000)
 - `-sr` (`--sigma_range`) controls all the values taken by sigma to alter the affinity matrix (default = 100)
+- `-ra` (`--reuse_alignment`) followed by the filepath of the alignment file to use.
 
 Warning : A higher depth and sigma range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
 
@@ -162,8 +163,9 @@ The output can be given, depending on the parameters, as a combination of the th
 - CLUSTER file labeled with clusters.
 - Heatmap in PDF if testing is necessary.
 - Visualizer of the affinity matrix.
+- Alignment file. (please see below for an example).
 
-When clustering, the algorithm will automatically align each structures pair by pair using AptAlign.
+When clustering, the algorithm will automatically align each structures pair by pair using AptAlign and output an alignment file.
 
 **ONLY TESTED IN LINUX**
 
@@ -174,9 +176,9 @@ It is possible to use four other alignment algorithms using scripts inside the /
 - [RNAlign2D](https://github.com/tomaszwozniakihg/rnalign2d) : please ensure that the program is correctly installed.
 
 When the chosen alignment algorithm is correctly installed, you will need:
-- to decomment/comment the chosen imported API imported from line 13.
+- to decomment/comment the chosen API module imported from line 13.
 - to decomment the chosen function from line 228 as instructed by the commented line.
-- to decomment from line 255 as instructed by the commented line.
+- to decomment from line 296 as instructed by the commented line.
 
 Both in the clustering/clustering_AptaMat.py file.
 
@@ -238,6 +240,25 @@ CLUSTER    FAMILY    ID    SEQUENCE    DOTBRACKET
 
 This means that this structure have been put in the first cluster.
 
+__________________
+
+This algorithm can also output and input alignment files which are modified FASTA files, each pair by pair alignments is represented by a block of three lines :
+
+```
+>4MEG_B - 2HO7_B | AptaMat: 0.12698412698412698
+...........--[[....((((((....]]..............-))))))[[[[[.((((((]]]]].....((((((......((((((....)))))).......))))))..)))))).
+.............[[[...((((((...-]]]..............))))))[[[[[.((((((]]]]].....((((((......((((((....)))))).......))))))..)))))).
+```
+
+The first line gives the IDs of the two structures and the calculated aptamat distance between their aligned form.
+The second line is the aligned dotbracket notation of the first structure. (the ID is given first on the first line)
+The third line is the aligned dotbracket notation of the second structure. (Second id in the first line)
+
+**PLEASE BE AWARE THAT**
+- Only alignment files formatted like above will be understood by the algorithm.
+- You still need to give a CLUSTER file with the `-fp` parameter for the algorithm to run.
+- The alignment file MUST BE from the same dataset as in the CLUSTER file without any subsets or cuts and the IDs MUST BE the same.
+
 # Note
 
 For the moment, no features have been included to check whether the base pair is able to exist or not, according 
@@ -247,4 +268,4 @@ to literature. You must be careful about the sequence input and the base pairing
 
 If you are using AptaMat in your research, please support us by citing us : Thomas Binet, Bérangère Avalle, Miraine Dávila Felipe, Irene Maffucci, AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures, Bioinformatics, Volume 39, Issue 1, January 2023, btac752, https://doi.org/10.1093/bioinformatics/btac752
 
-If you are using AptaMat2.0, an article is on the way.
+If you are using AptaMat2.0 and AptAlign, an article is on the way.
