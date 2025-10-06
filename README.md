@@ -125,12 +125,12 @@ instead of calculating pairwise distance.
 
 AptAlign is an alignment algorithm used to align DNA or RNA secondary structure.
 
-It takes two arguments:
+It takes four arguments:
 
 - `-s` (`--structures`) followed by secondary structures written in dotbracket format
-- `-v` (`--verbose`) to increase the verbosity of the output.
-- `-d` (`--depth`) to set the depth at which the overdivision calculation will go. (if set too high, WILL hinder performances, default = 10)
-- `-u` (`--unoptimised`) to use the unoptimised version of the overdivision calculation. (Can be of use if singlecore performances is very high compared to multicore)
+- `-v` (`--verbose`) to increase the verbosity of the output. (optionnal)
+- `-d` (`--depth`) to set the depth at which the overdivision calculation will go. (optionnal, if set too high, WILL hinder performances, default = 10)
+- `-u` (`--unoptimised`) to use the unoptimised version of the overdivision calculation. (optionnal, Can be of use if singlecore performances is very high compared to multicore)
 
 The `structures` argument must be a string formatted secondary structures array. You can only input two structures with this parameter. Quotes are necessary.
 
@@ -154,7 +154,7 @@ It takes several arguments:
 
 Warning : A higher depth and sigma range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
 
-    usage: clustering_AptaMat.py [-fp FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT]
+    usage: clustering_AptaMat.py [-fp CLUSTER_FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT] [-ra ALIGNMENT_FILE]
 
 All of these parameters can be combined in a single call.
 
