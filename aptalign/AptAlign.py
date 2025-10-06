@@ -11,7 +11,6 @@ sys.path.append(root_path)
 import AptaMat2 as AF
 import time
 import argparse
-import traceback
 import multiprocessing as mp
 # import matplotlib.pyplot as plt
 import numpy as np
