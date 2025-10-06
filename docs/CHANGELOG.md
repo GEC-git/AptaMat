@@ -1525,3 +1525,10 @@ Looks like I'm back, let's go!
 ### THURSDAY 02/10/25
 
 - Added last clustering results for aptalign v1.4
+- Added better error handling into AptAlign
+
+### MONDAY 06/10/25
+
+- You can now reuse an alignment file for the clustering algorithm.
+- Added latest clustering results for the original dataset.
+
