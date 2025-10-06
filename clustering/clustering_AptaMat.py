@@ -236,45 +236,94 @@ def API_alignment_calc(struct1, struct2, speed):
     ids=[struct1.id, struct2.id]
     return dist, alignment, ids
 
-def calculation(structure_list, CORE, speed, depth, sigma_range):
+def extracting_alignment(filepath):
+    lines=open(filepath).readlines()
+    results=[]
+
+    for i, line in enumerate(lines):
+        line=line.replace("\n","")
+        if line.startswith(">"):
+            first_block=True
+            ids = ""
+            j=0
+            while line[j] != "|":
+                if line[j]!=">":
+                    ids+=line[j]
+                j+=1
+                
+            ids=ids.replace(" ","")
+            center=ids.find("-")
+            id1=ids[0:center]
+            id2=ids[center+1:len(ids)]
+            
+            ids=[id1,id2]
+
+            dist=line[j:len(line)]
+            dist=dist.replace("| AptaMat: ","")
+            dist=float(dist)
+            
+        elif first_block:
+            first_block = False
+            second_block = True
+            struct1_al=line
+        
+        elif second_block:
+            second_block = False
+            struct2_al=line
+            
+            results.append([dist,[struct1_al,struct2_al],ids])
+        
+    return results
+            
+
+def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment):
     
     ### N for matrix size
     N = len(structure_list)
     
     ### Calculate AptaMat distance for each
-
     
-
     start = time.time()
     print("Job started",time.asctime())
-    results = []
-    pool = multiprocessing.Pool(CORE)
-
-    inter_res=[]
     
-    #Decoment here if using API.
-    # for result in pool.starmap(API_alignment_calc,
-    #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-    #     inter_res.append(result)
+    if reuse_alignment == "":
+        print("Creating all alignment file.")
+        results = []
+        pool = multiprocessing.Pool(CORE)
     
-    # Decomment here if using AptAlign.
-    for result in pool.starmap(alignment_calc,
-                                [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-        inter_res.append(result)
-    #-------------------------#
-    
-    tbw=""
-    for elt in inter_res:
-        results.append(elt[0])
-        tbw+=">"+str(elt[2][0])+" - "+str(elt[2][1])+" | AptaMat: "+str(elt[0])+"\n"
-        tbw+=str(elt[1][0])+"\n"
-        tbw+=str(elt[1][1])+"\n"
-    
-    pool.terminate()
-    print("Creating all alignment file.")
-    f_created=open("CLUSTERING_ALIGNMENT_RESULTS.dat",'a')
-    f_created.write(tbw)
-    f_created.close()
+        inter_res=[]
+        
+        #Decoment here if using API.
+        # for result in pool.starmap(API_alignment_calc,
+        #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
+        #     inter_res.append(result)
+        
+        # Decomment here if using AptAlign.
+        for result in pool.starmap(alignment_calc,
+                                    [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
+            inter_res.append(result)
+        #-------------------------#
+        
+        tbw=""
+        for elt in inter_res:
+            results.append(elt[0])
+            tbw+=">"+str(elt[2][0])+" - "+str(elt[2][1])+" | AptaMat: "+str(elt[0])+"\n"
+            tbw+=str(elt[1][0])+"\n"
+            tbw+=str(elt[1][1])+"\n"
+        
+        pool.terminate()
+        f_created=open("CLUSTERING_ALIGNMENT_RESULTS.dat",'a')
+        f_created.write(tbw)
+        f_created.close()
+    else:
+        
+        print("Reusing prior alignment from : ",reuse_alignment)
+        inter_res=extracting_alignment(reuse_alignment)
+        results=[]
+        for elt in inter_res:
+            results.append(elt[0])
+        
+        
     print("Starting clustering\n")
     
     
@@ -284,7 +333,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range):
             matrix_element.append(0)
         else:
             matrix_element.append(float(i))
-        
+    
     dist_matrix = np.array(matrix_element).reshape(N, N)
     
     
@@ -440,6 +489,13 @@ def main():
                         nargs='+',
                         help="Range of clustering calculation.")
     
+    parser.add_argument('-ra',
+                        '--reuse_alignment',
+                        type=str,
+                        nargs='+',
+                        default="",
+                        help="Input file containing the already aligned structures (MUST BE FROM AN OUTPUT FROM THIS CLUSTERING ALGORITHM)")
+    
     args = parser.parse_args()
     if isinstance(args.depth,list):
         depth=args.depth[0]
@@ -454,14 +510,19 @@ def main():
     structure_file=""
     for elt in args.filepath:
         structure_file+=str(elt)
-    
+        
+    alignment_file=""
+    if args.reuse_alignment != "":
+        for elt in args.reuse_alignment:
+            alignment_file+=str(elt)
+        
     print("This is a multiprocessed algorithm.")
     print("You have",multiprocessing.cpu_count(),"cores in your CPU.")
     CORE = int(input("Please input the number of cores you want to use:"))
     
     structure_list,family=initialize_dataset(structure_file)
     
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file)
     
     
     ### Print Optimal values obtained from affinity propagation clustering
