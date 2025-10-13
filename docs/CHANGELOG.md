@@ -1045,7 +1045,7 @@ The actual aptamat distance is worse than before because of the matching. BUT, t
 - Started work on ensemble alignment.
 
 - Added a new function to align all structure from a single family.
-    - It starts with the smallest structure and aligns it to th next smallest.
+    - It starts with the smallest structure and aligns it to the next smallest.
     - Then redo aligning with a new reference structure that is bigger.
     - It is finished when all structures have the same size.
 
@@ -1531,4 +1531,11 @@ Looks like I'm back, let's go!
 
 - You can now reuse an alignment file for the clustering algorithm.
 - Added latest clustering results for the original dataset.
+- Updated README with latest changes.
 
+### MONDAY 13/10/25
+
+- Added a new parameter to the clutering algorithm to control AptAlign's  optimal overdivision calculation.
+- Added a weighted penalty calculation, results show that it manages to greatly reduce spread but increase superposition when clustering.
+- Added latest clustering results.
+- Updated README with new parameter.
