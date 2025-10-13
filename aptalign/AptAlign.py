@@ -757,10 +757,14 @@ class Structure():
         self.length=len(sequence)
         self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param)
         count_par=sequence.count("(")+sequence.count(")")
-        if len(self.subdiv_list) == count_par:
+        subdiv_count=0
+        for elt in self.subdiv_list:
+            subdiv_count+=len(elt)
+        
+        if subdiv_count == count_par:
             self.subdiv_list=[]
             self.raw_nosubdiv=self.raw
-            
+ 
         sep,pat=slicer(self.raw_nosubdiv)
 
         if self.subdiv_list!=[]:
@@ -2176,7 +2180,7 @@ def main():
     
     parser.add_argument('-d',
                         '--depth',
-                        nargs='+',
+                        nargs=1,
                         type=int,
                         default=[10],
                         help='Search depth for optimal overdivision parameter.')
