@@ -210,9 +210,9 @@ def initialize_dataset(structure_file):
                     structure_list.append(structure)
     return structure_list,family
 
-def alignment_calc(struct1,struct2,speed):
+def alignment_calc(struct1,struct2,speed,AL_depth):
     
-    struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=5,ident1=struct1.id,ident2=struct2.id)
+    struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=AL_depth,ident1=struct1.id,ident2=struct2.id)
     
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
     
@@ -276,7 +276,7 @@ def extracting_alignment(filepath):
     return results
             
 
-def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment):
+def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment, AL_depth):
     
     ### N for matrix size
     N = len(structure_list)
@@ -300,7 +300,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
         
         # Decomment here if using AptAlign.
         for result in pool.starmap(alignment_calc,
-                                    [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
+                                    [(struct1, struct2, speed, AL_depth) for struct1 in structure_list for struct2 in structure_list]):
             inter_res.append(result)
         #-------------------------#
         
@@ -478,14 +478,14 @@ def main():
     parser.add_argument('-d',
                         '--depth',
                         type=int,
-                        default=1000,
+                        default=[1000],
                         nargs='+',
                         help="Depth of clustering calculation.")
     
     parser.add_argument('-sr',
                         '--sigma_range',
                         type=int,
-                        default=100,
+                        default=[100],
                         nargs='+',
                         help="Range of clustering calculation.")
     
@@ -496,16 +496,19 @@ def main():
                         default="",
                         help="Input file containing the already aligned structures (MUST BE FROM AN OUTPUT FROM THIS CLUSTERING ALGORITHM)")
     
+    parser.add_argument('-ad',
+                        '--al_depth',
+                        type=int,
+                        nargs='+',
+                        default=[10],
+                        help="Depth used in aptalign alignment, ignored if using API")
+    
     args = parser.parse_args()
-    if isinstance(args.depth,list):
-        depth=args.depth[0]
-    else:
-        depth=args.depth
-        
-    if isinstance(args.sigma_range,list):
-        sigma_range=args.sigma_range[0]
-    else:
-        sigma_range=args.sigma_range
+
+    depth=args.depth[0]
+    sigma_range=args.sigma_range[0]
+    AL_depth=args.al_depth[0]
+
     ### Structure file to be used
     structure_file=""
     for elt in args.filepath:
@@ -522,7 +525,7 @@ def main():
     
     structure_list,family=initialize_dataset(structure_file)
     
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file, AL_depth)
     
     
     ### Print Optimal values obtained from affinity propagation clustering
