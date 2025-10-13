@@ -183,10 +183,11 @@ class Dotbracket:
             gap_penalty = self.gap_penalty_matrix
         self.dotbracket = dotbracket
         self.gap = self.gap_penalty(gap_penalty)
+        #self.gap = self.gap_penalty_pond(gap_penalty)
 
     def gap_penalty(self, gap_penalty):
         all_char="([{<>}])"
-        penalty=0
+        penalty=0   
         first=True
         for char in self.dotbracket:
             if char == "-" and first:
@@ -204,6 +205,26 @@ class Dotbracket:
             back-=1
         
         return penalty - minus
+    
+    def gap_penalty_pond(self, gap_penalty):
+        all_char="([{<>}])"
+        penalty=0   
+        first=True
+        for char in self.dotbracket:
+            if char in all_char and first:
+                first=False
+            elif char=="-" and not first:
+                penalty+=gap_penalty
+        
+        minus=0
+        back=len(self.dotbracket)-1
+        while self.dotbracket[back] not in all_char:
+            if self.dotbracket[back] == "-":
+                minus+=gap_penalty
+            back-=1
+        
+        return (penalty - minus)/len(self.dotbracket.replace("-",""))
+        
         
     @staticmethod
     def is_dotbracket(dotbracket):
@@ -520,8 +541,7 @@ def compute_distance(struct_1: object, struct_2: object, method, nb_pool: int, p
         Method for distance calculation.
     verbose :
         True or False
-    cache :
-        CompressedCache passed through
+
 
     Returns
     -------
