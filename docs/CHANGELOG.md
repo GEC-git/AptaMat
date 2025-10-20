@@ -1544,4 +1544,9 @@ Looks like I'm back, let's go!
 
 - Added latest weighted penalty clustering results.
 
-
+- discovered a bug, where, on certain dataset and certain aptalign depth, the multiprocessing library will return an error.
+    - It is somewhat unlikely BUT, when found, will occur every time.
+    - For example, we have this error when clustering at ad=10 and with the 15x6 dataset.
+    
+- tested a new penalty calculation: added 1 to 3 to the penalty regarding the matching quality (pass 1, 2 or 3)
+    - the changes where not significant enough to be kept.
