@@ -1539,3 +1539,9 @@ Looks like I'm back, let's go!
 - Added a weighted penalty calculation, results show that it manages to greatly reduce spread but increase superposition when clustering.
 - Added latest clustering results.
 - Updated README with new parameter.
+
+### MONDAY 20/10/25
+
+- Added latest weighted penalty clustering results.
+
+
