@@ -74,6 +74,9 @@ class StructBuildError(Exception):
 class MultiprocessingError(Exception):
     pass
 
+class OPKPrioError(Exception):
+    pass
+
 ### BASE FUNCTIONS
 
     # For string manipulations
@@ -783,24 +786,6 @@ class Structure():
         self.alignedsequence=""
         self.alignedwith=None
     
-    def reset(self, sequence):
-        self.raw=sequence
-        self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, 2)
-        sep,pat=slicer(self.raw_nosubdiv)
-        if self.subdiv_list!=[]:
-            if surround(self.subdiv_list,sep):
-                self.raw_nosubdiv=self.raw
-                self.subdiv_list=[]
-                sep,pat=slicer(self.raw_nosubdiv)
-        self.separators=sep
-        self.patterns=pat
-        self.length=len(sequence)
-        self.pattern_nb=len(pat)
-        self.separator_nb=len(sep)
-        self.isaligned=False
-        self.alignedsequence=""
-        self.alignedwith=None
-    
     def __str__(self):
         tab=[["Type:","Structure"],
              ["Length:",self.length],
@@ -910,10 +895,10 @@ class Separator():
             
         self.pk_index_opened=raw.count("[")+raw.count("{")+raw.count("<")
         self.pk_index_closed=raw.count("]")+raw.count("}")+raw.count(">")
+        self.pk_index=self.pk_index_closed+self.pk_index_opened
         
         if self.pk_index_closed!=0:
             self.pk_index_c_accounted=False
-        
         if self.pk_index_opened!=0:
             self.pk_index_o_accounted=False
 
@@ -959,6 +944,7 @@ class Pattern():
         
         self.pk_index_opened=raw.count("[")+raw.count("{")+raw.count("<")
         self.pk_index_closed=raw.count("]")+raw.count("}")+raw.count(">")
+        self.pk_index=self.pk_index_closed+self.pk_index_opened
         
         if self.pk_index_closed!=0:
             self.pk_index_c_accounted=False
@@ -1347,7 +1333,7 @@ def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     
     We are only looking at separators present right before or after matched patterns.
     
-    If there are spcial overdivision characters in both separators compared, we align them with eachother.
+    If there are spatial overdivision characters in both separators compared, we align them with eachother.
     """
     
     #creating necessary separator matching 
@@ -1967,6 +1953,155 @@ def matching_finder(struct1, struct2, verbose=False):
                 
         return matching_pass1
 
+def discriminate_po_priority(struct1, struct2, matching):
+    """
+    This function checks whether this situation is present inside separators:
+        
+    #####[[[[[
+    [[[[[#####
+         
+         OR
+    
+    [[[[[#####
+    #####[[[[[
+
+    with #### the overdivision and [[[[ the pseudoknots.
+    
+    In that case, the entirety of the bloc should be considered for alignment and ignored by both function after.
+    
+    Returns a boolean.
+    In all cases, pseudoknots_compensating should be executed since it tests for pseudoknots also in non paired patterns.
+    ALL OVERDIVISION SHOULD BE IN SEPARATORS.
+    """
+    
+    pk=["[","{","<",">","}","]"]
+    # first, create the matched separators list:
+    order1=struct1.order_list()
+    order2=struct2.order_list()
+    
+    matched_sep=[]
+    accounted_sep=[]
+
+    for tup_pat in matching:
+        pat1=tup_pat[0]
+        pat2=tup_pat[1]
+        #Before the two matched patterns:
+        if (order1[pat1.nb-1],order2[pat2.nb-1]) not in accounted_sep:
+            matched_sep.append([order1[pat1.nb-1],order2[pat2.nb-1]])
+            accounted_sep.append((order1[pat1.nb-1],order2[pat2.nb-1]))
+        #After the two matched patterns:
+        if (order1[pat1.nb+1],order2[pat2.nb+1]) not in accounted_sep:
+            matched_sep.append([order1[pat1.nb+1],order2[pat2.nb+1]])
+            accounted_sep.append((order1[pat1.nb+1],order2[pat2.nb+1]))
+         
+    criss_cross = []
+    #Now testing for overdivision in known matched separators:
+    for sepmatch in matched_sep:
+        sep1=sepmatch[0]
+        sep2=sepmatch[1]
+        if sep1.subdiv_index!=0 and sep2.subdiv_index!=0:
+            #overdivision are present.
+            if sep1.pk_index!=0 and sep2.pk_index!=0:
+                #pseudoknots are also present.
+                #check if pseudoknots and overdivision have a criss-cross pattern and mark the separators for alignment.
+                if sep1.pk_index_closed!=0:
+                    start_od1=np.char.find(sep1.sequence, "C")
+                else:
+                    start_od1=np.char.find(sep1.sequence, "O")
+                
+                if sep2.pk_index_closed!=0:
+                    start_od2=np.char.find(sep2.sequence, "C")
+                else:
+                    start_od2=np.char.find(sep2.sequence, "O")
+                    
+                pk_array1=[]
+                pk_array2=[]
+                for elt in pk:
+                    pk_array1.append(np.char.find(sep1.sequence,elt))
+                    pk_array2.append(np.char.find(sep2.sequence,elt))
+                
+                for i,elt in enumerate(pk_array1):
+                    if elt == -1:
+                        pk_array1[i]=np.inf
+                
+                for i,elt in enumerate(pk_array2):
+                    if elt == -1:
+                        pk_array2[i]=np.inf
+                
+                start_pk1=min(pk_array1)
+                start_pk2=min(pk_array2)
+
+                if start_pk1 < start_od1 and start_pk2 > start_od2:
+                    #criss-cross detected! - mark the considered separators!
+                    bk_start1 = start_pk1
+                    bk_start2 = start_od2
+                    criss_cross.append([sep1,sep2, bk_start1, bk_start2])
+                elif start_pk1 > start_od1 and start_pk2 < start_od2:
+                    #criss-cross detected! - mark the considered separators!
+                    bk_start1 = start_od1
+                    bk_start2 = start_pk2
+                    criss_cross.append([sep1,sep2, bk_start1, bk_start2])
+           
+    #Aligning the start of each blocks
+    for sep_mark in criss_cross:
+        sep1=sep_mark[0]
+        sep2=sep_mark[1]
+        start1=int(sep_mark[2])
+        start2=int(sep_mark[3])
+        
+        
+        dict_seq1={}
+        for i,elt in enumerate(sep1.sequence):
+            dict_seq1[i]=elt
+        
+        dict_seq2={}
+        for i,elt in enumerate(sep2.sequence):
+            dict_seq2[i]=elt
+         
+        if sep1.pk_index_closed!=0:
+            sep1.pk_index_c_accounted=True
+        if sep1.pk_index_opened!=0:
+            sep1.pk_index_o_accounted=True
+        sep1.subdiv_accounted=True
+            
+        if sep2.pk_index_closed!=0:
+            sep2.pk_index_c_accounted=True
+        if sep2.pk_index_opened!=0:
+            sep2.pk_index_o_accounted=True
+        sep2.subdiv_accounted=True
+            
+        if start1!=start2:
+            diff=start1-start2
+            
+            if diff > 0:
+                #start1>start2, # starts after in sep1; placing gaps in sep2.
+                for i in range(abs(diff)):
+                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
+                nb_gaps1=0
+                nb_gaps2=abs(diff)
+            elif diff <0:
+                #start2>start1, # starts after in sep2; placing gaps in sep1.
+                for i in range(abs(diff)):
+                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
+                nb_gaps1=abs(diff)
+                nb_gaps2=0
+            
+            sep1.sequence=dict_seq_reagglomerate(dict_seq1)
+            sep2.sequence=dict_seq_reagglomerate(dict_seq2)
+
+            sep1.length+=nb_gaps1
+            sep2.length+=nb_gaps2
+            
+            sep1.finish+=nb_gaps1
+            sep2.finish+=nb_gaps2
+
+            add_gaps(sep1.nb,nb_gaps1,order1)
+            add_gaps(sep2.nb,nb_gaps2,order2)
+
+            struct1.length+=nb_gaps1
+            struct2.length+=nb_gaps2
+           
+
 ### MAIN ALIGNMENT FUNCTION
 
 def full_alignment(struct1, struct2, verbose=False):
@@ -2048,19 +2183,24 @@ def full_alignment(struct1, struct2, verbose=False):
     order1=struct1.order_list()
     order2=struct2.order_list()
     
-    
+    try:
+        discriminate_po_priority(struct1, struct2, matching)
+    except Exception as e:
+        e=f"An error occured when checking for overdiv/pseudo priority on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
+        raise OPKPrioError(e)
+        
     try:
         pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
     except Exception as e:
         e=f"An error occured when compensating for pseudoknots on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise PKCompensatingError(e)
-        
+            
     try:
         overdivision_compensating(struct1, struct2, order1, order2, matching)
     except Exception as e:
         e = f"An error occured when compensating for overdivision on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise ODCompensatingError(e)
-    
+        
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
         
@@ -2069,7 +2209,7 @@ def full_alignment(struct1, struct2, verbose=False):
     except Exception as e:
         e = f"An error occured when aligning separators on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise SepCompensatingError(e)
-    
+        
     if verbose:
         print("\nUpdating last parameters and finishing\n")
     struct1.alignedwith=struct2
