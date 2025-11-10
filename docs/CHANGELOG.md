@@ -1550,3 +1550,12 @@ Looks like I'm back, let's go!
     
 - tested a new penalty calculation: added 1 to 3 to the penalty regarding the matching quality (pass 1, 2 or 3)
     - the changes where not significant enough to be kept.
+    
+### MONDAY 10/11/25
+
+- Now accounting for criss-cross patterns when considering priority between overdivision and pseudoknots.
+
+- Found a bug when aligning a separator containing an overdision/pseudoknots already aligned right before an overhang.
+    - The alignment of the overdivision/pseudoknot is executed before the overhang is calculated so when the overhang is removed, it shifts the alignment to the left and is never reaccounted.
+    
+- Still finding a way to counter the bug.
