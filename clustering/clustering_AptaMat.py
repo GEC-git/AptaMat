@@ -500,7 +500,7 @@ def main():
                         '--al_depth',
                         type=int,
                         nargs='+',
-                        default=[10],
+                        default=[5],
                         help="Depth used in aptalign alignment, ignored if using API")
     
     args = parser.parse_args()

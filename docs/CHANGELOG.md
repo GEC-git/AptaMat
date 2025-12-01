@@ -1559,3 +1559,12 @@ Looks like I'm back, let's go!
     - The alignment of the overdivision/pseudoknot is executed before the overhang is calculated so when the overhang is removed, it shifts the alignment to the left and is never reaccounted.
     
 - Still finding a way to counter the bug.
+
+### THURSDAY 13/11/25
+
+- Bug has been fixed.
+
+- Making new clusterings for aptalign v1.5.
+
+- Final version!!!!!!!
+

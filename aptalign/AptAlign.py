@@ -311,8 +311,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                 if local_diff > 0:
                     # place local_diff gaps in 1 at pos cluster_1[i].
                     for k in range(local_diff):
-                        dict_tba1 = insert_gap_seq_dict(
-                            dict_tba1, cluster_1[i])
+                        dict_tba1 = insert_gap_seq_dict(dict_tba1, cluster_1[i])
 
                     # update cluster_1
                     for j in range(i, len(cluster_1)):
@@ -346,7 +345,7 @@ def propagation_alignment(dict_tba1, dict_tba2, direction):
                     for j in range(i, len(cluster_2)):
                         cluster_2[j] += abs(local_diff)
                         
-    if direction=="Left":        
+    if direction=="Left":      
         #reinversing the dictionnaries when finished aligning.
         dict_tba1=inverser_dico(dict_tba1)
         dict_tba2=inverser_dico(dict_tba2)
@@ -2440,7 +2439,7 @@ def main():
             tab=[["Structure 1:"+(count+2)*"\n"+"Structure 2:",str1+"\n"+str2],
                  ["Improvement: ",str(initial_dist)+" -> "+str(new_dist)+" | in %: "+str(improvement)+"%"]]
             print("\n")
-            print(tabulate(tab,headers=["Results","In "+str(round(b-a,3))+"s"],tablefmt="fancy_grid"))
+            print(tabulate(tab,headers=["Results","In "+str(b-a)+"s"],tablefmt="fancy_grid"))
             print("\n")
         else:
             if initial_dist!=0:
@@ -2458,7 +2457,7 @@ def main():
             tab=[["Structure 1:"+(count+2)*"\n"+"Structure 2:",str1+"\n"+str2],
                  ["Improvement: ",str(initial_dist)+" -> "+str(new_dist)+" | in %: "+str(improvement)+"%"]]
             print("\n")
-            print(tabulate(tab,headers=["Results","In "+str(round(b-a,3))+"s"],tablefmt="fancy_grid"))
+            print(tabulate(tab,headers=["Results","In "+str(b-a)+"s"],tablefmt="fancy_grid"))
             print("\n")
             print("\nDetailed results:\n")
             print("______________________________________\n")
