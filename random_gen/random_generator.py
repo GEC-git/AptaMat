@@ -124,10 +124,22 @@ def file_struct_gen(nb_struct,lgth):
             
     return output
 
-lgth=200
-nb_struct=2
-f=open("RandomWeightFile"+str(nb_struct)+"-"+str(lgth)+".fa","a")
-f.write(file_struct_gen(nb_struct,lgth))
-f.close()
-print("Successfuly created a randomly generated weighted structure file.")
+def double_struct_gen(lgth):
+    i=0
+    gene=[]
+    while i < 2:
+        gen=random_gen(length=lgth)
+        if dotbracket_verif(gen,lgth):
+            gene.append(gen)
+            i+=1
+        
+    return gene[0],gene[1]
+    
+
+# lgth=200
+# nb_struct=2
+# f=open("RandomWeightFile"+str(nb_struct)+"-"+str(lgth)+".fa","a")
+# f.write(file_struct_gen(nb_struct,lgth))
+# f.close()
+# print("Successfuly created a randomly generated weighted structure file.")
         
