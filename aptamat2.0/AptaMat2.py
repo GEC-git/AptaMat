@@ -191,7 +191,7 @@ class Dotbracket:
         first=True
         for char in self.dotbracket:
             if char == "-" and first:
-                penalty+=gap_penalty/2
+                penalty+=0 #gap_penalty/2
             elif char in all_char and first:
                 first=False
             elif char=="-" and not first:
