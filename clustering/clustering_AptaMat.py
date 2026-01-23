@@ -56,16 +56,18 @@ def build_label_dict(labels, family):
         family_name.append(key)
         family_range.append(sum_value)
         sum_value += value
-
+        
     label_dict = {}
     for n, range_fami in enumerate(family_range):
         newdict = {}
         try:
             set(labels[family_range[n]:family_range[n + 1]])
+
         except:
             for i in set(labels[family_range[n]:]):
                 newdict[i] = labels[family_range[n]:].count(i)
             label_dict[family_name[n]] = newdict
+
         else:
             for i in set(labels[family_range[n]:family_range[n + 1]]):
                 newdict[i] = labels[family_range[n]:family_range[n + 1]].count(i)
@@ -91,14 +93,15 @@ def renumber_by_rank(labels):
     dcc = {}
     for l in labels:
         dcc[l] = dcc.get(l, 0) + 1
-
+        
     ranked = sorted(dcc.items(), key=lambda x: x[1], reverse=True)
 
     new_labels = []
     for element in labels:
         for i, r in enumerate(ranked):
             if element == r[0]:
-                new_labels.append(i)     
+                new_labels.append(i)
+          
     return new_labels
 
 
@@ -411,8 +414,10 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
-    #df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
+    print(dict_label)
+    #df = pd.DataFrame(family, index=labels, columns=dict_label.keys())
     #print(dict_label)
+
     df=pd.DataFrame(dict_label)
     s = df.sum()
     df = df[s.sort_values(ascending=False).index[:]]
@@ -532,8 +537,9 @@ def main():
     print('Optimal Calinski Harabasz index =', aff_prop_calinski_best)
     print("Optimal Silhouette score =", silhouette_best)
     print('Optimal Sigma =', sigma_best)
-    labels = renumber_by_rank(aff_prop_clust_best.labels_)
     
+    labels = renumber_by_rank(aff_prop_clust_best.labels_)
+
     tbw='Optimal Calinski Harabasz index ='+str(aff_prop_calinski_best)+"\n"
     tbw+="Optimal Silhouette score ="+str(silhouette_best)+"\n"
     tbw+='Optimal Sigma ='+str(sigma_best)+"\n"
@@ -544,7 +550,6 @@ def main():
     f_created=open(structure_file.replace(".dat","")+"_CLUSTERING_DISTRIBUTION_RESULTS.dat",'a')
     f_created.write(tbw)
     f_created.close()
-    labels = renumber_by_rank(labels)
     dict_label = build_label_dict(list(labels),family)
     
     if args.visu is not None:

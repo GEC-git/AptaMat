@@ -231,4 +231,3 @@ def file_converter_CLUSTER_to_FASTA():
             tbw+=">"+family+str(i)+"\n"+sequence+"\n"+dotbracket
     f_created.write(tbw)
     f_created.close()
-            

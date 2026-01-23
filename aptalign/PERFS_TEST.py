@@ -38,9 +38,18 @@ plt.plot(X,Y)
 
 f_created=open("PERFRESULTS_var="+str(vr)+"_length="+str(lgt),'a')
 f_created.write("RAW RESULTS\n")
-f_created.write(perfs)
+f_created.write(str(perfs))
 f_created.write("\nMEAN\n")
-f_created.write(Y)
+f_created.write(str(Y))
 f_created.write("\nLENGTHS\n")
-f_created.write(X)
+f_created.write(str(X))
 f_created.close()
+
+import csv
+with open('perfs_test_d=5_u.csv', 'w', newline='') as csvfile:
+    spamwriter = csv.writer(csvfile, delimiter=",",
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    for i,rows in enumerate(X):
+        row=perfs[i]
+        spamwriter.writerow(row)
+        

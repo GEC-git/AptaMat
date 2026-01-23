@@ -26,7 +26,14 @@ def dotbracket_verif(input_str):
             nb+=1
         if elt==")":
             nb-=1
-            
+    
+    add=0
+    for elt in input_str:
+        if elt==".":
+            add+=1
+    if add == len(input_str):
+        nb=1
+    
     return not bool(nb)
 
 def file_converter(path):
@@ -106,18 +113,25 @@ def parser(all_files):
 
 all_structs, ignored=parser(all_files)
 
-def create_CLUSTER(all_structs):
-    f = open("/home/bcuvillier/Documents/AptaMat/clustering/RNAstralign_clust.dat",'a')
+def create_CLUSTER(all_structs,nb_max_per_fam):
+    f = open("/home/bcuvillier/Documents/AptaMat/clustering/RNAstralign_clust_reduced.dat",'a')
     tbw=""
+    dict_fam={}
     for struct in all_structs:
         family=struct[1]
-        name=struct[0]
-        sequence=struct[2]
-        dotbracket=struct[3]
-        tbw+=family+"    "+name+"    "+sequence+"    "+dotbracket+"\n"
+        if family not in dict_fam.keys():
+            dict_fam[family]=1
+        else:
+            dict_fam[family]+=1
+        
+        if dict_fam[family] <= nb_max_per_fam:
+            name=struct[0]
+            sequence=struct[2]
+            dotbracket=struct[3]
+            tbw+=family+"    "+name+"    "+sequence+"    "+dotbracket+"\n"
 
     f.write("FAMILY    NAME    SEQUENCE    DOTBRACKET\n")   
     f.write(tbw)
     f.close()
     
-create_CLUSTER(all_structs)
+create_CLUSTER(all_structs,1000)

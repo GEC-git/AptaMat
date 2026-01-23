@@ -2,22 +2,24 @@ import sys
 import os
 
 current_dir = os.path.dirname(__file__)
-root_path = os.path.abspath(os.path.join(current_dir, '..','aptalign'))
+root_path = os.path.abspath(os.path.join(current_dir, '..','..','aptalign'))
+root_path = os.path.abspath(os.path.join(current_dir, '..',))
 sys.path.append(root_path)
 
 import matplotlib.pyplot as plt
 import AptAlign as AL
+import clustering_AptaMat as CL
 
-structure_file="/home/bcuvillier/Documents/AptaMat/clustering/tests/tests_align_nonaligned/Test4/CLEANED/data_clustering_BPRNA_RFAM_scraped_10000_CLUSTER_NONALIGNED_150x8_CLEANED.dat"
-structure_list, families = AL.initialize_dataset(structure_file)
+structure_file="/home/bcuvillier/Documents/AptaMat/clustering/datasets/RNAstralign_clust.dat"
+structure_list, families = CL.initialize_dataset(structure_file)
 
 fam_dict={}
 for family in families:
     fam_dict[family]=[]
-    
+
 struct_obj_list=[]
 for struct in structure_list:
-    struct_obj_list.append(AL.Structure(struct[0],ident=str(struct[1]),fam=struct[2], AGU=struct[3]))
+    struct_obj_list.append(AL.Structure(struct.dotbracket,ident=str(struct.id),fam=struct.family, AGU=struct.sequence))
 
 for struct in struct_obj_list:
     fam_dict[struct.family].append(struct)

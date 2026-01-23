@@ -1,24 +1,30 @@
 import subprocess
 import os
+import sys
 
+current_dir = os.path.dirname(__file__)
+root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
+sys.path.append(root_path)
+
+import AptaMat2 as AF
 
 def locarna_pairwise(struct1,struct2):
 
-    tbw1=">"+struct1.id+"\n"
+    tbw1=">"+str(struct1.id)+"\n"
     tbw1+=struct1.dotbracket
-    f_created=open("temp_struct1"+struct1.id+str(os.getpid())+".fa",'a')
+    f_created=open("temp_struct1"+str(struct1.id)+str(os.getpid())+".fa",'a')
     f_created.write(tbw1)
     f_created.close()
-    tbw2=">"+struct2.id+"\n"
+    tbw2=">"+str(struct2.id)+"\n"
     tbw2+=struct2.dotbracket
-    f_created=open("temp_struct2"+struct2.id+str(os.getpid())+".fa",'a')
+    f_created=open("temp_struct2"+str(struct2.id)+str(os.getpid())+".fa",'a')
     f_created.write(tbw2)
     f_created.close()
     
-    ident1, dotbracket1al, ident2, dotbracket2al = locarna_from_file("temp_struct1"+struct1.id+str(os.getpid())+".fa", "temp_struct2"+struct2.id+str(os.getpid())+".fa")
+    ident1, dotbracket1al, ident2, dotbracket2al = locarna_from_file("temp_struct1"+str(struct1.id)+str(os.getpid())+".fa", "temp_struct2"+str(struct2.id)+str(os.getpid())+".fa")
     
-    os.remove("temp_struct1"+struct1.id+str(os.getpid())+".fa")
-    os.remove("temp_struct2"+struct2.id+str(os.getpid())+".fa")
+    os.remove("temp_struct1"+str(struct1.id)+str(os.getpid())+".fa")
+    os.remove("temp_struct2"+str(struct2.id)+str(os.getpid())+".fa")
     
     return dotbracket1al, dotbracket2al
 

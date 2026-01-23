@@ -3,13 +3,13 @@ import subprocess
 
 def forester_pairwise(struct1,struct2):
 
-    tbw=">"+struct1.id+"\n"
-    tbw+=struct1.sequence+"\n"
-    tbw+=struct1.dotbracket+"\n"
-    tbw+=">"+struct2.id+"\n"
-    tbw+=struct2.sequence+"\n"
-    tbw+=struct2.dotbracket
-    filename="temp_struct"+struct2.id+struct1.id+str(os.getpid())+".fa"
+    tbw=">"+str(struct1.id)+"\n"
+    tbw+=str(struct1.sequence)+"\n"
+    tbw+=str(struct1.dotbracket)+"\n"
+    tbw+=">"+str(struct2.id)+"\n"
+    tbw+=str(struct2.sequence)+"\n"
+    tbw+=str(struct2.dotbracket)
+    filename="temp_struct"+str(struct2.id)+str(struct1.id)+str(os.getpid())+".fa"
     f_created=open(filename,'w+')
     f_created.write(tbw)
     f_created.close()
