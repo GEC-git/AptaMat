@@ -414,19 +414,22 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
 
 def heatmap(family, labels, dict_label):
 ### Heatmap setup
-    print(dict_label)
-    #df = pd.DataFrame(family, index=labels, columns=dict_label.keys())
-    #print(dict_label)
+    
+    df = pd.DataFrame(dict_label).fillna(0)
 
-    df=pd.DataFrame(dict_label)
-    s = df.sum()
-    df = df[s.sort_values(ascending=False).index[:]]
+    col_order = df.max(axis=0).sort_values(ascending=False).index
+    df = df[col_order]
+
+    row_order = df.values.argmax(axis=1)
+    df = df.iloc[np.argsort(row_order)]
+    
     family_np = df.to_numpy()
-    family_np=np.nan_to_num(family_np)
+    family_np = np.nan_to_num(family_np)
     
     family_percent = family_np / family_np.sum(axis=0) * 100
     family_np_t = np.transpose(family_np)
     family_p_t = np.transpose(family_percent)
+
     clean_labels = [i.replace('_', ' ') for i in df.columns]
     
     binary_m = plt.get_cmap('jet')
@@ -435,9 +438,8 @@ def heatmap(family, labels, dict_label):
     fig, ax = plt.subplots()
     im = ax.imshow(family_p_t, cmap=colormap, vmin=0.9)
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
-    # ax.set_yticks(np.arange(len(rfam)), labels=rfam)
     ax.set_xticks(np.arange(0, len(df)), labels=list(np.arange(0, len(df))))
-    #print(df)
+
     for i in range(len(df.columns)):
         for j in np.arange(0, len(df)):
             if round(family_p_t[i, j]) == 0:
@@ -449,10 +451,10 @@ def heatmap(family, labels, dict_label):
                 text = ax.text(j, i, int(family_np_t[i, j]),
                                ha="center", va="center", color="w")
     
-    plt.text(len(df)+1, 1, 'Occupancy (%)', fontsize=10)
-    cax = plt.axes([0.98, 0.295, 0.02, 0.4])
-    plt.colorbar(im, cax)
-    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label('Occupancy (%)')
+    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches="tight")
+    plt.close(fig)
 
 def main():
     parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaMat2.0 to determine"
