@@ -435,7 +435,7 @@ def heatmap(family, labels, dict_label):
     binary_m = plt.get_cmap('jet')
     colormap = ListedColormap(binary_m(np.linspace(0.2, 1, 100)))
     colormap.set_under(color='white')
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 7))
     im = ax.imshow(family_p_t, cmap=colormap, vmin=0.9)
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
     ax.set_xticks(np.arange(0, len(df)), labels=list(np.arange(0, len(df))))
@@ -451,9 +451,9 @@ def heatmap(family, labels, dict_label):
                 text = ax.text(j, i, int(family_np_t[i, j]),
                                ha="center", va="center", color="w")
     
-    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Occupancy (%)')
-    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches="tight")
+    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches="tight")  
     plt.close(fig)
 
 def main():
