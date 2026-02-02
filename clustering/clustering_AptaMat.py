@@ -412,7 +412,7 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
     
     plt.show()
 
-def heatmap(family, labels, dict_label):
+def heatmap(family, labels, dict_label, title="HeatMap_Color.pdf"):
 ### Heatmap setup
     
     df = pd.DataFrame(dict_label).fillna(0)
@@ -453,7 +453,7 @@ def heatmap(family, labels, dict_label):
     
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Occupancy (%)')
-    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches="tight")  
+    fig.savefig(title, dpi=600, bbox_inches="tight")  
     plt.close(fig)
 
 def main():
@@ -541,7 +541,6 @@ def main():
     print('Optimal Sigma =', sigma_best)
     
     labels = renumber_by_rank(aff_prop_clust_best.labels_)
-
     tbw='Optimal Calinski Harabasz index ='+str(aff_prop_calinski_best)+"\n"
     tbw+="Optimal Silhouette score ="+str(silhouette_best)+"\n"
     tbw+='Optimal Sigma ='+str(sigma_best)+"\n"
