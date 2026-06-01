@@ -103,8 +103,8 @@ class Parse:
             if line.isspace():
                 continue
 
-            if line.startswith(('>', '--')):
-                id = line.strip('\n >-')
+            if line.startswith(('>', '#')):
+                id = line.strip('\n >#')
                 if not Dotbracket.is_dotbracket(lines[i + 1]):
                     sequence = lines[i + 1].strip('\n')
                 else:
@@ -120,7 +120,7 @@ class Parse:
                 except IndexError:
                     pass
                 else:
-                    if lines[i + 1].startswith(('>', '--')):
+                    if lines[i + 1].startswith(('>', '#')):
                         pass
                     elif not Dotbracket.is_dotbracket(line):
                         non_parsed_weights.append(float(line))
@@ -1111,7 +1111,7 @@ def adjust_weight(structures, weight):
 
     return weight
 
-def main():
+def argument_parsing():
     parser = argparse.ArgumentParser(description="AptaMat is a simple script which aims to measure differences between "
                                                  "DNA or RNA secondary structures. The method is based on the "
                                                  "comparison of binary matrices representing the secondary "
@@ -1127,12 +1127,12 @@ def main():
                         '--verbose',
                         help="Increase output verbosity.",
                         action="store_true")
-    
-    parser.add_argument('-speed', 
+
+    parser.add_argument('-speed',
                         default='slow',
                         help="Using greedy or non greedy depth calculation",
                         nargs='?',
-                        choices=['slow','quick'])
+                        choices=['slow', 'quick'])
 
     parser.add_argument('-structures',
                         nargs='+',
@@ -1162,32 +1162,57 @@ def main():
                         default='matrix',
                         help="Type of plot of matrices in pdf",
                         choices=['matrix', 'varna', 'matrix_varna'])
-    
-    
-    args = parser.parse_args()
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
+    ##################################
+    #       Intercept sys.argv       #
+    ##################################
+    if '-structures' in sys.argv:
+        idx = sys.argv.index('-structures')
+        # Check arguments after "-structures"
+        for i in range(idx + 1, len(sys.argv)):
+            # If other flag/option encountered, stop the check
+            if sys.argv[i] in ['-h', '-v', '-speed', '-weights', '-files', '-ensemble',
+                               '-method', '-plot', '-plot_type']:
+                break
+            # If the '-' is not a known flag, we assume it is structure
+            if sys.argv[i].startswith('-'):
+                # Add space to avoid argparse flag checking
+                sys.argv[i] = ' ' + sys.argv[i]
+
+    args = parser.parse_args()
+
+    ##################################
+    #     Clean args.structures      #
+    ##################################
     if args.structures is not None and args.files is not None:
         raise KeyError('-structures and -files cannot be used at the same time.')
 
+    if args.structures:
+        # Remove artificial space after argparse
+        args.structures = [struct.strip() for struct in args.structures]
 
     if args.speed == "quick":
-        pooling=mp.Pool(mp.cpu_count())
+        pooling = mp.Pool(mp.cpu_count())
         print("MODE: quick | using all cores for file parsing")
     else:
-        pooling=mp.Pool(int(mp.cpu_count()/2))
+        pooling = mp.Pool(int(mp.cpu_count() / 2))
         print("MODE: slow | using half the cores for file parsing")
-    
+
+    return args, pooling
+
+def main():
+    args, pooling = argument_parsing()
     struct_list = []
     weights = []
     file_time_start=tm.time()
     
-      ##################################
-      #  Input structures preparation  #
-      ##################################  
+    ##################################
+    #  Input structures preparation  #
+    ##################################
       
     struct_sizes=[]
     if args.structures is not None:
@@ -1213,7 +1238,7 @@ def main():
                           'include the values in {}.\n'.format(args.file))
 
         for file in args.files:
-            structures = Parse.file(file,pooling)
+            structures = Parse.file(file, pooling)
             if not sum(struct.weight for struct in structures) == 1:
                 weights = adjust_weight(structures,
                                         [struct.weight for struct in structures])
@@ -1226,6 +1251,7 @@ def main():
         raise ValueError('No valid structure parsed.\n')
     file_time_finish=tm.time()
     pooling.terminate()
+
     ##########################
     #  Distance calculation  #
     ##########################

@@ -138,7 +138,7 @@ The `structures` argument must be a string formatted secondary structures array.
 
 The output is only in the terminal.
 
-## clustering
+## Clustering
 
 The clustering algorithm is used to cluster a dataset inside a CLUSTER file.
 
@@ -195,10 +195,10 @@ by one and always takes the first structure encountered as the template structur
 
       >5HRU
       TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
-      --Template--
+      #Template
       ((((.........(((((.....)))))))))
       [ weight ]
-      --Compared--
+      #Compared
       .........(((.(((((.....))))).)))
       [ weight ]
       ..........((.((((.......)))).)).
