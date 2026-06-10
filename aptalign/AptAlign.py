@@ -77,6 +77,9 @@ class MultiprocessingError(Exception):
 class OPKPrioError(Exception):
     pass
 
+class FinalCleanError(Exception):
+    pass
+
 ### BASE FUNCTIONS
 
     # For string manipulations
@@ -780,8 +783,10 @@ class Structure():
         self.pattern_nb=len(pat)
         self.separator_nb=len(sep)
         self.isaligned=False
+        self.iscleaned=False
         self.id=ident
         self.family=fam
+        self.beforeclean=""
         self.alignedsequence=""
         self.alignedwith=None
     
@@ -795,6 +800,7 @@ class Structure():
              ["Subdiv:",self.subdiv_list]]
         if self.isaligned:
             tab.append(["Aligned:","Yes"])
+            tab.append(["Sequences before cleaning:", self.beforeclean])
             tab.append(["Aligned Sequence:",self.alignedsequence])
             tab.append(["Aligned with:",self.alignedwith.alignedsequence])
         else:
@@ -815,7 +821,7 @@ class Structure():
                 self.isaligned=False
         if not self.isaligned:
             print("Structure not yet aligned")
-        
+
     def order_list(self):
         
         def get_order(motif):
@@ -1413,7 +1419,7 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
     
     Takes into account the overhang of matched patterns and the length of separators.
     """
-    
+
     if pat1.left_overhang !=0:
         # check for overhang deletion possibility on the left of pat1.
         if pat1.start > pat2.start:
@@ -1450,6 +1456,7 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
             
     elif pat2.left_overhang != 0:
         # check for overhang deletion possibility on the left of pat2
+
         if pat2.start > pat1.start:
             diff=pat2.start-pat1.start
             seq=pat2.alignedsequence
@@ -1583,42 +1590,53 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
         else:
             #separator after!
             diff = pat1.right_overhang - order1[pat1.nb+1].length
-            if diff >=0:
-                #overhang bigger than separator! Reduce by length of separator.
-                back = len(seq)-1
-                cpt=0
-                if order1[pat1.nb+1].length != 0:
-                    while cpt <= order1[pat1.nb+1].length -1 :
+            next = order1[pat1.nb+1]
+            ignore = False
+            if next.pk_index_opened != 0 and next.pk_index_o_accounted:
+                ignore = True
+            if next.pk_index_closed != 0 and next.pk_index_closed:
+                ignore = True
+            if next.subdiv_index != 0 and next.subdiv_accounted:
+                ignore = True
+
+            if not ignore:
+                if diff >=0:
+                    #overhang bigger than separator! Reduce by length of separator.
+                    back = len(seq)-1
+                    cpt=0
+                    if order1[pat1.nb+1].length != 0:
+                        while cpt <= order1[pat1.nb+1].length -1 :
+                            seq=del_str(seq,back)
+                            cpt+=1
+                            back-=1
+
+
+                        pat1.alignedsequence=seq
+
+                        pat1.length-=order1[pat1.nb+1].length
+                        pat1.finish-=order1[pat1.nb+1].length
+                        struct1.length-=order1[pat1.nb+1].length
+
+                        del_gaps(pat1.nb, order1[pat1.nb+1].length, order1)
+                else:
+                    #seprator bigger!, reduce by length of overhang!
+                    back = len(seq)-1
+                    cpt=0
+                    while cpt <= pat1.right_overhang-1:
                         seq=del_str(seq,back)
                         cpt+=1
                         back-=1
-    
-                        
+
                     pat1.alignedsequence=seq
-                         
-                    pat1.length-=order1[pat1.nb+1].length
-                    pat1.finish-=order1[pat1.nb+1].length
-                    struct1.length-=order1[pat1.nb+1].length
-                         
-                    del_gaps(pat1.nb, order1[pat1.nb+1].length, order1)
-            else:
-                #seprator bigger!, reduce by length of overhang!
-                back = len(seq)-1
-                cpt=0
-                while cpt <= pat1.right_overhang-1:
-                    seq=del_str(seq,back)
-                    cpt+=1
-                    back-=1
-                    
-                pat1.alignedsequence=seq
-                     
-                pat1.length-=pat1.right_overhang
-                pat1.finish-=pat1.right_overhang
-                struct1.length-=pat1.right_overhang
-                     
-                del_gaps(pat1.nb, pat1.right_overhang, order1)
+
+                    pat1.length-=pat1.right_overhang
+                    pat1.finish-=pat1.right_overhang
+                    struct1.length-=pat1.right_overhang
+
+                    del_gaps(pat1.nb, pat1.right_overhang, order1)
                 
     elif pat2.right_overhang !=0:
+
         seq=pat2.alignedsequence
         if order2[pat2.nb+1].nb==len(order2)-1:
             #end of the structure! completely remove overhang if no pk/od have been accounted for after!
@@ -1640,6 +1658,7 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
                 del_gaps(pat2.nb, pat2.right_overhang, order2)
                 
             elif (order2[pat2.nb+1].pk_index_closed !=0) and not(order2[pat2.nb+1].pk_index_c_accounted):
+
                 back = len(seq)-1
                 cpt=0
                 while cpt <= pat2.right_overhang-1:
@@ -1713,41 +1732,50 @@ def diff_overhang_calculator(pat1, pat2, struct1, struct2, order1, order2):
         else:
             #separator after!
             diff = pat2.right_overhang - order2[pat2.nb+1].length
-            
-            if diff >=0:
-                #overhang bigger than separator! Reduce by length of seprator.
-                back = len(seq)-1
-                if order2[pat2.nb+1].length != 0:
+            next = order2[pat2.nb+1]
+            ignore = False
+            if next.pk_index_opened != 0 and next.pk_index_o_accounted:
+                ignore = True
+            if next.pk_index_closed != 0 and next.pk_index_closed:
+                ignore = True
+            if next.subdiv_index != 0 and next.subdiv_accounted:
+                ignore = True
+
+            if not ignore:
+                if diff >=0:
+                    #overhang bigger than separator! Reduce by length of seprator.
+                    back = len(seq)-1
+                    if order2[pat2.nb+1].length != 0:
+                        cpt=0
+                        while cpt <= order2[pat2.nb+1].length-1:
+                            seq=del_str(seq,back)
+                            cpt+=1
+                            back-=1
+
+                        pat2.alignedsequence=seq
+
+                        pat2.length-=order2[pat2.nb+1].length
+                        pat2.finish-=order2[pat2.nb+1].length
+                        struct2.length-=order2[pat2.nb+1].length
+
+                        del_gaps(pat2.nb, order2[pat2.nb+1].length, order2)
+                else:
+                    #separator bigger!, reduce by length of overhang!
+                    back = len(seq)-1
                     cpt=0
-                    while cpt <= order2[pat2.nb+1].length-1:
+                    while cpt <= pat2.right_overhang-1:
                         seq=del_str(seq,back)
                         cpt+=1
                         back-=1
-                        
+
                     pat2.alignedsequence=seq
-                         
-                    pat2.length-=order2[pat2.nb+1].length
-                    pat2.finish-=order2[pat2.nb+1].length
-                    struct2.length-=order2[pat2.nb+1].length
-                         
-                    del_gaps(pat2.nb, order2[pat2.nb+1].length, order2)
-            else:
-                #seprator bigger!, reduce by length of overhang!
-                back = len(seq)-1
-                cpt=0
-                while cpt <= pat2.right_overhang-1:
-                    seq=del_str(seq,back)
-                    cpt+=1
-                    back-=1
-                    
-                pat2.alignedsequence=seq
-                     
-                pat2.length-=pat2.right_overhang
-                pat2.finish-=pat2.right_overhang
-                struct2.length-=pat2.right_overhang
-                     
-                del_gaps(pat2.nb, pat2.right_overhang, order2)
-                
+
+                    pat2.length-=pat2.right_overhang
+                    pat2.finish-=pat2.right_overhang
+                    struct2.length-=pat2.right_overhang
+
+                    del_gaps(pat2.nb, pat2.right_overhang, order2)
+
     return ret_diff
 
 def sep_gap_inserter(struct1, struct2, matching, ordered1, ordered2, main_diff):
@@ -2169,6 +2197,27 @@ def matching_finder(struct1, struct2, verbose=False):
                 
         return matching_pass1
 
+### CLEANING FUNCTION
+
+def end_clean(struct1, struct2):
+    struct1.beforeclean = copy.deepcopy(struct1.alignedsequence)
+    struct2.beforeclean = copy.deepcopy(struct2.alignedsequence)
+
+    struct1.alignedsequence = ""
+    struct2.alignedsequence = ""
+
+    if struct1.isaligned and struct2.isaligned:
+        for base_pairs_struct1, base_pairs_struct2 in zip(struct1.beforeclean, struct2.beforeclean):
+            if not(base_pairs_struct1 == base_pairs_struct2 == "-"):
+                struct1.alignedsequence+=base_pairs_struct1
+                struct2.alignedsequence+=base_pairs_struct2
+
+        struct1.iscleaned=True
+        struct2.iscleaned=True
+
+    else:
+        raise RuntimeError("Can't clean two structures that are not aligned.")
+
 ### MAIN ALIGNMENT FUNCTION
 
 def full_alignment(struct1, struct2, verbose=False):
@@ -2249,19 +2298,19 @@ def full_alignment(struct1, struct2, verbose=False):
 
     order1=struct1.order_list()
     order2=struct2.order_list()
-    
+
     try:
         discriminate_po_priority(struct1, struct2, matching)
     except Exception as e:
         e=f"An error occured when checking for overdiv/pseudoknots priority on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise OPKPrioError(e)
-        
+
     try:
         pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
     except Exception as e:
         e=f"An error occured when compensating for pseudoknots on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise PKCompensatingError(e)
-            
+
     try:
         overdivision_compensating(struct1, struct2, order1, order2, matching)
     except Exception as e:
@@ -2271,14 +2320,18 @@ def full_alignment(struct1, struct2, verbose=False):
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
 
+
     try:
         separator_compensating(struct1, struct2, matching)
     except Exception as e:
         e = f"An error occured when aligning separators on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise SepCompensatingError(e)
-    
+
     if verbose:
-        print("\nUpdating last parameters and finishing\n")
+        print("\nUpdating last parameters, cleaning and finishing\n")
+
+
+
     struct1.alignedwith=struct2
     struct2.alignedwith=struct1
     
@@ -2287,7 +2340,14 @@ def full_alignment(struct1, struct2, verbose=False):
   
     struct1.alignedsequence = struct1.reagglomerate()
     struct2.alignedsequence = struct2.reagglomerate()
-    
+
+    try:
+        end_clean(struct1, struct2)
+    except Exception as e:
+        e = f"An error occured while cleaning on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
+        raise FinalCleanError(e)
+
+
     return struct1,struct2
 
 #_____________________________MAIN FUNCTIONS_____________________________
