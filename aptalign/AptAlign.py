@@ -48,6 +48,10 @@ def vis_align(struct1,struct2,step="NULL"):
     if len(seq1) != struct1.length or len(seq2) != struct2.length:
         print("ERROR IN LENGTH CALCULATION AT STEP: ",step)
 
+    print("NO OD VIS:")
+    print(seq1.replace("O","(").replace("C",")"))
+    print(seq2.replace("O","(").replace("C",")"))
+
 ### ERROR HANDLING CLASSES
 
 class MatchingError(Exception):
@@ -1106,7 +1110,7 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
         
         #BEFORE - OPENED    
         #test only separators BEFORE for opened pseudoknots
-        
+
         unpacking=["o",[ordered1, 0, -1],[ordered2, 1, -1]]
         add=only_sep(unpacking,pairs)
         if add:
@@ -1188,7 +1192,7 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
             add = non_paired(unpacking,pairs)
             if add:
                 sep_closed_matching.append(add)
-    
+
     for pair in sep_opened_matching:
         dict_seq1={}
         for i,elt in enumerate(pair[0].sequence):
@@ -1198,16 +1202,9 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
         for i,elt in enumerate(pair[1].sequence):
             dict_seq2[i]=elt
         
-        start_diff1=0
-        if pair[0].nb-1>=0 and isinstance(pair[0],Separator):
-            if ordered1[pair[0].nb-1].alignedwith == EmptyPattern:
-                start_diff1=ordered1[pair[0].nb-1].length
-        
-        start_diff2=0
-        if pair[1].nb-1>=0 and isinstance(pair[1],Separator):
-            if ordered2[pair[1].nb-1].alignedwith == EmptyPattern:
-                start_diff2=ordered2[pair[1].nb-1].length
-        
+        start_diff1=pair[0].start
+        start_diff2=pair[1].start
+
         opened="[{<"
         #determining the start of both pseudoknots
         start1=0
@@ -1220,7 +1217,7 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
         
         start1+=start_diff1
         start2+=start_diff2
-        
+
         #aligning if pk starts at different places in the separator
         if start1!=start2:
             
@@ -1259,10 +1256,8 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
 
             struct1.length+=nb_gaps1
             struct2.length+=nb_gaps2
-        
-            
+
     for pair in sep_closed_matching:
-    
         dict_seq1={}
         for i,elt in enumerate(pair[0].sequence):
             dict_seq1[i]=elt
@@ -1271,16 +1266,9 @@ def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
         for i,elt in enumerate(pair[1].sequence):
             dict_seq2[i]=elt
 
-        start_diff1=0
-        if pair[0].nb-1>=0 and isinstance(pair[0],Separator):
-            if ordered1[pair[0].nb-1].alignedwith == EmptyPattern:
-                start_diff1=ordered1[pair[0].nb-1].length
-        
-        start_diff2=0
-        if pair[1].nb-1>=0 and isinstance(pair[1],Separator):
-            if ordered2[pair[1].nb-1].alignedwith == EmptyPattern:
-                start_diff2=ordered2[pair[1].nb-1].length
-        
+        start_diff1=pair[0].start
+        start_diff2=pair[1].start
+
         closed="]}>"
         #determining the start of both pseudoknots
         start1=0
@@ -2282,17 +2270,18 @@ def full_alignment(struct1, struct2, verbose=False):
     
     if verbose:
         print("\nAligning patterns.")
-    
 
     for elt in matching:
         order1=struct1.order_list()
         order2=struct2.order_list()
+
         try:
             pattern_alignment(struct1,struct2,elt[0],elt[1],order1,order2,verbose)
         except Exception as e:
             e = f"An error occured when aligning patterns on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
             raise PatternAlignmentError(e)
-        
+
+
     if verbose:
         print("\nAccounting for pseudoknots and overdivision.")
 
@@ -2310,6 +2299,7 @@ def full_alignment(struct1, struct2, verbose=False):
     except Exception as e:
         e=f"An error occured when compensating for pseudoknots on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise PKCompensatingError(e)
+
 
     try:
         overdivision_compensating(struct1, struct2, order1, order2, matching)
@@ -2331,7 +2321,6 @@ def full_alignment(struct1, struct2, verbose=False):
         print("\nUpdating last parameters, cleaning and finishing\n")
 
 
-
     struct1.alignedwith=struct2
     struct2.alignedwith=struct1
     
@@ -2346,7 +2335,6 @@ def full_alignment(struct1, struct2, verbose=False):
     except Exception as e:
         e = f"An error occured while cleaning on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise FinalCleanError(e)
-
 
     return struct1,struct2
 
