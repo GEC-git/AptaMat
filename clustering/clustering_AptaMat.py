@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 
 current_dir = os.path.dirname(__file__)
 root_path = os.path.abspath(os.path.join(current_dir, '..','aptamat2.0'))
@@ -16,11 +17,11 @@ sys.path.append(root_path)
 import RNAlignAPI as rnapi
 #--------------------------#
 
-
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, adjusted_rand_score
+from tqdm import tqdm
 import AptaMat2 as AF
 import AptAlign as AL
 import matplotlib.pyplot as plt
@@ -56,18 +57,16 @@ def build_label_dict(labels, family):
         family_name.append(key)
         family_range.append(sum_value)
         sum_value += value
-        
+
     label_dict = {}
     for n, range_fami in enumerate(family_range):
         newdict = {}
         try:
             set(labels[family_range[n]:family_range[n + 1]])
-
         except:
             for i in set(labels[family_range[n]:]):
                 newdict[i] = labels[family_range[n]:].count(i)
             label_dict[family_name[n]] = newdict
-
         else:
             for i in set(labels[family_range[n]:family_range[n + 1]]):
                 newdict[i] = labels[family_range[n]:family_range[n + 1]].count(i)
@@ -93,15 +92,14 @@ def renumber_by_rank(labels):
     dcc = {}
     for l in labels:
         dcc[l] = dcc.get(l, 0) + 1
-        
+
     ranked = sorted(dcc.items(), key=lambda x: x[1], reverse=True)
 
     new_labels = []
     for element in labels:
         for i, r in enumerate(ranked):
             if element == r[0]:
-                new_labels.append(i)
-          
+                new_labels.append(i)     
     return new_labels
 
 
@@ -110,8 +108,10 @@ def affinity_calculation(distance_matrix, standard_labels, sigma, depth):
     affinity_matrix = np.exp(- distance_matrix ** 2 / (2. * sigma ** 2))
     clustering = AffinityPropagation(damping=0.52, affinity="precomputed", convergence_iter=10, max_iter=depth,
                                      random_state=0).fit(affinity_matrix)
-    
-    #sub_aff_prop.append(clustering)
+
+    if len(np.unique(clustering.labels_)) == 1:
+        return (None, None, None, None, None, None, None)
+
     calinski = calinski_harabasz_score(distance_matrix, clustering.labels_)
     silhouette = silhouette_score(affinity_matrix, clustering.labels_)
     acc_score = adjusted_rand_score(standard_labels, clustering.labels_)
@@ -147,43 +147,44 @@ def optimised_affinity_propagation(distance_matrix, CORE, depth, standard=None, 
     for result in pool.starmap(affinity_calculation,
                                [(distance_matrix, standard_labels, sigma, depth) for sigma in sigma_iter]):
         results.append(result)
+
     pool.terminate()
     print("Job Finished, fetching the best result.")
     for elt in results:
-        
-        acc_score=elt[3]
-        calinski=elt[1]
-        silhouette=elt[2]
-        if acc_best < acc_score:
-            acc_best = acc_score
-            aff_prop_calinski_best = calinski
-            silhouette_best = silhouette
-            aff_prop_clust_best = elt[0]
-            sigma_best = elt[4]
-            aff=elt[5]
-
-        if aff_prop_calinski_best < calinski and silhouette_best < silhouette:
-            aff_prop_calinski_best = calinski
-            silhouette_best = silhouette
-            aff_prop_clust_best = elt[0]
-            sigma_best = elt[4]
-            aff=elt[5]
-
-        elif aff_prop_calinski_best > calinski and silhouette_best < silhouette:
-            if calinski + (5 * aff_prop_calinski_best / 100) > aff_prop_calinski_best:
+        if elt != (None, None, None, None, None, None, None):
+            acc_score=elt[3]
+            calinski=elt[1]
+            silhouette=elt[2]
+            if acc_best < acc_score:
+                acc_best = acc_score
                 aff_prop_calinski_best = calinski
                 silhouette_best = silhouette
                 aff_prop_clust_best = elt[0]
                 sigma_best = elt[4]
                 aff=elt[5]
 
-        elif aff_prop_calinski_best < calinski and silhouette_best > silhouette:
-            if silhouette + (20 * silhouette_best / 100) > silhouette_best:
+            if aff_prop_calinski_best < calinski and silhouette_best < silhouette:
                 aff_prop_calinski_best = calinski
                 silhouette_best = silhouette
                 aff_prop_clust_best = elt[0]
                 sigma_best = elt[4]
                 aff=elt[5]
+
+            elif aff_prop_calinski_best > calinski and silhouette_best < silhouette:
+                if calinski + (5 * aff_prop_calinski_best / 100) > aff_prop_calinski_best:
+                    aff_prop_calinski_best = calinski
+                    silhouette_best = silhouette
+                    aff_prop_clust_best = elt[0]
+                    sigma_best = elt[4]
+                    aff=elt[5]
+
+            elif aff_prop_calinski_best < calinski and silhouette_best > silhouette:
+                if silhouette + (20 * silhouette_best / 100) > silhouette_best:
+                    aff_prop_calinski_best = calinski
+                    silhouette_best = silhouette
+                    aff_prop_clust_best = elt[0]
+                    sigma_best = elt[4]
+                    aff=elt[5]
                 
     return aff, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop
 
@@ -214,11 +215,11 @@ def initialize_dataset(structure_file):
     return structure_list,family
 
 def alignment_calc(struct1,struct2,speed,AL_depth):
-    
+
     struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=AL_depth,ident1=struct1.id,ident2=struct2.id)
-    
+
     dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1al.alignedsequence), AF.SecondaryStructure(struct2al.alignedsequence),"cityblock",speed)
-    
+
     alignment=[struct1al.alignedsequence,struct2al.alignedsequence]
     ids=[struct1.id, struct2.id]
     del struct1al
@@ -227,7 +228,7 @@ def alignment_calc(struct1,struct2,speed,AL_depth):
 
 def API_alignment_calc(struct1, struct2, speed):
     
-    #Please decomment/comment the right functions depending of algorithm used.
+    #Please decomment/comment the right functions depending on algorithm used.
     #dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2) #RNAforester
     dotbracket1al, dotbracket2al = rnapi.rnalign2d_pairwise(struct1,struct2) #RNAlign2D
     #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2) #LocARNA
@@ -277,7 +278,158 @@ def extracting_alignment(filepath):
             results.append([dist,[struct1_al,struct2_al],ids])
         
     return results
-            
+
+def make_error_handler(pool, queue, n_tasks):
+    def handle_error(e):
+        print("=== CALLBACK ERROR ===")
+        traceback.print_exception(type(e), e, e.__traceback__)
+
+        for i in range(n_tasks):
+            queue.put((i, "STOP_ERROR", repr(e)))
+
+        pool.terminate()
+
+    return handle_error
+
+def make_success_handler(results_by_worker):
+    def handle_success(result):
+        worker_num, worker_results = result
+        results_by_worker[worker_num] = worker_results
+
+    return handle_success
+
+def split_list(items, m):
+    n = len(items)
+
+    if m <= 0:
+        raise ValueError("m must be strictly positive")
+
+    base_size = n // m
+    remainder = n % m
+
+    result = []
+    start = 0
+
+    for i in range(m):
+        chunk_size = base_size
+
+        if i < remainder:
+            chunk_size += 1
+
+        end = start + chunk_size
+        result.append(items[start:end])
+        start = end
+
+    return result
+
+def prepare_split_lists(split_list):
+    results = []
+    steps_per_tasks = [len(elt) for elt in split_list]
+    for i in range(len(split_list)):
+        results.append([split_list[i]])
+    return results, steps_per_tasks
+
+def alignment_worker(worker_num, all_tasks, queue):
+    res = []
+
+    if len(all_tasks) == 0:
+        queue.put((worker_num, "DONE", "No task."))
+        return worker_num, res
+
+    try:
+        for i, elements in enumerate(all_tasks):
+            struct1, struct2, speed, AL_depth = elements
+
+            queue.put((
+                worker_num,
+                "DESC",
+                f"Aligning {struct1.id} - {struct2.id}"
+            ))
+
+            res.append(alignment_calc(struct1, struct2, speed, AL_depth))
+
+            queue.put((worker_num, "STEP", ""))
+
+        queue.put((worker_num, "DONE", "Finished."))
+        return worker_num, res
+
+    except Exception as e:
+        queue.put((worker_num, "STOP_ERROR", repr(e)))
+        raise
+
+
+def remerge_results(results):
+    merged = []
+
+    for worker_array in results:
+        if worker_array is not None:
+            merged.extend(worker_array)
+
+    return merged
+
+def progress_handler(queue, n_tasks, steps_per_tasks):
+    task_bars = {}
+    finished_tasks = 0
+    err = False
+    error_desc = ""
+
+    while finished_tasks < n_tasks:
+
+        if not queue.empty():
+            task_id, event, desc = queue.get(timeout=0.1)
+
+            disp_w_num = task_id + 1
+
+            if task_id not in task_bars:
+                task_bars[task_id] = tqdm(
+                    total=steps_per_tasks[task_id],
+                    desc=f"Worker {disp_w_num} | Initializing worker...",
+                    position=task_id,
+                    leave=True,
+                    unit="align",
+                    colour="green",
+                )
+
+            bar = task_bars[task_id]
+
+            if event == "STEP":
+                bar.update(1)
+
+            elif event == "DESC":
+                bar.set_description_str(f"Worker {disp_w_num} | {desc}")
+                bar.refresh()
+
+            elif event == "DONE":
+                finished_tasks += 1
+                bar.set_description_str(f"Worker {disp_w_num} | {desc}")
+                bar.colour = "white"
+
+                remaining = bar.total - bar.n
+                if remaining > 0:
+                    bar.update(remaining)
+
+                bar.refresh()
+
+            elif event == "STOP_ERROR":
+                error_desc = bar.desc
+                bar.set_description_str(f"Worker {disp_w_num} | {desc}")
+                bar.colour = "red"
+                bar.n = steps_per_tasks[task_id]
+                bar.refresh()
+                err = True
+
+        if err:
+            for bar in task_bars.values():
+                bar.close()
+
+            print(f"\n\n=== DETECTED ERROR OF ALIGNMENT IN {error_desc} ===\n\n")
+            return False
+
+    for bar in task_bars.values():
+        bar.close()
+
+    return True
+
 
 def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment, AL_depth):
     
@@ -292,19 +444,59 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
     if reuse_alignment == "":
         print("Creating all alignment file.")
         results = []
-        pool = multiprocessing.Pool(CORE)
-    
         inter_res=[]
         
         #Decoment here if using API.
-        # for result in pool.starmap(API_alignment_calc,
-        #                             [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-        #     inter_res.append(result)
+        #for result in pool.starmap(API_alignment_calc,
+        #                           [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
+        #    inter_res.append(result)
         
         # Decomment here if using AptAlign.
-        for result in pool.starmap(alignment_calc,
-                                    [(struct1, struct2, speed, AL_depth) for struct1 in structure_list for struct2 in structure_list]):
-            inter_res.append(result)
+
+        manager = multiprocessing.Manager()
+        queue = manager.Queue()
+
+        n_tasks = CORE
+
+        full_task_order = [
+            (struct1, struct2, speed, AL_depth)
+            for struct1 in structure_list
+            for struct2 in structure_list
+        ]
+
+        distributed_tasks = split_list(full_task_order, n_tasks)
+        steps_per_tasks = [len(task_group) for task_group in distributed_tasks]
+
+        results_by_worker = [None] * n_tasks
+
+        pool = multiprocessing.Pool(n_tasks)
+
+        try:
+            for worker_num, worker_tasks in enumerate(distributed_tasks):
+                pool.apply_async(
+                    alignment_worker,
+                    args=(worker_num, worker_tasks, queue),
+                    callback=make_success_handler(results_by_worker),
+                    error_callback=make_error_handler(pool, queue, n_tasks),
+                )
+
+            no_err = progress_handler(queue, n_tasks, steps_per_tasks)
+
+            if not no_err:
+                pool.terminate()
+                pool.join()
+                raise RuntimeError("Error while aligning, aborting.")
+
+            pool.close()
+            pool.join()
+
+        except Exception:
+            pool.terminate()
+            pool.join()
+            raise
+
+        inter_res = remerge_results(results_by_worker)
+
         #-------------------------#
         
         tbw=""
@@ -313,11 +505,11 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
             tbw+=">"+str(elt[2][0])+" - "+str(elt[2][1])+" | AptaMat: "+str(elt[0])+"\n"
             tbw+=str(elt[1][0])+"\n"
             tbw+=str(elt[1][1])+"\n"
-        
-        pool.terminate()
+
         f_created=open("CLUSTERING_ALIGNMENT_RESULTS.dat",'a')
         f_created.write(tbw)
         f_created.close()
+
     else:
         
         print("Reusing prior alignment from : ",reuse_alignment)
@@ -328,8 +520,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
         
         
     print("Starting clustering\n")
-    
-    
+
     matrix_element = []
     for i in results:
         if i == None:
@@ -412,34 +603,30 @@ def affinity_visualization_CPU(affinity_matrix,structure_list):
     
     plt.show()
 
-def heatmap(family, labels, dict_label, title="HeatMap_Color.pdf"):
+def heatmap(family, labels, dict_label):
 ### Heatmap setup
-    
-    df = pd.DataFrame(dict_label).fillna(0)
-
-    col_order = df.max(axis=0).sort_values(ascending=False).index
-    df = df[col_order]
-
-    row_order = df.values.argmax(axis=1)
-    df = df.iloc[np.argsort(row_order)]
-    
+    #df = pd.DataFrame(family, index=list(set(labels)), columns=dict_label.keys())
+    #print(dict_label)
+    df=pd.DataFrame(dict_label)
+    s = df.sum()
+    df = df[s.sort_values(ascending=False).index[:]]
     family_np = df.to_numpy()
-    family_np = np.nan_to_num(family_np)
+    family_np=np.nan_to_num(family_np)
     
     family_percent = family_np / family_np.sum(axis=0) * 100
     family_np_t = np.transpose(family_np)
     family_p_t = np.transpose(family_percent)
-
     clean_labels = [i.replace('_', ' ') for i in df.columns]
     
     binary_m = plt.get_cmap('jet')
     colormap = ListedColormap(binary_m(np.linspace(0.2, 1, 100)))
     colormap.set_under(color='white')
-    fig, ax = plt.subplots(figsize=(12, 7))
+    fig, ax = plt.subplots()
     im = ax.imshow(family_p_t, cmap=colormap, vmin=0.9)
     ax.set_yticks(np.arange(len(df.columns)), labels=clean_labels)
+    # ax.set_yticks(np.arange(len(rfam)), labels=rfam)
     ax.set_xticks(np.arange(0, len(df)), labels=list(np.arange(0, len(df))))
-
+    #print(df)
     for i in range(len(df.columns)):
         for j in np.arange(0, len(df)):
             if round(family_p_t[i, j]) == 0:
@@ -451,10 +638,10 @@ def heatmap(family, labels, dict_label, title="HeatMap_Color.pdf"):
                 text = ax.text(j, i, int(family_np_t[i, j]),
                                ha="center", va="center", color="w")
     
-    cbar = fig.colorbar(im, ax=ax)
-    cbar.set_label('Occupancy (%)')
-    fig.savefig(title, dpi=600, bbox_inches="tight")  
-    plt.close(fig)
+    plt.text(len(df)+1, 1, 'Occupancy (%)', fontsize=10)
+    cax = plt.axes([0.98, 0.295, 0.02, 0.4])
+    plt.colorbar(im, cax)
+    fig.savefig('HeatMap_Color.pdf', dpi=600, bbox_inches='tight')
 
 def main():
     parser = argparse.ArgumentParser(description="This clustering algorithm uses AptaMat2.0 to determine"
@@ -531,7 +718,7 @@ def main():
     CORE = int(input("Please input the number of cores you want to use:"))
     
     structure_list,family=initialize_dataset(structure_file)
-    
+
     affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file, AL_depth)
     
     
@@ -539,8 +726,8 @@ def main():
     print('Optimal Calinski Harabasz index =', aff_prop_calinski_best)
     print("Optimal Silhouette score =", silhouette_best)
     print('Optimal Sigma =', sigma_best)
-    
     labels = renumber_by_rank(aff_prop_clust_best.labels_)
+    
     tbw='Optimal Calinski Harabasz index ='+str(aff_prop_calinski_best)+"\n"
     tbw+="Optimal Silhouette score ="+str(silhouette_best)+"\n"
     tbw+='Optimal Sigma ='+str(sigma_best)+"\n"
@@ -551,6 +738,7 @@ def main():
     f_created=open(structure_file.replace(".dat","")+"_CLUSTERING_DISTRIBUTION_RESULTS.dat",'a')
     f_created.write(tbw)
     f_created.close()
+    labels = renumber_by_rank(labels)
     dict_label = build_label_dict(list(labels),family)
     
     if args.visu is not None:
