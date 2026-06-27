@@ -19,38 +19,54 @@ from tabulate import tabulate
 
 ### DEBUGGING FUNCTIONS
 
-def vis_align(struct1,struct2,step="NULL"):
+def vis_align(struct1, struct2, step="NULL", enabled=True):
     """
-    Function used to visualize the alignment at any step in the full_alignment function.
-    """
-    seq1=""
-    for elt in struct1.order_list():
-        if isinstance(elt, Pattern):
-            if elt.alignedsequence=="":
-                seq1+=elt.sequence
-            else:
-                seq1+=elt.alignedsequence
-        else:
-            seq1+=elt.sequence
-    seq2=""
-    for elt in struct2.order_list():
-        if isinstance(elt, Pattern):
-            if elt.alignedsequence=="":
-                seq2+=elt.sequence
-            else:
-                seq2+=elt.alignedsequence
-        else:
-            seq2+=elt.sequence
-            
-    print("\nSTEP:",step," | Calculated lengths: - Struct1: ",struct1.length,"- Struct2: ",struct2.length)
-    print(seq1,"    Real Length of Struct1: ",len(seq1))
-    print(seq2,"    Real Length of Struct2: ",len(seq2))
-    if len(seq1) != struct1.length or len(seq2) != struct2.length:
-        print("ERROR IN LENGTH CALCULATION AT STEP: ",step)
+    Visualize two structures during alignment.
 
-    print("NO OD VIS:")
-    print(seq1.replace("O","(").replace("C",")"))
-    print(seq2.replace("O","(").replace("C",")"))
+    Uses the final alignedsequence when available, otherwise rebuilds the
+    current intermediate sequence from patterns and separators.
+    """
+    if not enabled:
+        return
+
+    def render(struct):
+        if getattr(struct, "iscleaned", False) and struct.alignedsequence:
+            return struct.alignedsequence
+
+        seq = ""
+        for elt in struct.order_list():
+            if isinstance(elt, Pattern):
+                seq += elt.alignedsequence if elt.alignedsequence != "" else elt.sequence
+            else:
+                seq += elt.sequence
+        return seq
+
+    seq1 = render(struct1)
+    seq2 = render(struct2)
+
+    len_ok_1 = len(seq1) == struct1.length
+    len_ok_2 = len(seq2) == struct2.length
+
+    print("\n\n\n=== STEP:", step, "===")
+    print("Calculated lengths: - Struct1:", struct1.length, "- Struct2:", struct2.length)
+    print("Real lengths:       - Struct1:", len(seq1), "- Struct2:", len(seq2))
+
+    if not len_ok_1 or not len_ok_2:
+        print("ERROR IN LENGTH CALCULATION AT STEP:", step)
+        if not len_ok_1:
+            print("  Struct1 delta:", len(seq1) - struct1.length)
+        if not len_ok_2:
+            print("  Struct2 delta:", len(seq2) - struct2.length)
+
+    print("\nRAW VIS:")
+    print(seq1)
+    print(seq2)
+
+    print("\nNO OD VIS:")
+    print(seq1.replace("O", "(").replace("C", ")"))
+    print(seq2.replace("O", "(").replace("C", ")"))
+
+    print("\nDEPTH:", struct1.subdiv_param, struct2.subdiv_param)
 
 ### ERROR HANDLING CLASSES
 
@@ -764,6 +780,7 @@ class Structure():
         self.raw=sequence
         self.sequence=AGU
         self.length=len(sequence)
+        self.subdiv_param=subdiv_param
         self.subdiv_list, self.raw_nosubdiv=subdiv_finder(sequence, subdiv_param)
         count_par=sequence.count("(")+sequence.count(")")
         subdiv_count=0
@@ -1044,283 +1061,270 @@ def sep_gap_adder(struct,nb_gaps,sep,ordered):
     struct.length+=nb_gaps
 
 ### SEPARATOR ALIGNMENT FUNCTIONS
-
 def pseudoknots_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
-    Spatially aware pseudoknots compensation inside of separators and non paired patterns.
+    Spatially aware pseudoknots compensation inside non-paired objects.
     """
-    #creating necessary separator and pattern matching 
-    sep_opened_matching=[]
-    sep_closed_matching=[]
-    
-    def gen_pair(triad, pairs):
-        return triad[0][pairs[triad[1]].nb+triad[2]]
-    
+    def create_superposed_clusters():
+        order_match = [[pair[0].nb, pair[1].nb] for pair in matching]
 
-    def only_sep(upk, pairs):        
-        if upk[0]=="o":
-            if gen_pair(upk[1],pairs).pk_index_opened !=0 and gen_pair(upk[2],pairs).pk_index_opened !=0:
-                if not(gen_pair(upk[1],pairs).pk_index_o_accounted) and not(gen_pair(upk[2],pairs).pk_index_o_accounted):
-                    gen_pair(upk[1],pairs).pk_index_o_accounted = True
-                    gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                    if upk[1][0]==ordered1:
-                        return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+        clustered=[]
+
+        for i, pairs in enumerate(order_match):
+            if i == 0:
+                min_1 = 0
+                min_2 = 0
+                max_1 = pairs[0]
+                max_2 = pairs[1]
+
+            else:
+                min_1 = order_match[i-1][0]+1
+                min_2 = order_match[i-1][1]+1
+                max_1 = pairs[0]
+                max_2 = pairs[1]
+
+            clus1=[]
+            while min_1 != max_1:
+                clus1.append(min_1)
+                min_1+=1
+
+            clus2=[]
+            while min_2 != max_2:
+                clus2.append(min_2)
+                min_2+=1
+
+            clustered.append((clus1,clus2))
+
+
+        min_1 = order_match[-1][0]+1
+        min_2 = order_match[-1][1]+1
+        max_1 = len(ordered1)
+        max_2 = len(ordered2)
+
+        clus1 = []
+        while min_1 != max_1:
+            clus1.append(min_1)
+            min_1 += 1
+
+        clus2 = []
+        while min_2 != max_2:
+            clus2.append(min_2)
+            min_2 += 1
+
+        clustered.append((clus1, clus2))
+
+        real_sup_objs=[]
+        for superpos in clustered:
+
+            sup_struct1=[]
+            for ord_objs in superpos[0]:
+                sup_struct1.append(ordered1[ord_objs])
+
+            sup_struct2=[]
+            for ord_objs in superpos[1]:
+                sup_struct2.append(ordered2[ord_objs])
+
+            real_sup_objs.append([sup_struct1,sup_struct2])
+
+        return real_sup_objs
+
+    def reconstruct_seq(objs_1):
+        sup_seq = []
+        pk_indexes = []
+        for elt in objs_1:
+            closed_accounted=False
+            opened_accounted=False
+            pk_opened = False
+            pk_closed = False
+            if elt.pk_index_closed:
+                pk_closed = True
+                if elt.pk_index_c_accounted:
+                    closed_accounted=True
+
+            if elt.pk_index_opened:
+                pk_opened = True
+                if elt.pk_index_o_accounted:
+                    opened_accounted=True
+
+
+            sup_seq.append(elt)
+            pk_indexes.append([(pk_opened, opened_accounted), (pk_closed, closed_accounted)])
+
+
+        return sup_seq, pk_indexes
+
+    superposed_objs = create_superposed_clusters()
+
+    for superpositions in superposed_objs:
+        seqs_1, indexes_1 = reconstruct_seq(superpositions[0])
+        seqs_2, indexes_2 = reconstruct_seq(superpositions[1])
+
+        pk_opened_not_acc_1 = False
+        pk_closed_not_acc_1 = False
+        opened_indexes_1=[]
+        closed_indexes_1=[]
+        for i,elt in enumerate(indexes_1):
+            if elt[0][0] and not elt[0][1]:
+                pk_opened_not_acc_1 = True
+                opened_indexes_1.append(i)
+            if elt[1][0] and not elt[1][1]:
+                pk_closed_not_acc_1 = True
+                closed_indexes_1.append(i)
+
+        opened_indexes_2 = []
+        closed_indexes_2 = []
+        pk_opened_not_acc_2 = False
+        pk_closed_not_acc_2 = False
+        for i,elt in enumerate(indexes_2):
+            if elt[0][0] and not elt[0][1]:
+                pk_opened_not_acc_2 = True
+                opened_indexes_2.append(i)
+
+            if elt[1][0] and not elt[1][1]:
+                pk_closed_not_acc_2 = True
+                closed_indexes_2.append(i)
+
+        if not (pk_opened_not_acc_1 and pk_closed_not_acc_1 and pk_opened_not_acc_2 and pk_closed_not_acc_2):
+
+            if pk_opened_not_acc_1 and pk_opened_not_acc_2:
+                first_opened_1 = opened_indexes_1[0]
+                first_opened_2 = opened_indexes_2[0]
+                obj_to_comp_in_1 = seqs_1[first_opened_1]
+                obj_to_comp_in_2 = seqs_2[first_opened_2]
+
+                dict_seq1 = {}
+                for i, elt in enumerate(obj_to_comp_in_1.sequence):
+                    dict_seq1[i] = elt
+
+                dict_seq2 = {}
+                for i, elt in enumerate(obj_to_comp_in_2.sequence):
+                    dict_seq2[i] = elt
+
+                start_diff1 = obj_to_comp_in_1.start
+                start_diff2 = obj_to_comp_in_2.start
+
+                opened = "[{<"
+                # determining the start of both pseudoknots
+                start1 = 0
+                while dict_seq1[start1] not in opened:
+                    start1 += 1
+
+                start2 = 0
+                while dict_seq2[start2] not in opened:
+                    start2 += 1
+
+                start1 += start_diff1
+                start2 += start_diff2
+
+                if start1 != start2:
+
+                    diff = start1 - start2
+
+                    if diff > 0:
+                        # start1>start2, # starts after in 1; placing gaps in 2.
+                        for i in range(abs(diff)):
+                            dict_seq2 = insert_gap_seq_dict(dict_seq2, start2)
+                    elif diff < 0:
+                        # start2>start1, # starts after in 2; placing gaps in 1.
+                        for i in range(abs(diff)):
+                            dict_seq1 = insert_gap_seq_dict(dict_seq1, start1)
+
+                    if isinstance(obj_to_comp_in_1, Pattern):
+                        obj_to_comp_in_1.alignedsequence = dict_seq_reagglomerate(dict_seq1)
+                        nb_gaps1 = obj_to_comp_in_1.alignedsequence.count('-')
                     else:
-                        return [gen_pair(upk[2],pairs),gen_pair(upk[1],pairs)]
-        
-        elif upk[0]=="c":
-            if gen_pair(upk[1],pairs).pk_index_closed !=0 and gen_pair(upk[2],pairs).pk_index_closed !=0:
-                if not(gen_pair(upk[1],pairs).pk_index_c_accounted) and not(gen_pair(upk[2],pairs).pk_index_c_accounted):
-                    gen_pair(upk[1],pairs).pk_index_c_accounted = True
-                    gen_pair(upk[2],pairs).pk_index_c_accounted = True
-                    if upk[1][0]==ordered1:
-                        return [gen_pair(upk[1],pairs),gen_pair(upk[2],pairs)]
+                        obj_to_comp_in_1.sequence = dict_seq_reagglomerate(dict_seq1)
+                        nb_gaps1 = obj_to_comp_in_1.sequence.count('-')
+
+                    if isinstance(obj_to_comp_in_2, Pattern):
+                        obj_to_comp_in_2.alignedsequence = dict_seq_reagglomerate(dict_seq2)
+                        nb_gaps2 = obj_to_comp_in_2.alignedsequence.count('-')
                     else:
-                        return [gen_pair(upk[2],pairs),gen_pair(upk[1],pairs)]
+                        obj_to_comp_in_2.sequence = dict_seq_reagglomerate(dict_seq2)
+                        nb_gaps2 = obj_to_comp_in_2.sequence.count('-')
 
-        return False
-            
 
-    def non_paired(upk,pairs):
-        if upk[4][0]=="b":
-            bool_res = pairs[upk[1][0]].nb+upk[1][1] != 0
-        elif upk[4][0]=="a":
-            bool_res = pairs[upk[1][0]].nb+upk[1][1] != len(upk[4][1])-1
-        if bool_res:
-            if gen_pair(upk[2],pairs).alignedwith == EmptyPattern:
-                if upk[0]=="o":
-                    if gen_pair(upk[2],pairs).pk_index_opened != 0 and gen_pair(upk[3],pairs).pk_index_opened !=0:
-                        if not(gen_pair(upk[3],pairs).pk_index_o_accounted) and not (gen_pair(upk[2],pairs).pk_index_o_accounted):
-                            gen_pair(upk[3],pairs).pk_index_o_accounted = True
-                            gen_pair(upk[2],pairs).pk_index_o_accounted = True
-                            if upk[2][0]==ordered1:
-                                return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
-                            else:
-                                return [gen_pair(upk[3],pairs),gen_pair(upk[2],pairs)]
-                elif upk[0]=="c":
-                    if gen_pair(upk[2],pairs).pk_index_closed != 0 and gen_pair(upk[3],pairs).pk_index_closed !=0:
-                        if not(gen_pair(upk[3],pairs).pk_index_c_accounted) and not (gen_pair(upk[2],pairs).pk_index_c_accounted):
-                            gen_pair(upk[3],pairs).pk_index_c_accounted = True
-                            gen_pair(upk[2],pairs).pk_index_c_accounted = True
-                            return [gen_pair(upk[2],pairs),gen_pair(upk[3],pairs)]
-                
-        return False
-    
-    for pairs in matching:
-        
-        #BEFORE - OPENED    
-        #test only separators BEFORE for opened pseudoknots
+                    obj_to_comp_in_1.length += nb_gaps1
+                    obj_to_comp_in_2.length += nb_gaps2
 
-        unpacking=["o",[ordered1, 0, -1],[ordered2, 1, -1]]
-        add=only_sep(unpacking,pairs)
-        if add:
-            sep_opened_matching.append(add)
-    
-        else:
-            #test non paired Pattern BEFORE for opened pseudoknots in ordered1.
-            unpacking=["o", [0,-1],[ordered1, 0, -2], [ordered2, 1, -1], ["b"]]
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_opened_matching.append(add)
-            
-            #test non paired Pattern BEFORE for opened pseudoknots in ordered2.
-            unpacking=["o", [1,-1],[ordered2, 1, -2], [ordered1, 0, -1], ["b"]]            
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_opened_matching.append(add)
-        
-        #BEFORE - CLOSED
-        #test only separators BEFORE for closed pseudoknots
-        
-        unpacking=["c",[ordered1, 0, -1],[ordered2, 1, -1]]
-        add=only_sep(unpacking,pairs)
-        if add:
-            sep_closed_matching.append(add)
-        
-        else:
-            #test non paired Pattern BEFORE for closed pseudoknots in ordered1
-            unpacking=["c", [0,-1],[ordered1, 0, -2], [ordered2, 1, -1], ["b"]]
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_closed_matching.append(add)
-            
-            unpacking=["c", [1,-1],[ordered2, 1, -2], [ordered1, 0, -1], ["b"]] 
-            #test non paired Pattern BEFORE for closed pseudoknots in ordered2
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_closed_matching.append(add)
-        
-        
-        #AFTER - OPENED
-        #test only separators AFTER for opened pseudoknots
-        
-        unpacking=["o",[ordered1, 0, 1],[ordered2, 1, 1]]
-        add=only_sep(unpacking,pairs)
-        if add:
-            sep_opened_matching.append(add)
-            
-        else:
-            #test non paired Pattern AFTER for opened pseudoknots in ordered1.
-            unpacking=["o", [0,1],[ordered1, 0, 2], [ordered2, 1, 1], ["a",ordered1]]
-            add=non_paired(unpacking,pairs)
-            if add:
-                sep_opened_matching.append(add)
-            
-            #test non paired Pattern AFTER for opened pseudoknots in ordered2.
-            unpacking=["o", [1,1], [ordered2, 1, 2], [ordered1, 0, 1], ["a",ordered2]]
-            add=non_paired(unpacking,pairs)
-            if add:
-                sep_opened_matching.append(add)
-        
-        #AFTER - CLOSED
-        #test only separators AFTER for closed pseudoknots
-        
-        unpacking=["c",[ordered1, 0, 1],[ordered2, 1, 1]]
-        add=only_sep(unpacking,pairs)
-        if add:
-            sep_closed_matching.append(add)
-            
-        else:
-            #test non paired Pattern AFTER for closed pseudoknots in ordered1.
-            unpacking=["c", [0,1],[ordered1, 0, 2], [ordered2, 1, 1], ["a",ordered1]]
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_closed_matching.append(add)
-            
-            #test non paired Pattern AFTER for opened pseudoknots in ordered2.
-            unpacking=["o", [1,1], [ordered2, 1, 2], [ordered1, 0, 1], ["a",ordered2]]        
-            add = non_paired(unpacking,pairs)
-            if add:
-                sep_closed_matching.append(add)
+                    obj_to_comp_in_1.finish += nb_gaps1
+                    obj_to_comp_in_2.finish += nb_gaps2
 
-    for pair in sep_opened_matching:
-        dict_seq1={}
-        for i,elt in enumerate(pair[0].sequence):
-            dict_seq1[i]=elt
-        
-        dict_seq2={}
-        for i,elt in enumerate(pair[1].sequence):
-            dict_seq2[i]=elt
-        
-        start_diff1=pair[0].start
-        start_diff2=pair[1].start
+                    add_gaps(obj_to_comp_in_1.nb, nb_gaps1, ordered1)
+                    add_gaps(obj_to_comp_in_2.nb, nb_gaps2, ordered2)
 
-        opened="[{<"
-        #determining the start of both pseudoknots
-        start1=0
-        while dict_seq1[start1] not in opened:
-            start1+=1
-            
-        start2=0
-        while dict_seq2[start2] not in opened:
-            start2+=1
-        
-        start1+=start_diff1
-        start2+=start_diff2
+                    struct1.length += nb_gaps1
+                    struct2.length += nb_gaps2
 
-        #aligning if pk starts at different places in the separator
-        if start1!=start2:
-            
-            diff=start1-start2
-            
-            if diff > 0:
-                #start1>start2, # starts after in 1; placing gaps in 2.
-                for i in range(abs(diff)):
-                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
-            elif diff <0:
-                #start2>start1, # starts after in 2; placing gaps in 1.
-                for i in range(abs(diff)):
-                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
-            
-            if isinstance(pair[0],Pattern):
-                pair[0].alignedsequence=dict_seq_reagglomerate(dict_seq1)
-            else:
-                pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
-                
-            if isinstance(pair[1],Pattern):
-                pair[1].alignedsequence=dict_seq_reagglomerate(dict_seq2)
-            else:
-                pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
-            
-            nb_gaps1=pair[0].sequence.count('-')
-            nb_gaps2=pair[1].sequence.count('-')
-            
-            pair[0].length+=nb_gaps1
-            pair[1].length+=nb_gaps2
-            
-            pair[0].finish+=nb_gaps1
-            pair[1].finish+=nb_gaps2
+            if pk_closed_not_acc_1 and pk_closed_not_acc_2:
+                first_closed_1 = closed_indexes_1[0]
+                first_closed_2 = closed_indexes_2[0]
+                obj_to_comp_in_1 = seqs_1[first_closed_1]
+                obj_to_comp_in_2 = seqs_2[first_closed_2]
 
-            add_gaps(pair[0].nb,nb_gaps1,ordered1)
-            add_gaps(pair[1].nb,nb_gaps2,ordered2)
+                dict_seq1 = {}
+                for i, elt in enumerate(obj_to_comp_in_1.sequence):
+                    dict_seq1[i] = elt
 
-            struct1.length+=nb_gaps1
-            struct2.length+=nb_gaps2
+                dict_seq2 = {}
+                for i, elt in enumerate(obj_to_comp_in_2.sequence):
+                    dict_seq2[i] = elt
 
-    for pair in sep_closed_matching:
-        dict_seq1={}
-        for i,elt in enumerate(pair[0].sequence):
-            dict_seq1[i]=elt
-        
-        dict_seq2={}
-        for i,elt in enumerate(pair[1].sequence):
-            dict_seq2[i]=elt
+                start_diff1 = obj_to_comp_in_1.start
+                start_diff2 = obj_to_comp_in_2.start
 
-        start_diff1=pair[0].start
-        start_diff2=pair[1].start
+                closed = "]}>"
+                # determining the start of both pseudoknots
+                start1 = 0
+                while dict_seq1[start1] not in closed:
+                    start1 += 1
 
-        closed="]}>"
-        #determining the start of both pseudoknots
-        start1=0
-        while dict_seq1[start1] not in closed:
-            start1+=1
-            
-        start2=0
-        while dict_seq2[start2] not in closed:
-            start2+=1
-        
-        start1+=start_diff1
-        start2+=start_diff2
-        
-        #aligning if pk starts at different places in the separator
-        if start1!=start2:
-            
-            diff=start1-start2
-            
-            if diff > 0:
-                #start1>start2, # starts after in 1; placing gaps in 2.
-                for i in range(abs(diff)):
-                    dict_seq2 = insert_gap_seq_dict(dict_seq2,start2)
-            elif diff <0:
-                #start2>start1, # starts after in 2; placing gaps in 1.
-                for i in range(abs(diff)):
-                    dict_seq1 = insert_gap_seq_dict(dict_seq1,start1)
-            
-            if isinstance(pair[0],Pattern):
-                pair[0].alignedsequence=dict_seq_reagglomerate(dict_seq1)
-            else:
-                pair[0].sequence=dict_seq_reagglomerate(dict_seq1)
-                
-            if isinstance(pair[1],Pattern):
-                pair[1].alignedsequence=dict_seq_reagglomerate(dict_seq2)
-            else:
-                pair[1].sequence=dict_seq_reagglomerate(dict_seq2)
-                
-            nb_gaps1=pair[0].sequence.count('-')
-            nb_gaps2=pair[1].sequence.count('-')
-            
-            pair[0].length+=nb_gaps1
-            pair[1].length+=nb_gaps2
-            
-            pair[0].finish+=nb_gaps1
-            pair[1].finish+=nb_gaps2
-            
-            add_gaps(pair[0].nb,nb_gaps1,ordered1)
-            add_gaps(pair[1].nb,nb_gaps2,ordered2)
-            
-            
-            struct1.length+=nb_gaps1
-            struct2.length+=nb_gaps2
+                start2 = 0
+                while dict_seq2[start2] not in closed:
+                    start2 += 1
+
+                start1 += start_diff1
+                start2 += start_diff2
+
+                if start1 != start2:
+
+                    diff = start1 - start2
+
+                    if diff > 0:
+                        # start1>start2, # starts after in 1; placing gaps in 2.
+                        for i in range(abs(diff)):
+                            dict_seq2 = insert_gap_seq_dict(dict_seq2, start2)
+                    elif diff < 0:
+                        # start2>start1, # starts after in 2; placing gaps in 1.
+                        for i in range(abs(diff)):
+                            dict_seq1 = insert_gap_seq_dict(dict_seq1, start1)
+
+                    if isinstance(obj_to_comp_in_1, Pattern):
+                        obj_to_comp_in_1.alignedsequence = dict_seq_reagglomerate(dict_seq1)
+                        nb_gaps1 = obj_to_comp_in_1.alignedsequence.count('-')
+                    else:
+                        obj_to_comp_in_1.sequence = dict_seq_reagglomerate(dict_seq1)
+                        nb_gaps1 = obj_to_comp_in_1.sequence.count('-')
+
+                    if isinstance(obj_to_comp_in_2, Pattern):
+                        obj_to_comp_in_2.alignedsequence = dict_seq_reagglomerate(dict_seq2)
+                        nb_gaps2 = obj_to_comp_in_2.alignedsequence.count('-')
+                    else:
+                        obj_to_comp_in_2.sequence = dict_seq_reagglomerate(dict_seq2)
+                        nb_gaps2 = obj_to_comp_in_2.sequence.count('-')
+
+                    obj_to_comp_in_1.length += nb_gaps1
+                    obj_to_comp_in_2.length += nb_gaps2
+
+                    obj_to_comp_in_1.finish += nb_gaps1
+                    obj_to_comp_in_2.finish += nb_gaps2
+
+                    add_gaps(obj_to_comp_in_1.nb, nb_gaps1, ordered1)
+                    add_gaps(obj_to_comp_in_2.nb, nb_gaps2, ordered2)
+
+                    struct1.length += nb_gaps1
+                    struct2.length += nb_gaps2
+
 
 def overdivision_compensating(struct1, struct2, ordered1, ordered2, matching):
     """
@@ -2253,12 +2257,15 @@ def full_alignment(struct1, struct2, verbose=False):
         
         struct1.aligned()
         struct2.aligned()
-        
+
         struct1.alignedsequence = struct1.reagglomerate()
         struct2.alignedsequence = struct2.reagglomerate()
         
         if verbose:
             print("Same structures.")
+
+        return struct1, struct2
+
     else:
         if verbose:
             print("\nDetermining the optimal pattern match if possible \n")
@@ -2288,11 +2295,15 @@ def full_alignment(struct1, struct2, verbose=False):
     order1=struct1.order_list()
     order2=struct2.order_list()
 
+    vis_align(struct1, struct2, "BEFORE PO PRIORITY", verbose)
+
     try:
         discriminate_po_priority(struct1, struct2, matching)
     except Exception as e:
         e=f"An error occured when checking for overdiv/pseudoknots priority on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise OPKPrioError(e)
+
+    vis_align(struct1, struct2, "BEFORE PK COMPENSATING - AFTER PO PRIORITY", verbose)
 
     try:
         pseudoknots_compensating(struct1, struct2, order1, order2, matching)    
@@ -2300,6 +2311,7 @@ def full_alignment(struct1, struct2, verbose=False):
         e=f"An error occured when compensating for pseudoknots on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise PKCompensatingError(e)
 
+    vis_align(struct1, struct2, "BEFORE OD COMPENSATING - AFTER PK COMPENSATING", verbose)
 
     try:
         overdivision_compensating(struct1, struct2, order1, order2, matching)
@@ -2310,6 +2322,7 @@ def full_alignment(struct1, struct2, verbose=False):
     if verbose:
         print("\nAdding gaps in separators for length and pattern matching")
 
+    vis_align(struct1, struct2, "BEFORE SEP COMPENSATING - AFTER OD COMPENSATING", verbose)
 
     try:
         separator_compensating(struct1, struct2, matching)
@@ -2320,6 +2333,7 @@ def full_alignment(struct1, struct2, verbose=False):
     if verbose:
         print("\nUpdating last parameters, cleaning and finishing\n")
 
+    vis_align(struct1, struct2, "BEFORE CLEAN - AFTER SEP COMPENSATING", verbose)
 
     struct1.alignedwith=struct2
     struct2.alignedwith=struct1
@@ -2336,11 +2350,13 @@ def full_alignment(struct1, struct2, verbose=False):
         e = f"An error occured while cleaning on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
         raise FinalCleanError(e)
 
+    vis_align(struct1, struct2, "AFTER CLEAN", verbose)
+
     return struct1,struct2
 
 #_____________________________MAIN FUNCTIONS_____________________________
 
-def opt_subdiv(seq1, seq2, depth):
+def opt_subdiv(seq1, seq2, depth, verbose=False):
     """
     opt_subdiv finds the best subdiv parameter via brute force. This function runs the alignments in parallel.
     """
@@ -2367,7 +2383,7 @@ def opt_subdiv(seq1, seq2, depth):
     
     results=[]
     try:
-        for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1]) for structs in structure_list]):
+        for struct1, struct2 in pool.starmap(full_alignment, [(structs[0], structs[1], verbose) for structs in structure_list]):
             results.append([struct1,struct2])
     except Exception as e:
         e = f"An error occured while aligning in parallel: \n     {e}"
@@ -2384,7 +2400,7 @@ def opt_subdiv(seq1, seq2, depth):
     
     return results[min_dist][0], results[min_dist][1]
 
-def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ident2=None, fam2=None, AGU2=None):
+def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ident2=None, fam2=None, AGU2=None, verbose=False):
     """
     clustering_opt_subdiv finds the best subdiv parameter via brute force. This function does NOT run the alignments in parallel.
     """
@@ -2400,7 +2416,7 @@ def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ide
     results=[]
     for struct1, struct2 in structure_list:
         try:
-            results.append(full_alignment(struct1,struct2))
+            results.append(full_alignment(struct1,struct2, verbose))
         except Exception as e:
             e = f"An error occured while aligning on line {sys.exc_info()[2].tb_next.tb_lineno}: \n     {e}"
             raise GeneralAlignmentError(e)
@@ -2410,7 +2426,7 @@ def clustering_opt_subdiv(seq1,seq2, depth,ident1=None, fam1=None, AGU1=None,ide
         dists.append(AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow"))
     
     min_dist = np.argmin(dists)
-    
+
     return results[min_dist][0], results[min_dist][1]
     
 def main():
@@ -2445,6 +2461,7 @@ def main():
                         help="Use the unoptimised overdivision parameter calculator function.",
                         default=False,
                         action="store_true")
+
     try:
         args = parser.parse_args()
         
@@ -2460,9 +2477,9 @@ def main():
         a=time.time()
         
         if args.unoptimised:
-            struct1, struct2 = clustering_opt_subdiv(args.structures[0],args.structures[1],args.depth[0])
+            struct1, struct2 = clustering_opt_subdiv(args.structures[0],args.structures[1],args.depth[0], verbose=args.verbose)
         else:
-            struct1, struct2 = opt_subdiv(args.structures[0],args.structures[1],args.depth[0])
+            struct1, struct2 = opt_subdiv(args.structures[0],args.structures[1],args.depth[0],verbose=args.verbose)
         
         initial_dist=AF.compute_distance_clustering(AF.SecondaryStructure(struct1.raw),AF.SecondaryStructure(struct2.raw), "cityblock", "slow")
         new_dist = AF.compute_distance_clustering(AF.SecondaryStructure(struct1.alignedsequence),AF.SecondaryStructure(struct2.alignedsequence), "cityblock", "slow")
