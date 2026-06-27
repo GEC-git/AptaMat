@@ -696,6 +696,13 @@ def main():
                         nargs='+',
                         default=[5],
                         help="Depth used in aptalign alignment, ignored if using API")
+
+
+    parser.add_argument('-p',
+                        "--processes_number",
+                        type = int,
+                        default = int(multiprocessing.cpu_count()/2),
+                        help="Number of processes to use. Defaults to half the number of cores.")
     
     args = parser.parse_args()
 
@@ -712,10 +719,14 @@ def main():
     if args.reuse_alignment != "":
         for elt in args.reuse_alignment:
             alignment_file+=str(elt)
-        
-    print("This is a multiprocessed algorithm.")
-    print("You have",multiprocessing.cpu_count(),"cores in your CPU.")
-    CORE = int(input("Please input the number of cores you want to use:"))
+
+    CORE = args.processes_number
+    if CORE > multiprocessing.cpu_count():
+        CORE = int(multiprocessing.cpu_count()/2)
+        print(f"Too much processes! Reverting to {CORE} processes.")
+
+    print(f"This is a multiprocessed algorithm, using {CORE} processes.")
+
     
     structure_list,family=initialize_dataset(structure_file)
 
