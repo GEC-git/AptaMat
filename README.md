@@ -151,10 +151,11 @@ It takes several arguments:
 - `-sr` (`--sigma_range`) controls all the values taken by sigma to alter the affinity matrix (default = 100)
 - `-ra` (`--reuse_alignment`) followed by the filepath of the alignment file to use.
 - `-ad` (`--al_depth`) Depth used in aptalign alignment, ignored if using API. (default = 10)
+- `-p` The number of cores used to parallelize the procedure.
 
 Warning : A higher depth, al_depth and sigma_range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
 
-    usage: clustering_AptaMat.py [-fp CLUSTER_FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT] [-ra ALIGNMENT_FILE] [-ad INT]
+    usage: clustering_AptaMat.py [-fp CLUSTER_FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT] [-ra ALIGNMENT_FILE] [-ad INT] [-p INT]
 
 All of these parameters can be combined in a single call.
 
