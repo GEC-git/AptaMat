@@ -10,12 +10,10 @@ sys.path.append(root_path)
 root_path = os.path.abspath(os.path.join(current_dir, '..', 'API'))
 sys.path.append(root_path)
 
-#Decomment/Comment the chosen APIs.
-#import locarnapi as loc
-#import foresterAPI as forest
-#import beagleAPI as beagle
+import locarnapi as loc
+import foresterAPI as forest
+import beagleAPI as beagle
 import RNAlignAPI as rnapi
-#--------------------------#
 
 import numpy as np
 import pandas as pd
@@ -214,7 +212,7 @@ def initialize_dataset(structure_file):
                     structure_list.append(structure)
     return structure_list,family
 
-def alignment_calc(struct1,struct2,speed,AL_depth):
+def aptalign_alignment_calc(struct1, struct2, speed, AL_depth):
 
     struct1al, struct2al = AL.clustering_opt_subdiv(struct1.dotbracket,struct2.dotbracket,depth=AL_depth,ident1=struct1.id,ident2=struct2.id)
 
@@ -226,18 +224,31 @@ def alignment_calc(struct1,struct2,speed,AL_depth):
     del struct2al
     return dist, alignment, ids
 
-def API_alignment_calc(struct1, struct2, speed):
-    
-    #Please decomment/comment the right functions depending on algorithm used.
-    #dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1,struct2) #RNAforester
-    dotbracket1al, dotbracket2al = rnapi.rnalign2d_pairwise(struct1,struct2) #RNAlign2D
-    #dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1,struct2) #LocARNA
-    #dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2) #Beagle2
-    #-----------------------#
-    
-    dist=AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al),"cityblock",speed)
-    alignment=[dotbracket1al,dotbracket2al]
-    ids=[struct1.id, struct2.id]
+def get_AM_secondary_structs(dotbracket1al, dotbracket2al, speed, struct1, struct2):
+    dist = AF.compute_distance_clustering(AF.SecondaryStructure(dotbracket1al), AF.SecondaryStructure(dotbracket2al), "cityblock", speed)
+    alignment = [dotbracket1al, dotbracket2al]
+    ids = [struct1.id, struct2.id]
+
+    return dist, alignment, ids
+
+def rnalign2d_alignment_calc(struct1, struct2, speed):
+    dotbracket1al, dotbracket2al = rnapi.rnalign2d_pairwise(struct1, struct2)  # RNAlign2D
+    dist, alignment, ids = get_AM_secondary_structs(dotbracket1al, dotbracket2al, speed, struct1, struct2)
+    return dist, alignment, ids
+
+def rnaforester_alignment_calc(struct1, struct2, speed):
+    dotbracket1al, dotbracket2al = forest.forester_pairwise(struct1, struct2)
+    dist, alignment, ids = get_AM_secondary_structs(dotbracket1al, dotbracket2al, speed, struct1, struct2)
+    return dist, alignment, ids
+
+def locarna_alignment_calc(struct1, struct2, speed):
+    dotbracket1al, dotbracket2al = loc.locarna_pairwise(struct1, struct2)
+    dist, alignment, ids = get_AM_secondary_structs(dotbracket1al, dotbracket2al, speed, struct1, struct2)
+    return dist, alignment, ids
+
+def beagle2_alignment_calc(struct1, struct2, speed):
+    dotbracket1al, dotbracket2al = beagle.get_db(struct1, struct2)
+    dist, alignment, ids = get_AM_secondary_structs(dotbracket1al, dotbracket2al, speed, struct1, struct2)
     return dist, alignment, ids
 
 def extracting_alignment(filepath):
@@ -329,9 +340,8 @@ def prepare_split_lists(split_list):
         results.append([split_list[i]])
     return results, steps_per_tasks
 
-def alignment_worker(worker_num, all_tasks, queue):
+def alignment_worker(worker_num, all_tasks, queue, align_with):
     res = []
-
     if len(all_tasks) == 0:
         queue.put((worker_num, "DONE", "No task."))
         return worker_num, res
@@ -346,7 +356,18 @@ def alignment_worker(worker_num, all_tasks, queue):
                 f"Aligning {struct1.id} - {struct2.id}"
             ))
 
-            res.append(alignment_calc(struct1, struct2, speed, AL_depth))
+            if align_with == "aptalign":
+                res.append(aptalign_alignment_calc(struct1, struct2, speed, AL_depth))
+            elif align_with == "locarna":
+                res.append(locarna_alignment_calc(struct1, struct2, speed))
+            elif align_with == "beagle2":
+                res.append(beagle2_alignment_calc(struct1, struct2, speed))
+            elif align_with == "rnaforester":
+                res.append(rnaforester_alignment_calc(struct1, struct2, speed))
+            elif align_with == "rnalign2d":
+                res.append(rnalign2d_alignment_calc(struct1, struct2, speed))
+            else:
+                raise ValueError("Unknown alignment algorithm.")
 
             queue.put((worker_num, "STEP", ""))
 
@@ -431,7 +452,7 @@ def progress_handler(queue, n_tasks, steps_per_tasks):
     return True
 
 
-def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment, AL_depth):
+def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment, AL_depth, align_with):
     
     ### N for matrix size
     N = len(structure_list)
@@ -444,19 +465,16 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
     if reuse_alignment == "":
         print("Creating all alignment file.")
         results = []
-        inter_res=[]
-        
-        #Decoment here if using API.
-        #for result in pool.starmap(API_alignment_calc,
-        #                           [(struct1, struct2, speed) for struct1 in structure_list for struct2 in structure_list]):
-        #    inter_res.append(result)
-        
-        # Decomment here if using AptAlign.
 
         manager = multiprocessing.Manager()
         queue = manager.Queue()
 
         n_tasks = CORE
+
+        alignment_algs = ["aptalign", "rnalign2d","locarna","rnaforester", "beagle2"]
+
+        if align_with not in alignment_algs:
+            raise ValueError("Invalid alignment algorithm chosen. Call the algorithm with -h for help.")
 
         full_task_order = [
             (struct1, struct2, speed, AL_depth)
@@ -475,7 +493,7 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
             for worker_num, worker_tasks in enumerate(distributed_tasks):
                 pool.apply_async(
                     alignment_worker,
-                    args=(worker_num, worker_tasks, queue),
+                    args=(worker_num, worker_tasks, queue, align_with),
                     callback=make_success_handler(results_by_worker),
                     error_callback=make_error_handler(pool, queue, n_tasks),
                 )
@@ -497,8 +515,6 @@ def calculation(structure_list, CORE, speed, depth, sigma_range, reuse_alignment
 
         inter_res = remerge_results(results_by_worker)
 
-        #-------------------------#
-        
         tbw=""
         for elt in inter_res:
             results.append(elt[0])
@@ -697,13 +713,17 @@ def main():
                         default=[5],
                         help="Depth used in aptalign alignment, ignored if using API")
 
-
     parser.add_argument('-p',
                         "--processes_number",
                         type = int,
                         default = int(multiprocessing.cpu_count()/2),
                         help="Number of processes to use. Defaults to half the number of cores.")
-    
+
+    parser.add_argument('--align_with',
+                        type=str,
+                        default="aptalign",
+                        help="Which alignment algorithm you want to use (can be 'aptalign', 'rnalign2d','locarna','rnaforester' or 'beagle2'.")
+
     args = parser.parse_args()
 
     depth=args.depth[0]
@@ -730,7 +750,7 @@ def main():
     
     structure_list,family=initialize_dataset(structure_file)
 
-    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file, AL_depth)
+    affinity_matrix, aff_prop_clust_best, aff_prop_calinski_best, silhouette_best, acc_best, sigma_best, sub_aff_prop=calculation(structure_list, CORE, args.speed, depth, sigma_range, alignment_file, AL_depth, args.align_with)
     
     
     ### Print Optimal values obtained from affinity propagation clustering
