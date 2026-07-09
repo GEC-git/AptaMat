@@ -7,7 +7,7 @@ You can also find other scripts to convert datasets or generating ones randomly.
 
 ____
 
-**AptaMat2.0** is a simple optimised script which aims to measure differences between two DNA or RNA secondary structures. 
+**AptaMat2.0** is a simple optimised script which aims to measure differences between DNA or RNA secondary structures. 
 The method is based on the comparison of the matrices representing the two secondary structures to analyze, assimilable to dotplots. 
 The dot-bracket notation of the structure is converted in a half binary matrix showing width equal to structure's length.
 Each matrix case (i,j) is filled with '1' if the nucleotide in position i is paired with the nucleotide in position j, with '0' otherwise. 
@@ -19,7 +19,8 @@ by the sum of all the points in both matrices.
 
 AptaMat can handle extended dot-bracket notation and every additional bracket is converted into coordinates for the matrix.
 
-AptaMat can also compare structures of different length, preliminary aligned. Indeed, the algorithm includes gap understanding, where each gap is considered as an additional penalized unpaired nucleotide.
+AptaMat can also compare structures of different length. However, we recommend to work with structure of same length.
+The algorithm includes gap understanding, where each gap is considered as an additional penalized unpaired nucleotide.
 
 AptaMat can output different types of data :
 
@@ -66,8 +67,9 @@ Those Python modules are needed for all algorithms:
 - [matplotlib](https://matplotlib.org/)
 - [vispy](https://vispy.org/)
 - [tabulate](https://pypi.org/project/tabulate/)
+- [tqdm](https://tqdm.github.io/)
 
-Use of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
+Usage of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
 
 # Usage
 
@@ -76,9 +78,9 @@ Use of [Anaconda](https://docs.conda.io/en/latest/#) is highly recommended.
 AptaMat2.0 is a flexible Python script which can take several arguments:
 
 - `-structures` followed by secondary structures written in dotbracket format
-- `-weigths` (Optional) followed by weight values between 0 and 1 to indicate optional weight indices
+- `-weigths` (Optionnal) followed by weight values between 0 and 1 to indicate optionnal weight indices
 - `-files` followed by path to formatted files containing one, or several secondary structures in dotbracket format
-- `-ensemble` (Optional) which indicates whether the input secondary structures are part of an ensemble
+- `-ensemble` (Optionnal) which indicates whether the input secondary structures are part of an ensemble
 - `-method` indicates the spatial distance method choose for AptaMat, by default cityblock and alternatively euclidean
 - `-speed` indicates the risk taken by the algorithm when calculating the search depth. (default: slow) Can be set to quick if the user is confident in its data.
 - `-plot` indicates whether or not to output a pdf contribution file. The choices indicates the label of the matrix inside the pdf.
@@ -96,7 +98,7 @@ limitations. Quotes are necessary.
       usage: AptaMat2.py -structures STRUCTURES [STRUCTURES ...]
 
 
-The `weight` optional argument must be an array of float in 0 to 1 range showing identical size than input `structures` array. 
+The `weight` optionnal argument must be an array of float in 0 to 1 range showing identical size than input `structures` array. 
 This argument is not compatible with `files` as the script is expecting this information to be in the input file. 
 
 
@@ -110,7 +112,7 @@ during the parsing is used as the template structure. The others are the compare
       usage: AptaMat2.py -files FILES [FILES ...]
     
 
-`ensemble` is an optional argument which allow to calculate AptaMat distance value for an ensemble of structure
+`ensemble` is an optionnal argument which allow to calculate AptaMat distance value for an ensemble of structure
 instead of calculating pairwise distance.
 
 
@@ -127,9 +129,9 @@ AptAlign is an alignment algorithm used to align DNA or RNA secondary structure.
 It takes four arguments:
 
 - `-s` (`--structures`) followed by secondary structures written in dotbracket format
-- `-v` (`--verbose`) to increase the verbosity of the output. (optionnl)
-- `-d` (`--depth`) to set the depth at which the overdivision calculation will go. (optional, if set too high, WILL hinder performances, default = 10)
-- `-u` (`--unoptimised`) to use the serial version of the overdivision calculation. (optional, Can be of use if singlecore performances is very high compared to multicore)
+- `-v` (`--verbose`) to increase the verbosity of the output. (optionnal)
+- `-d` (`--depth`) to set the depth at which the overdivision calculation will go. (optionnal, if set too high, WILL hinder performances, default = 10)
+- `-u` (`--unoptimised`) to use the unoptimised version of the overdivision calculation. (optionnal, Can be of use if singlecore performances is very high compared to multicore)
 
 The `structures` argument must be a string formatted secondary structures array. You can only input two structures with this parameter. Quotes are necessary.
 
@@ -137,7 +139,7 @@ The `structures` argument must be a string formatted secondary structures array.
 
 The output is only in the terminal.
 
-## Clustering
+## clustering
 
 The clustering algorithm is used to cluster a dataset inside a CLUSTER file.
 
@@ -150,12 +152,19 @@ It takes several arguments:
 - `-d` (`--depth`) controls the depth of iterations when calculating a clustering with a certain sigma value. (default = 1000)
 - `-sr` (`--sigma_range`) controls all the values taken by sigma to alter the affinity matrix (default = 100)
 - `-ra` (`--reuse_alignment`) followed by the filepath of the alignment file to use.
-- `-ad` (`--al_depth`) Depth used in aptalign alignment, ignored if using API. (default = 10)
-- `-p` The number of cores used to parallelize the procedure.
+- `-ad` (`--al_depth`) Depth used in aptalign alignment, ignored if using API. (default = 5)
+- `-p` (`--processes_number`) Number of processes to spawn when aligning and clustering.
+- `--align_with` Choose which alignment algorithm you want to use between `aptalign` (default), `rnaforester`, `locarna`, `rnalign2d` and `beagle2`.
 
-Warning : A higher depth, al_depth and sigma_range WILL extend the run time. I found when testing that the default values give the best result in term of quality/time compromise.
+For those other alignment algorithms, please use Linux:
+- RNAforester : please ensure that the [ViennaRNA](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/install.html) suite is installed and located in the PATH. It should come with RNAforester.
+- LocARNA : please ensure that [LocARNA](http://www.bioinf.uni-freiburg.de/Software/LocARNA/) is installed and located in the PATH.
+- Beagle2 : Please extract the results from their [webserver](http://beagle2.bio.uniroma2.it/) as a .txt file and change the path to this file in the /API/beagleAPI.py file.
+- [RNAlign2D](https://github.com/tomaszwozniakihg/rnalign2d) : please ensure that the program is correctly installed and located in the PATH.
 
-    usage: clustering_AptaMat.py [-fp CLUSTER_FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT] [-ra ALIGNMENT_FILE] [-ad INT] [-p INT]
+A higher depth, al_depth and sigma_range WILL extend the run time. We found when testing that the default values give the best result in term of quality/time compromise.
+
+    usage: clustering_AptaMat.py [-fp CLUSTER_FILE] [-speed [{slow,quick}]] [-visu [{GPU,CPU}]] [-cv] [-d INT] [-sr INT] [-ra ALIGNMENT_FILE] [-ad INT] [-p INT] [--align_with {aptalign, rnaforester, locarna, rnalign2d, beagle2}]
 
 All of these parameters can be combined in a single call.
 
@@ -168,23 +177,6 @@ The output can be given, depending on the parameters, as a combination of the th
 
 When clustering, the algorithm will automatically align each structures pair by pair using AptAlign and output an alignment file.
 
-**ONLY TESTED IN LINUX**
-
-It is possible to use four other alignment algorithms using scripts inside the /API/ folder.
-- RNAforester : please ensure that the [ViennaRNA](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/install.html) suite is installed and located in the PATH. It should come with RNAforester.
-- LocARNA : please ensure that [LocARNA](http://www.bioinf.uni-freiburg.de/Software/LocARNA/) is installed and located in the PATH.
-- Beagle2 : Please extract the results from their [webserver](http://beagle2.bio.uniroma2.it/) as a .txt file and change the path to this file in the /API/beagleAPI.py file.
-- [RNAlign2D](https://github.com/tomaszwozniakihg/rnalign2d) : please ensure that the program is correctly installed.
-
-When the chosen alignment algorithm is correctly installed, you will need:
-- to decomment/comment the chosen API module imported from line 13.
-- to decomment the chosen function from line 228 as instructed by the commented line.
-- to decomment from line 296 as instructed by the commented line.
-
-Both in the clustering/clustering_AptaMat.py file.
-
-*it should not work on Windows/MacOS (untested).*
-
 # Data files to use.
 
 ## AptaMat2.0
@@ -195,10 +187,10 @@ by one and always takes the first structure encountered as the template structur
 
       >5HRU
       TCGATTGGATTGTGCCGGAAGTGCTGGCTCGA
-      #Template
+      --Template--
       ((((.........(((((.....)))))))))
       [ weight ]
-      #Compared
+      --Compared--
       .........(((.(((((.....))))).)))
       [ weight ]
       ..........((.((((.......)))).)).
@@ -269,4 +261,4 @@ to literature. You must be careful about the sequence input and the base pairing
 
 If you are using AptaMat in your research, please support us by citing us : Thomas Binet, Bérangère Avalle, Miraine Dávila Felipe, Irene Maffucci, AptaMat: a matrix-based algorithm to compare single-stranded oligonucleotides secondary structures, Bioinformatics, Volume 39, Issue 1, January 2023, btac752, https://doi.org/10.1093/bioinformatics/btac752
 
-If you are using AptaMat2.0 and AptAlign, an article is in preparation.
+If you are using AptAlign, an article is on the way.
