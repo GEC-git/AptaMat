@@ -1,6 +1,6 @@
 def file_reader():
     dot="(.-"
-    file_from="" #PLEASE PUT HERE PATH TO THE EXPORTED .TXT FROM BEAGLE2.
+    file_from="/mnt/c/Users/volni/Desktop/COURS/COURS UTC A25/TX/AptaMat-main/clustering/tests/tests_alignment/test_150x8/cleaned_nopseudoknots_reduced_6x15/beagle2_alignment/export_beagle_alignement_fromsite.txt" #PLEASE PUT HERE PATH TO THE EXPORTED .TXT FROM BEAGLE2.
     lines=open(file_from).readlines()
     results_dictionnary={}
     for i,line in enumerate(lines):
@@ -31,9 +31,9 @@ def file_reader():
                 
     return results_dictionnary
 
-results_dictionnary=file_reader()
-
 def get_db(struct1,struct2):
+    results_dictionnary = file_reader()
+
     if struct1.id==struct2.id:
         return struct1.dotbracket, struct2.dotbracket
     try:
